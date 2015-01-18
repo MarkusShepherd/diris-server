@@ -3,7 +3,7 @@
  */
 package info.riemannhypothesis.dixit.server.repository;
 
-import info.riemannhypothesis.dixit.server.Player;
+import info.riemannhypothesis.dixit.server.objects.Player;
 
 import java.util.Collection;
 
@@ -13,10 +13,8 @@ import java.util.Collection;
  */
 public interface PlayerRepository {
 
-    // Add a video
     public boolean addPlayer(Player player);
 
-    // Get the videos that have been added so far
     public Collection<Player> getPlayers();
 
     public Player getPlayer(long id);

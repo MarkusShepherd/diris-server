@@ -1,6 +1,7 @@
-package info.riemannhypothesis.dixit.server;
+package info.riemannhypothesis.dixit.server.objects;
 
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Markus Schepke
@@ -8,12 +9,24 @@ import java.util.Collection;
  */
 public class Player {
 
-    private long              id;
+    private long        id;
 
-    private String            name;
-    private String            email;
+    private String      name;
+    private String      email;
 
-    private Collection<Match> matches;
+    private List<Match> matches;
+
+    public Player() {
+        this.id = (long) (Math.random() * Long.MAX_VALUE);
+        this.matches = new ArrayList<Match>();
+    }
+
+    public Player(String email, String name) {
+        this.id = (long) (Math.random() * Long.MAX_VALUE);
+        this.name = name;
+        this.email = email;
+        this.matches = new ArrayList<Match>();
+    }
 
     public long getId() {
         return id;
@@ -39,11 +52,11 @@ public class Player {
         this.email = email.toLowerCase();
     }
 
-    public Collection<Match> getMatches() {
+    public List<Match> getMatches() {
         return matches;
     }
 
-    public void setMatches(Collection<Match> matches) {
+    public void setMatches(List<Match> matches) {
         this.matches = matches;
     }
 
@@ -60,4 +73,5 @@ public class Player {
         Player that = (Player) obj;
         return this.email.equalsIgnoreCase(that.email);
     }
+
 }

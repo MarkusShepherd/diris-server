@@ -1,4 +1,4 @@
-package info.riemannhypothesis.dixit.server;
+package info.riemannhypothesis.dixit.server.objects;
 
 import java.util.List;
 import java.util.Map;

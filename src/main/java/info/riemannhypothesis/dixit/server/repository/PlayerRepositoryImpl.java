@@ -1,6 +1,6 @@
 package info.riemannhypothesis.dixit.server.repository;
 
-import info.riemannhypothesis.dixit.server.Player;
+import info.riemannhypothesis.dixit.server.objects.Player;
 
 import java.util.Collection;
 import java.util.Map;
@@ -20,7 +20,7 @@ public class PlayerRepositoryImpl implements PlayerRepository {
 
     @Override
     public boolean addPlayer(Player player) {
-        return players.put(player.getId(), player) != null;
+        return players.put(player.getId(), player) == null;
     }
 
     @Override

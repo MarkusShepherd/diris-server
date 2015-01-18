@@ -1,4 +1,4 @@
-package info.riemannhypothesis.dixit.server;
+package info.riemannhypothesis.dixit.server.objects;
 
 /**
  * @author Markus Schepke
