@@ -1,5 +1,7 @@
 package info.riemannhypothesis.dixit.server;
 
+import info.riemannhypothesis.dixit.server.repository.MatchRepository;
+import info.riemannhypothesis.dixit.server.repository.MatchRepositoryImpl;
 import info.riemannhypothesis.dixit.server.repository.PlayerRepository;
 import info.riemannhypothesis.dixit.server.repository.PlayerRepositoryImpl;
 
@@ -23,6 +25,11 @@ public class Application {
     @Bean
     public PlayerRepository playerRepository() {
         return new PlayerRepositoryImpl();
+    }
+
+    @Bean
+    public MatchRepository matchRepository() {
+        return new MatchRepositoryImpl();
     }
 
 }
