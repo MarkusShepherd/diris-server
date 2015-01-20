@@ -17,8 +17,8 @@ public class Player {
     private List<Match> matches;
 
     public Player() {
-        this.id = (long) (Math.random() * Long.MAX_VALUE);
-        this.matches = new ArrayList<Match>();
+        //this.id = (long) (Math.random() * Long.MAX_VALUE);
+        //this.matches = new ArrayList<Match>();
     }
 
     public Player(String email, String name) {

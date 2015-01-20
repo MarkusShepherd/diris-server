@@ -1,7 +1,5 @@
 package info.riemannhypothesis.dixit.server.objects;
 
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author Markus Schepke
@@ -9,19 +7,19 @@ import java.util.Map;
  */
 public class Match {
 
-    public static final int      STANDARD_TIMEOUT = 60 * 60 * 24; // 24h
+    public static final int STANDARD_TIMEOUT = 60 * 60 * 24; // 24h
 
-    private long                 id;
+    private long            id;
 
-    private Player[]             players;
-    private Round[]              rounds;
+    private Player[]        players;
+    private Round[]         rounds;
 
-    private int                  totalRounds;
-    private int                  currentRound;
+    private int             totalRounds;
+    private int             currentRound;
 
-    private Map<Player, Integer> standings;
+    private int[]           standings;
 
-    private int                  timeout;
+    private int             timeout;
 
     public Match() {
         id = (long) (Math.random() * Long.MAX_VALUE);
@@ -33,7 +31,7 @@ public class Match {
         totalRounds = players.length;
         currentRound = 0;
         rounds = new Round[totalRounds];
-        standings = new HashMap<Player, Integer>();
+        standings = new int[players.length];
         timeout = STANDARD_TIMEOUT;
     }
 
@@ -77,11 +75,11 @@ public class Match {
         this.currentRound = currentRound;
     }
 
-    public Map<Player, Integer> getStandings() {
+    public int[] getStandings() {
         return standings;
     }
 
-    public void setStandings(Map<Player, Integer> standings) {
+    public void setStandings(int[] standings) {
         this.standings = standings;
     }
 
