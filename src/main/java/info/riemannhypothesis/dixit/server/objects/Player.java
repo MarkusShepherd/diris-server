@@ -9,23 +9,22 @@ import java.util.List;
  */
 public class Player {
 
-    private long        id;
+    private long       id;
 
-    private String      name;
-    private String      email;
+    private String     name;
+    private String     email;
 
-    private List<Match> matches;
+    private List<Long> matchIds;
 
     public Player() {
-        //this.id = (long) (Math.random() * Long.MAX_VALUE);
-        //this.matches = new ArrayList<Match>();
+        this.id = (long) (Math.random() * Long.MAX_VALUE);
+        this.matchIds = new ArrayList<Long>();
     }
 
     public Player(String email, String name) {
-        this.id = (long) (Math.random() * Long.MAX_VALUE);
+        this();
         this.name = name;
         this.email = email;
-        this.matches = new ArrayList<Match>();
     }
 
     public long getId() {
@@ -52,12 +51,20 @@ public class Player {
         this.email = email.toLowerCase();
     }
 
-    public List<Match> getMatches() {
-        return matches;
+    public List<Long> getMatchIds() {
+        return matchIds;
     }
 
-    public void setMatches(List<Match> matches) {
-        this.matches = matches;
+    public void setMatchIds(List<Long> matches) {
+        this.matchIds = matches;
+    }
+
+    public void addMatch(Match match) {
+        matchIds.add(match.getId());
+    }
+
+    public void addMatch(long matchId) {
+        matchIds.add(matchId);
     }
 
     @Override
@@ -71,7 +78,7 @@ public class Player {
             return false;
         }
         Player that = (Player) obj;
-        return this.email.equalsIgnoreCase(that.email);
+        return this.id == that.id;
     }
 
 }

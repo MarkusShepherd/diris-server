@@ -1,5 +1,6 @@
 package info.riemannhypothesis.dixit.server.objects;
 
+import info.riemannhypothesis.dixit.server.objects.Round.Status;
 
 /**
  * @author Markus Schepke
@@ -11,7 +12,7 @@ public class Match {
 
     private long            id;
 
-    private Player[]        players;
+    private long[]          playerIds;
     private Round[]         rounds;
 
     private int             totalRounds;
@@ -22,17 +23,26 @@ public class Match {
     private int             timeout;
 
     public Match() {
-        id = (long) (Math.random() * Long.MAX_VALUE);
+        id = 0;
     }
 
-    public Match(Player[] players) {
-        id = (long) (Math.random() * Long.MAX_VALUE);
-        this.players = players;
+    public Match(long[] players) {
+        this();
+        this.playerIds = players;
         totalRounds = players.length;
         currentRound = 0;
         rounds = new Round[totalRounds];
         standings = new int[players.length];
         timeout = STANDARD_TIMEOUT;
+
+        int numPlayers = players.length;
+        for (int i = 0; i < rounds.length; i++) {
+            int p = i % numPlayers;
+            Round round = new Round(this);
+            round.setStoryTellerId(playerIds[p]);
+            rounds[i] = round;
+        }
+        rounds[0].setStatus(Status.SUBMIT_STORY);
     }
 
     public long getId() {
@@ -43,12 +53,12 @@ public class Match {
         this.id = id;
     }
 
-    public Player[] getPlayers() {
-        return players;
+    public long[] getPlayerIds() {
+        return playerIds;
     }
 
-    public void setPlayers(Player[] players) {
-        this.players = players;
+    public void setPlayerIds(long[] players) {
+        this.playerIds = players;
     }
 
     public Round[] getRounds() {
@@ -91,4 +101,16 @@ public class Match {
         this.timeout = timeout;
     }
 
+    public int getPlayerPos(long id) {
+        for (int i = 0; i < playerIds.length; i++) {
+            if (playerIds[i] == id) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public int getPlayerPos(Player player) {
+        return getPlayerPos(player.getId());
+    }
 }
