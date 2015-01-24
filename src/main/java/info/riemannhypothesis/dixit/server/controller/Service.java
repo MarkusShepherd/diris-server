@@ -159,4 +159,53 @@ public class Service implements ServiceApi {
 
         return path;
     }
+
+    @Override
+    @RequestMapping(value = VOTE_SVC_PATH, method = RequestMethod.POST)
+    public @ResponseBody boolean submitVote(
+            @RequestParam(value = PLAYER_PARAMETER, required = true) long playerId,
+            @RequestParam(value = MATCH_PARAMETER, required = true) long matchId,
+            @RequestParam(value = ROUND_PARAMETER, required = true) int roundNum,
+            @RequestParam(value = IMAGE_PARAMETER, required = true) long imageId) {
+
+        Match match = matchRepo.getMatch(matchId);
+        Round round = match.getRounds()[roundNum];
+
+        int playerPos = match.getPlayerPos(playerId);
+
+        if (playerPos < 0) {
+            throw new IllegalArgumentException("Player " + playerId
+                    + " not found in match " + matchId + ".");
+        }
+
+        if (round.getStatus() != Status.SUBMIT_VOTES) {
+            throw new IllegalArgumentException("Status " + round.getStatus()
+                    + "; not expecting votes.");
+        }
+
+        if (round.getStoryTellerId() == playerId) {
+            throw new IllegalArgumentException("Player " + playerId
+                    + " is the storyteller and cannot submit a vote.");
+        }
+
+        int imagePos = round.getImagePos(imageId);
+
+        if (imagePos < 0) {
+            throw new IllegalArgumentException("Image " + imageId
+                    + " not found in match " + matchId + ", round " + roundNum
+                    + ".");
+        }
+
+        if (imagePos == playerPos) {
+            throw new IllegalArgumentException("Player " + playerId
+                    + " cannot vote for their own image " + imageId
+                    + ", match " + matchId + ", round " + roundNum + ".");
+        }
+
+        round.getVotes()[playerPos] = imagePos;
+
+        round.calculateScores();
+
+        return true;
+    }
 }

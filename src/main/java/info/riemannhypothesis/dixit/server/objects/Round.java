@@ -6,29 +6,43 @@ public class Round {
         WAITING, SUBMIT_STORY, SUBMIT_OTHERS, SUBMIT_VOTES, FINISHED
     }
 
-    private long    id;
+    public static final int MAX_WRONG_VOTE_SCORE                       = 3;
+    public static final int WRONG_VOTE_SCORE                           = 1;
+    public static final int ALL_CORRECT_OR_WRONG_SCORE                 = 2;
+    public static final int NOT_ALL_CORRECT_OR_WRONG_SCORE             = 3;
+    public static final int NOT_ALL_CORRECT_OR_WRONG_STORYTELLER_SCORE = 3;
 
-    private long    matchId;
+    private long            id;
 
-    private long    storyTellerId;
-    private String  story;
+    private Match           match;
+    private long            matchId;
 
-    private Image[] images;
+    private long            storyTellerId;
+    private int             storyTellerPos;
+    private String          story;
 
-    private int[]   scores;
+    private Image[]         images;
 
-    private Status  status;
+    private int[]           scores;
 
-    private int[]   votes;
+    private Status          status;
+
+    private int[]           votes;
 
     public Round(Match match) {
         id = (long) (Math.random() * Long.MAX_VALUE);
 
+        this.match = match;
         this.matchId = match.getId();
         int numPlayers = match.getPlayerIds().length;
 
         images = new Image[numPlayers];
         scores = new int[numPlayers];
+        votes = new int[numPlayers];
+
+        for (int i = 0; i < votes.length; i++) {
+            votes[i] = -1;
+        }
 
         status = Status.WAITING;
     }
@@ -55,6 +69,7 @@ public class Round {
 
     public void setStoryTellerId(long storyTellerId) {
         this.storyTellerId = storyTellerId;
+        this.storyTellerPos = match.getPlayerPos(storyTellerId);
     }
 
     public String getStory() {
@@ -97,6 +112,15 @@ public class Round {
         this.votes = votes;
     }
 
+    public int getImagePos(long id) {
+        for (int i = 0; i < images.length; i++) {
+            if (images[i].getId() == id) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     public boolean submissionComplete() {
         for (Image image : images) {
             if (image == null) {
@@ -106,4 +130,58 @@ public class Round {
         return true;
     }
 
+    public boolean votesComplete() {
+        for (int i = 0; i < votes.length; i++) {
+            if (i != storyTellerPos && votes[i] < 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public boolean calculateScores() {
+        if (!(status == Status.SUBMIT_VOTES || status == Status.FINISHED)
+                || !votesComplete()) {
+            return false;
+        }
+
+        boolean allCorrect = true;
+        boolean allWrong = true;
+
+        int[] tempScores = new int[votes.length];
+
+        for (int i = 0; i < votes.length; i++) {
+            if (i == storyTellerPos)
+                continue;
+
+            if (votes[i] == storyTellerPos) {
+                allWrong = false;
+            } else {
+                allCorrect = false;
+                if (tempScores[votes[i]] < MAX_WRONG_VOTE_SCORE) {
+                    tempScores[votes[i]] += WRONG_VOTE_SCORE;
+                }
+            }
+        }
+
+        if (allCorrect || allWrong) {
+            for (int i = 0; i < votes.length; i++) {
+                if (i != storyTellerPos)
+                    tempScores[i] += ALL_CORRECT_OR_WRONG_SCORE;
+            }
+        } else {
+            for (int i = 0; i < votes.length; i++) {
+                if (i == storyTellerPos)
+                    tempScores[i] += NOT_ALL_CORRECT_OR_WRONG_STORYTELLER_SCORE;
+                else if (votes[i] == storyTellerPos)
+                    tempScores[i] += NOT_ALL_CORRECT_OR_WRONG_SCORE;
+            }
+        }
+
+        scores = tempScores;
+        status = Status.FINISHED;
+        match.update();
+
+        return true;
+    }
 }

@@ -113,4 +113,23 @@ public class Match {
     public int getPlayerPos(Player player) {
         return getPlayerPos(player.getId());
     }
+
+    public void update() {
+        int[] temp = new int[standings.length];
+        for (int i = 0; i < rounds.length; i++) {
+            Round round = rounds[i];
+            if (round.getStatus() == Status.FINISHED) {
+                for (int j = 0; j < temp.length; j++) {
+                    temp[j] += round.getScores()[j];
+                }
+            } else {
+                currentRound = i;
+                if (rounds[i].getStatus() == Status.WAITING) {
+                    rounds[i].setStatus(Status.SUBMIT_STORY);
+                }
+                break;
+            }
+        }
+        standings = temp;
+    }
 }
