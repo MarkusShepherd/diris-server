@@ -33,7 +33,7 @@ public class PlayerServiceClientApiTest {
 
     @Test
     public void test01players() throws Exception {
-        int c = 0;
+        /*int c = 0;
         for (Player player : players) {
             player.setId(c++);
             service.addPlayer(player);
@@ -78,7 +78,7 @@ public class PlayerServiceClientApiTest {
                         newMatch.getRounds()[r].getImages()[(i + 1)
                                 % players.length].getId());
             }
-        }
+        }*/
     }
 
 }
