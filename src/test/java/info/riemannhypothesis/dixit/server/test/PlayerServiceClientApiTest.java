@@ -8,17 +8,14 @@ import info.riemannhypothesis.dixit.server.objects.Round;
 
 import java.util.Collection;
 
-import org.junit.FixMethodOrder;
 import org.junit.Test;
-import org.junit.runners.MethodSorters;
 
 import retrofit.RestAdapter;
 import retrofit.RestAdapter.LogLevel;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class PlayerServiceClientApiTest {
 
-    private final String TEST_URL = "http://localhost:8080";
+    private final String TEST_URL = "http://localhost:8181";
 
     private ServiceApi   service  = new RestAdapter.Builder()
                                           .setEndpoint(TEST_URL)
@@ -33,7 +30,7 @@ public class PlayerServiceClientApiTest {
 
     @Test
     public void test01players() throws Exception {
-        /*int c = 0;
+        int c = 0;
         for (Player player : players) {
             player.setId(c++);
             service.addPlayer(player);
@@ -78,7 +75,7 @@ public class PlayerServiceClientApiTest {
                         newMatch.getRounds()[r].getImages()[(i + 1)
                                 % players.length].getId());
             }
-        }*/
+        }
     }
 
 }

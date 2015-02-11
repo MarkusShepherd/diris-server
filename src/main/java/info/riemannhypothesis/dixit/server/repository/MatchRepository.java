@@ -1,22 +1,36 @@
-/**
- * 
- */
 package info.riemannhypothesis.dixit.server.repository;
 
 import info.riemannhypothesis.dixit.server.objects.Match;
 
 import java.util.Collection;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.springframework.stereotype.Service;
 
 /**
  * @author Markus Schepke
  * @date 18 Jan 2015
  */
-public interface MatchRepository {
+@Service
+public class MatchRepository {
 
-    public boolean addMatch(Match match);
+    private final Map<Long, Match> matches;
 
-    public Collection<Match> getMatches();
+    public MatchRepository() {
+        matches = new ConcurrentHashMap<Long, Match>();
+    }
 
-    public Match getMatch(long id);
+    public boolean addMatch(Match match) {
+        return matches.put(match.getId(), match) == null;
+    }
+
+    public Collection<Match> getMatches() {
+        return matches.values();
+    }
+
+    public Match getMatch(long id) {
+        return matches.get(id);
+    }
 
 }

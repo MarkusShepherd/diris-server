@@ -1,35 +1,18 @@
 package info.riemannhypothesis.dixit.server;
 
-import info.riemannhypothesis.dixit.server.repository.MatchRepository;
-import info.riemannhypothesis.dixit.server.repository.MatchRepositoryImpl;
-import info.riemannhypothesis.dixit.server.repository.PlayerRepository;
-import info.riemannhypothesis.dixit.server.repository.PlayerRepositoryImpl;
-
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
 @Configuration
+@ComponentScan
 @EnableWebMvc
-@ComponentScan("info.riemannhypothesis.dixit.server.controller")
-@EnableAutoConfiguration
-public class Application {
+public class Application extends WebMvcConfigurerAdapter {
 
-    public static void main(String[] args) {
-        SpringApplication.run(Application.class, args);
-    }
-
-    @Bean
-    public PlayerRepository playerRepository() {
-        return new PlayerRepositoryImpl();
-    }
-
-    @Bean
-    public MatchRepository matchRepository() {
-        return new MatchRepositoryImpl();
-    }
+    // We do not have the typical main method because we need
+    // the Maven AppEngine plugin to launch / configure the
+    // development server. However, we are still using this
+    // class to define configuration information.
 
 }
