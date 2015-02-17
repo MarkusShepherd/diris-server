@@ -1,109 +1,119 @@
 package info.riemannhypothesis.dixit.server.objects;
 
-import info.riemannhypothesis.dixit.server.objects.Round.Status;
+import info.riemannhypothesis.dixit.server.util.Utils;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.jdo.annotations.IdGeneratorStrategy;
+import javax.jdo.annotations.PersistenceCapable;
+import javax.jdo.annotations.Persistent;
+import javax.jdo.annotations.PrimaryKey;
+
+import lombok.Getter;
+import lombok.Setter;
+
+import com.google.appengine.api.datastore.Key;
 
 /**
  * @author Markus Schepke
  * @date 18 Jan 2015
  */
+@PersistenceCapable
 public class Match {
 
-    public static final int STANDARD_TIMEOUT = 60 * 60 * 24; // 24h
-
-    private long            id;
-
-    private long[]          playerIds;
-    private Round[]         rounds;
-
-    private int             totalRounds;
-    private int             currentRound;
-
-    private int[]           standings;
-
-    private int             timeout;
-
-    public Match() {
-        id = 0;
+    public enum Status {
+        WAITING, IN_PROGRESS, FINISHED
     }
 
-    public Match(long[] players) {
-        this();
-        this.playerIds = players;
-        totalRounds = players.length;
-        currentRound = 0;
-        rounds = new Round[totalRounds];
-        standings = new int[players.length];
-        timeout = STANDARD_TIMEOUT;
+    public static final int   STANDARD_TIMEOUT = 60 * 60 * 24; // 24h
 
-        int numPlayers = players.length;
-        for (int i = 0; i < rounds.length; i++) {
-            int p = i % numPlayers;
-            Round round = new Round(this);
-            round.setStoryTellerId(playerIds[p]);
-            rounds[i] = round;
-        }
-        rounds[0].setStatus(Status.SUBMIT_STORY);
+    @Getter
+    @PrimaryKey
+    @Persistent(valueStrategy = IdGeneratorStrategy.IDENTITY)
+    private Key               key;
+
+    @Getter
+    @Persistent
+    private final List<Key>   playerKeys;
+
+    @Getter
+    @Persistent(mappedBy = "match")
+    private final List<Round> rounds;
+
+    @Getter
+    @Persistent
+    private final int         totalRounds;
+
+    @Getter
+    @Persistent
+    private int               currentRound;
+
+    @Getter
+    @Persistent
+    private Status            status;
+
+    @Getter
+    @Persistent
+    private Map<Key, Integer> standings;
+
+    @Setter
+    @Getter
+    @Persistent
+    private int               timeout;
+
+    public Match(Set<Key> playerKeySet) {
+        this(Utils.shuffledListFromSet(playerKeySet), playerKeySet.size(),
+                STANDARD_TIMEOUT);
     }
 
-    public long getId() {
-        return id;
+    public Match(Set<Key> playerKeySet, int totalRounds) {
+        this(Utils.shuffledListFromSet(playerKeySet), totalRounds,
+                STANDARD_TIMEOUT);
     }
 
-    public void setId(long id) {
-        this.id = id;
+    public Match(Set<Key> playerKeySet, int totalRounds, int timeOut) {
+        this(Utils.shuffledListFromSet(playerKeySet), totalRounds, timeOut);
     }
 
-    public long[] getPlayerIds() {
-        return playerIds;
+    public Match(List<Key> playerKeys) {
+        this(playerKeys, playerKeys.size(), STANDARD_TIMEOUT);
     }
 
-    public void setPlayerIds(long[] players) {
-        this.playerIds = players;
+    public Match(List<Key> playerKeys, int totalRounds) {
+        this(playerKeys, totalRounds, STANDARD_TIMEOUT);
     }
 
-    public Round[] getRounds() {
-        return rounds;
-    }
-
-    public void setRounds(Round[] rounds) {
-        this.rounds = rounds;
-    }
-
-    public int getTotalRounds() {
-        return totalRounds;
-    }
-
-    public void setTotalRounds(int totalRounds) {
+    public Match(List<Key> playerKeys, int totalRounds, int timeOut) {
+        this.playerKeys = playerKeys;
         this.totalRounds = totalRounds;
+        this.currentRound = 0;
+        this.standings = new HashMap<Key, Integer>();
+        this.timeout = timeOut;
+
+        this.rounds = new ArrayList<Round>(totalRounds);
+
+        int numPlayers = playerKeys.size();
+        for (int i = 0; i < totalRounds; i++) {
+            Round round = new Round(this);
+
+            int p = i % numPlayers;
+            round.setStoryTellerKey(playerKeys.get(p));
+
+            if (i == 0) {
+                round.setStatus(Round.Status.SUBMIT_STORY);
+            }
+
+            rounds.add(round);
+        }
     }
 
-    public int getCurrentRound() {
-        return currentRound;
-    }
-
-    public void setCurrentRound(int currentRound) {
-        this.currentRound = currentRound;
-    }
-
-    public int[] getStandings() {
-        return standings;
-    }
-
-    public void setStandings(int[] standings) {
-        this.standings = standings;
-    }
-
-    public int getTimeout() {
-        return timeout;
-    }
-
-    public void setTimeout(int timeout) {
-        this.timeout = timeout;
-    }
-
-    public int getPlayerPos(long id) {
-        for (int i = 0; i < playerIds.length; i++) {
-            if (playerIds[i] == id) {
+    public int getPlayerPos(Key pKey) {
+        for (int i = 0; i < playerKeys.size(); i++) {
+            if (playerKeys.get(i).equals(pKey)) {
                 return i;
             }
         }
@@ -111,25 +121,15 @@ public class Match {
     }
 
     public int getPlayerPos(Player player) {
-        return getPlayerPos(player.getId());
+        return getPlayerPos(player.getKey());
     }
 
-    public void update() {
-        int[] temp = new int[standings.length];
-        for (int i = 0; i < rounds.length; i++) {
-            Round round = rounds[i];
-            if (round.getStatus() == Status.FINISHED) {
-                for (int j = 0; j < temp.length; j++) {
-                    temp[j] += round.getScores()[j];
-                }
-            } else {
-                currentRound = i;
-                if (rounds[i].getStatus() == Status.WAITING) {
-                    rounds[i].setStatus(Status.SUBMIT_STORY);
-                }
-                break;
-            }
-        }
-        standings = temp;
-    }
+    /* public void update() { int[] temp = new int[standings.length]; for (int i
+     * = 0; i < roundKeys.length; i++) { Round round = roundKeys[i]; if
+     * (round.getStatus() == Status.FINISHED) { for (int j = 0; j < temp.length;
+     * j++) { temp[j] += round.getScores()[j]; } } else { currentRound = i; if
+     * (roundKeys[i].getStatus() == Status.WAITING) {
+     * roundKeys[i].setStatus(Status.SUBMIT_STORY); } break; } } standings =
+     * temp; } */
+
 }
