@@ -20,19 +20,22 @@ import com.google.appengine.api.datastore.Key;
 public class PlayerServiceClientApiTest {
 
     private final String     TEST_URL      = "http://localhost:8181";
+    private final String     LIVE_URL      = "http://dixit-app.appspot.com";
+
+    private final String     url           = TEST_URL;
 
     private PlayerServiceApi playerService = new RestAdapter.Builder()
-                                                   .setEndpoint(TEST_URL)
+                                                   .setEndpoint(url)
                                                    .setLogLevel(LogLevel.FULL)
                                                    .build()
                                                    .create(PlayerServiceApi.class);
     private MatchServiceApi  matchService  = new RestAdapter.Builder()
-                                                   .setEndpoint(TEST_URL)
+                                                   .setEndpoint(url)
                                                    .setLogLevel(LogLevel.FULL)
                                                    .build()
                                                    .create(MatchServiceApi.class);
     private ImageServiceApi  imageService  = new RestAdapter.Builder()
-                                                   .setEndpoint(TEST_URL)
+                                                   .setEndpoint(url)
                                                    .setLogLevel(LogLevel.FULL)
                                                    .build()
                                                    .create(ImageServiceApi.class);
