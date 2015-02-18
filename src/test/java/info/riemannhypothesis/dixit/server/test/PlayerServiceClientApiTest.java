@@ -7,6 +7,7 @@ import info.riemannhypothesis.dixit.server.objects.Match;
 import info.riemannhypothesis.dixit.server.objects.Player;
 import info.riemannhypothesis.dixit.server.objects.Round;
 
+import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -14,33 +15,37 @@ import org.junit.Test;
 
 import retrofit.RestAdapter;
 import retrofit.RestAdapter.LogLevel;
+import retrofit.mime.TypedFile;
 
 import com.google.appengine.api.datastore.Key;
 
 public class PlayerServiceClientApiTest {
 
-    private final String     TEST_URL      = "http://localhost:8181";
-    private final String     LIVE_URL      = "http://dixit-app.appspot.com";
+    public final static String  TEST_URL      = "http://localhost:8181";
+    public final static String  LIVE_URL      = "http://dixit-app.appspot.com";
 
-    private final String     url           = TEST_URL;
+    private final static String URL           = TEST_URL;
 
-    private PlayerServiceApi playerService = new RestAdapter.Builder()
-                                                   .setEndpoint(url)
-                                                   .setLogLevel(LogLevel.FULL)
-                                                   .build()
-                                                   .create(PlayerServiceApi.class);
-    private MatchServiceApi  matchService  = new RestAdapter.Builder()
-                                                   .setEndpoint(url)
-                                                   .setLogLevel(LogLevel.FULL)
-                                                   .build()
-                                                   .create(MatchServiceApi.class);
-    private ImageServiceApi  imageService  = new RestAdapter.Builder()
-                                                   .setEndpoint(url)
-                                                   .setLogLevel(LogLevel.FULL)
-                                                   .build()
-                                                   .create(ImageServiceApi.class);
+    private PlayerServiceApi    playerService = new RestAdapter.Builder()
+                                                      .setEndpoint(URL)
+                                                      .setLogLevel(
+                                                              LogLevel.FULL)
+                                                      .build()
+                                                      .create(PlayerServiceApi.class);
+    private MatchServiceApi     matchService  = new RestAdapter.Builder()
+                                                      .setEndpoint(URL)
+                                                      .setLogLevel(
+                                                              LogLevel.FULL)
+                                                      .build()
+                                                      .create(MatchServiceApi.class);
+    private ImageServiceApi     imageService  = new RestAdapter.Builder()
+                                                      .setEndpoint(URL)
+                                                      .setLogLevel(
+                                                              LogLevel.FULL)
+                                                      .build()
+                                                      .create(ImageServiceApi.class);
 
-    private Player[]         players       = new Player[] {
+    private Player[]            players       = new Player[] {
             new Player("mk.schepke@gmail.com", "Markus"),
             new Player("test1@test.com", "Test1"),
             new Player("test2@test.com", "Test2"),
@@ -62,16 +67,22 @@ public class PlayerServiceClientApiTest {
         for (int r = 0; r < match.getTotalRounds(); r++) {
             Round thisRound = match.getRounds().get(r);
             Key storyTellerId = thisRound.getStoryTellerKey();
-            Player storyTeller = playerService.getPlayer(storyTellerId.getId());
+            // Player storyTeller =
+            // playerService.getPlayer(storyTellerId.getId());
 
-            imageService.submitImage("file", storyTellerId.getId(), match
-                    .getKey().getId(), r, "story " + r);
+            // String fileName = "image" + storyTellerId.getId();
+            imageService.submitImage(new TypedFile("image/*", new File(
+                    "/Users/mschepke/Downloads/2014-02-13.jpg")), storyTellerId
+                    .getId(), match.getKey().getId(), r, "story " + r);
 
             for (Player player : players) {
                 /* if (player.equals(storyTeller)) { continue; } */
                 try {
-                    imageService.submitImage("file", player.getKey().getId(),
-                            match.getKey().getId(), r, null);
+                    // fileName = "image" + player.getKey().getId();
+                    imageService.submitImage(new TypedFile("image/*", new File(
+                            "/Users/mschepke/Downloads/2014-02-13.jpg")),
+                            player.getKey().getId(), match.getKey().getId(), r,
+                            null);
                 } catch (Exception e) {
                     e.printStackTrace(System.err);
                 }

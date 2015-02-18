@@ -1,11 +1,13 @@
 package info.riemannhypothesis.dixit.server.client;
 
 import info.riemannhypothesis.dixit.server.objects.Image;
-import retrofit.http.Body;
 import retrofit.http.GET;
+import retrofit.http.Multipart;
 import retrofit.http.POST;
+import retrofit.http.Part;
 import retrofit.http.Path;
 import retrofit.http.Query;
+import retrofit.mime.TypedFile;
 
 /**
  * @author Markus Schepke
@@ -16,6 +18,7 @@ public interface ImageServiceApi {
     public static final String IMAGE_SVC_PATH   = "/image";
     public static final String VOTE_SVC_PATH    = "/vote";
 
+    public static final String FILE_PARAMETER   = "file";
     public static final String MATCH_PARAMETER  = "match";
     public static final String ROUND_PARAMETER  = "round";
     public static final String STORY_PARAMETER  = "story";
@@ -28,12 +31,13 @@ public interface ImageServiceApi {
     @GET(IMAGE_SVC_PATH + "/{id}")
     public Image getImage(@Path("id") long id);
 
+    @Multipart
     @POST(IMAGE_SVC_PATH)
-    public boolean submitImage(@Body String file,
-            @Query(PLAYER_PARAMETER) long playerId,
-            @Query(MATCH_PARAMETER) long matchId,
-            @Query(ROUND_PARAMETER) int roundNum,
-            @Query(STORY_PARAMETER) String story);
+    public boolean submitImage(@Part(IMAGE_PARAMETER) TypedFile file,
+            @Part(PLAYER_PARAMETER) long playerId,
+            @Part(MATCH_PARAMETER) long matchId,
+            @Part(ROUND_PARAMETER) int roundNum,
+            @Part(STORY_PARAMETER) String story);
 
     @GET(VOTE_SVC_PATH)
     public boolean submitVote(@Query(PLAYER_PARAMETER) long playerId,

@@ -9,16 +9,27 @@ import info.riemannhypothesis.dixit.server.repository.ImageRepository;
 import info.riemannhypothesis.dixit.server.repository.JDOCrudRepository.Callback;
 import info.riemannhypothesis.dixit.server.repository.MatchRepository;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+
+import retrofit.mime.TypedFile;
 
 import com.google.appengine.api.datastore.KeyFactory;
+import com.google.appengine.tools.cloudstorage.GcsFileOptions;
+import com.google.appengine.tools.cloudstorage.GcsFilename;
+import com.google.appengine.tools.cloudstorage.GcsOutputChannel;
+import com.google.appengine.tools.cloudstorage.GcsService;
+import com.google.appengine.tools.cloudstorage.GcsServiceFactory;
+import com.google.appengine.tools.cloudstorage.RetryParams;
 
 /**
  * @author Markus Schepke
@@ -28,9 +39,13 @@ import com.google.appengine.api.datastore.KeyFactory;
 public class ImageService implements ImageServiceApi {
 
     @Autowired
-    private MatchRepository matches;
+    private MatchRepository  matches;
     @Autowired
-    private ImageRepository images;
+    private ImageRepository  images;
+
+    private final GcsService gcsService = GcsServiceFactory
+                                                .createGcsService(RetryParams
+                                                        .getDefaultInstance());
 
     @Override
     @RequestMapping(value = IMAGE_SVC_PATH, method = RequestMethod.GET, produces = "application/json")
@@ -45,9 +60,14 @@ public class ImageService implements ImageServiceApi {
     }
 
     @Override
+    public boolean submitImage(TypedFile file, long playerId, long matchId,
+            int roundNum, String story) {
+        throw new UnsupportedOperationException();
+    }
+
     @RequestMapping(value = IMAGE_SVC_PATH, method = RequestMethod.POST, produces = "application/json")
     public @ResponseBody boolean submitImage(
-            @RequestBody String file,
+            @RequestParam(value = IMAGE_PARAMETER, required = true) final MultipartFile file,
             @RequestParam(value = PLAYER_PARAMETER, required = true) final long playerId,
             @RequestParam(value = MATCH_PARAMETER, required = true) final long matchId,
             @RequestParam(value = ROUND_PARAMETER, required = true) final int roundNum,
@@ -84,29 +104,25 @@ public class ImageService implements ImageServiceApi {
                     }
                 }
 
-                Image image = new Image();
-                final String path = /* file.getOriginalFilename() */"path";
+                if (file.isEmpty()) {
+                    throw new IllegalArgumentException("The file "
+                            + file.getOriginalFilename() + " is empty.");
+                }
 
-                /* try { MultipartFile file = uploadItem; String fileName =
-                 * null; InputStream inputStream = null; OutputStream
-                 * outputStream = null; if (file.getSize() > 0) { inputStream =
-                 * file.getInputStream(); if (file.getSize() > 10000) {
-                 * System.out.println("File Size:::" + file.getSize()); return
-                 * "/uploadfile"; } System.out.println("size::" +
-                 * file.getSize()); fileName = request.getRealPath("") +
-                 * "/images/" + file.getOriginalFilename(); outputStream = new
-                 * FileOutputStream(fileName); System.out.println("fileName:" +
-                 * file.getOriginalFilename());
-                 * 
-                 * int readBytes = 0; byte[] buffer = new byte[10000]; while
-                 * ((readBytes = inputStream.read(buffer, 0, 10000)) != -1) {
-                 * outputStream.write(buffer, 0, readBytes); }
-                 * outputStream.close(); inputStream.close(); }
-                 * 
-                 * // ..........................................
-                 * session.setAttribute("uploadFile",
-                 * file.getOriginalFilename()); } catch (Exception e) {
-                 * e.printStackTrace(); } */
+                Image image = new Image();
+                final String path = file.getOriginalFilename();
+
+                try {
+                    byte[] bytes = file.getBytes();
+                    GcsOutputChannel outputChannel = gcsService
+                            .createOrReplace(
+                                    new GcsFilename("dixit-app", path),
+                                    GcsFileOptions.getDefaultInstance());
+                    outputChannel.write(ByteBuffer.wrap(bytes));
+                    outputChannel.close();
+                } catch (IOException e) {
+                    throw new IllegalArgumentException(e);
+                }
 
                 image.setPath(path);
 
