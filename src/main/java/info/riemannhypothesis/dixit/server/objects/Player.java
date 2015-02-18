@@ -18,28 +18,24 @@ import com.google.appengine.api.datastore.Key;
  * @author Markus Schepke
  * @date 18 Jan 2015
  */
+@Getter
+@Setter
 @EqualsAndHashCode(of = { "key" })
 @PersistenceCapable
 public class Player {
 
-    @Getter
     @PrimaryKey
     @Persistent(valueStrategy = IdGeneratorStrategy.IDENTITY)
-    private Key             key;
+    private Key       key;
 
-    @Setter
-    @Getter
     @Persistent
-    private String          name;
+    private String    name;
 
-    @Setter
-    @Getter
     @Persistent
-    private String          email;
+    private String    email;
 
-    @Getter
     @Persistent
-    private final List<Key> matchKeys;
+    private List<Key> matchKeys;
 
     public Player() {
         this.matchKeys = new ArrayList<Key>();

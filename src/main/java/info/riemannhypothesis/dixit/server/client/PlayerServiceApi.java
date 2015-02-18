@@ -6,8 +6,6 @@ import retrofit.http.GET;
 import retrofit.http.POST;
 import retrofit.http.Path;
 
-import com.google.appengine.api.datastore.Key;
-
 /**
  * @author Markus Schepke
  * @date 18 Jan 2015
@@ -22,7 +20,7 @@ public interface PlayerServiceApi {
     @GET(PATH)
     public Iterable<Player> getPlayerList();
 
-    @GET(PATH + "/{key}")
-    public Player getPlayer(@Path("key") Key key);
+    @GET(PATH + "/{id}")
+    public Player getPlayer(@Path("id") long id);
 
 }

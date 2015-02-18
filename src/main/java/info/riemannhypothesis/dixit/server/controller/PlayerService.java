@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.google.appengine.api.datastore.Key;
+import com.google.appengine.api.datastore.KeyFactory;
 
 /**
  * @author Markus Schepke
@@ -25,21 +25,21 @@ public class PlayerService implements PlayerServiceApi {
     private PlayerRepository players;
 
     @Override
-    @RequestMapping(value = PATH, method = RequestMethod.POST)
+    @RequestMapping(value = PATH, method = RequestMethod.POST, produces = "application/json")
     public @ResponseBody Player addPlayer(@RequestBody Player player) {
         return players.save(player);
     }
 
     @Override
-    @RequestMapping(value = PATH, method = RequestMethod.GET)
+    @RequestMapping(value = PATH, method = RequestMethod.GET, produces = "application/json")
     public @ResponseBody Iterable<Player> getPlayerList() {
         return players.findAll();
     }
 
     @Override
-    @RequestMapping(value = PATH + "/{key}", method = RequestMethod.GET)
-    public @ResponseBody Player getPlayer(@PathVariable("key") Key key) {
-        return players.findOne(key);
+    @RequestMapping(value = PATH + "/{id}", method = RequestMethod.GET, produces = "application/json")
+    public @ResponseBody Player getPlayer(@PathVariable("id") long id) {
+        return players.findOne(KeyFactory.createKey("Player", id));
     }
 
 }

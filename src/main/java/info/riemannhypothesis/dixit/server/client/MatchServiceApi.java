@@ -9,8 +9,6 @@ import retrofit.http.GET;
 import retrofit.http.POST;
 import retrofit.http.Path;
 
-import com.google.appengine.api.datastore.Key;
-
 public interface MatchServiceApi {
 
     public static final String PATH = "/match";
@@ -21,7 +19,7 @@ public interface MatchServiceApi {
     @GET(PATH)
     public Iterable<Match> getMatchList();
 
-    @GET(PATH + "/{key}")
-    public Match getMatch(@Path("key") Key key);
+    @GET(PATH + "/{id}")
+    public Match getMatch(@Path("id") long id);
 
 }

@@ -14,16 +14,15 @@ import com.google.appengine.api.datastore.Key;
  * @author Markus Schepke
  * @date 18 Jan 2015
  */
+@Getter
+@Setter
 @PersistenceCapable
 public class Image {
 
-    @Getter
     @PrimaryKey
     @Persistent(valueStrategy = IdGeneratorStrategy.IDENTITY)
     private Key    key;
 
-    @Getter
-    @Setter
     @Persistent
     private String path;
 

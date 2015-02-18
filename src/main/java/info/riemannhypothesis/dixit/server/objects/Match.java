@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.jdo.annotations.IdGeneratorStrategy;
@@ -13,6 +14,7 @@ import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -22,6 +24,9 @@ import com.google.appengine.api.datastore.Key;
  * @author Markus Schepke
  * @date 18 Jan 2015
  */
+@Getter
+@Setter
+@EqualsAndHashCode(of = "key")
 @PersistenceCapable
 public class Match {
 
@@ -29,41 +34,32 @@ public class Match {
         WAITING, IN_PROGRESS, FINISHED
     }
 
-    public static final int   STANDARD_TIMEOUT = 60 * 60 * 24; // 24h
+    public static final int    STANDARD_TIMEOUT = 60 * 60 * 24; // 24h
 
-    @Getter
     @PrimaryKey
     @Persistent(valueStrategy = IdGeneratorStrategy.IDENTITY)
-    private Key               key;
+    private Key                key;
 
-    @Getter
     @Persistent
-    private final List<Key>   playerKeys;
+    private List<Key>          playerKeys;
 
-    @Getter
     @Persistent(mappedBy = "match")
-    private final List<Round> rounds;
+    private List<Round>        rounds;
 
-    @Getter
     @Persistent
-    private final int         totalRounds;
+    private int                totalRounds;
 
-    @Getter
     @Persistent
-    private int               currentRound;
+    private int                currentRound;
 
-    @Getter
     @Persistent
-    private Status            status;
+    private Status             status;
 
-    @Getter
-    @Persistent
-    private Map<Key, Integer> standings;
+    @Persistent(serialized = "true", defaultFetchGroup = "true")
+    private Map<Long, Integer> standings;
 
-    @Setter
-    @Getter
     @Persistent
-    private int               timeout;
+    private int                timeout;
 
     public Match(Set<Key> playerKeySet) {
         this(Utils.shuffledListFromSet(playerKeySet), playerKeySet.size(),
@@ -91,8 +87,9 @@ public class Match {
         this.playerKeys = playerKeys;
         this.totalRounds = totalRounds;
         this.currentRound = 0;
-        this.standings = new HashMap<Key, Integer>();
+        this.standings = new HashMap<Long, Integer>();
         this.timeout = timeOut;
+        this.status = Status.IN_PROGRESS;
 
         this.rounds = new ArrayList<Round>(totalRounds);
 
@@ -124,12 +121,35 @@ public class Match {
         return getPlayerPos(player.getKey());
     }
 
-    /* public void update() { int[] temp = new int[standings.length]; for (int i
-     * = 0; i < roundKeys.length; i++) { Round round = roundKeys[i]; if
-     * (round.getStatus() == Status.FINISHED) { for (int j = 0; j < temp.length;
-     * j++) { temp[j] += round.getScores()[j]; } } else { currentRound = i; if
-     * (roundKeys[i].getStatus() == Status.WAITING) {
-     * roundKeys[i].setStatus(Status.SUBMIT_STORY); } break; } } standings =
-     * temp; } */
+    public void update() {
+        Map<Long, Integer> temp = new HashMap<Long, Integer>();
+
+        for (Key pKey : playerKeys)
+            temp.put(pKey.getId(), 0);
+
+        boolean finished = true;
+
+        for (int i = 0; i < rounds.size(); i++) {
+            Round round = rounds.get(i);
+            if (round.getStatus() == Round.Status.FINISHED) {
+                for (Entry<Long, Integer> e : round.getScores().entrySet()) {
+                    Long pId = e.getKey();
+                    Integer score = temp.get(pId) + e.getValue();
+                    temp.put(pId, score);
+                }
+            } else {
+                currentRound = i;
+                if (round.getStatus() == Round.Status.WAITING)
+                    round.setStatus(Round.Status.SUBMIT_STORY);
+                finished = false;
+                break;
+            }
+        }
+
+        if (finished)
+            status = Status.FINISHED;
+
+        standings = temp;
+    }
 
 }

@@ -59,36 +59,38 @@ public class PlayerServiceClientApiTest {
         for (int r = 0; r < match.getTotalRounds(); r++) {
             Round thisRound = match.getRounds().get(r);
             Key storyTellerId = thisRound.getStoryTellerKey();
-            Player storyTeller = playerService.getPlayer(storyTellerId);
+            Player storyTeller = playerService.getPlayer(storyTellerId.getId());
 
-            imageService.submitImage(storyTellerId, match.getKey(), r, "story "
-                    + r);
+            imageService.submitImage("file", storyTellerId.getId(), match
+                    .getKey().getId(), r, "story " + r);
 
             for (Player player : players) {
-                if (player.equals(storyTeller)) {
-                    continue;
+                /* if (player.equals(storyTeller)) { continue; } */
+                try {
+                    imageService.submitImage("file", player.getKey().getId(),
+                            match.getKey().getId(), r, null);
+                } catch (Exception e) {
+                    e.printStackTrace(System.err);
                 }
-                imageService.submitImage(player.getKey(), match.getKey(), r,
-                        null);
             }
 
-            Match newMatch = matchService.getMatch(match.getKey());
+            match = matchService.getMatch(match.getKey().getId());
+            thisRound = match.getRounds().get(r);
 
             for (int i = 0; i < players.length; i++) {
                 Player player = players[i];
-                if (player.equals(storyTeller)) {
-                    continue;
+                /* if (player.equals(storyTeller)) { continue; } */
+                try {
+                    imageService.submitVote(
+                            player.getKey().getId(),
+                            match.getKey().getId(),
+                            r,
+                            thisRound.getImages().get(
+                                    players[(i + 1) % players.length].getKey()
+                                            .getId()));
+                } catch (Exception e) {
+                    e.printStackTrace(System.err);
                 }
-                imageService
-                        .submitVote(
-                                player.getKey(),
-                                newMatch.getKey(),
-                                r,
-                                newMatch.getRounds()
-                                        .get(r)
-                                        .getImages()
-                                        .get(players[(i + 1) % players.length]
-                                                .getKey()));
             }
         }
     }

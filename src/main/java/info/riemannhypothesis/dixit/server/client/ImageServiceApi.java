@@ -1,9 +1,11 @@
 package info.riemannhypothesis.dixit.server.client;
 
+import info.riemannhypothesis.dixit.server.objects.Image;
+import retrofit.http.Body;
+import retrofit.http.GET;
 import retrofit.http.POST;
+import retrofit.http.Path;
 import retrofit.http.Query;
-
-import com.google.appengine.api.datastore.Key;
 
 /**
  * @author Markus Schepke
@@ -20,17 +22,23 @@ public interface ImageServiceApi {
     public static final String IMAGE_PARAMETER  = "image";
     public static final String PLAYER_PARAMETER = "player";
 
+    @GET(IMAGE_SVC_PATH)
+    public Iterable<Image> getImageList();
+
+    @GET(IMAGE_SVC_PATH + "/{id}")
+    public Image getImage(@Path("id") long id);
+
     @POST(IMAGE_SVC_PATH)
-    public boolean submitImage(/* @Body MultipartFile file, */
-    @Query(PLAYER_PARAMETER) Key playerKey,
-            @Query(MATCH_PARAMETER) Key matchKey,
+    public boolean submitImage(@Body String file,
+            @Query(PLAYER_PARAMETER) long playerId,
+            @Query(MATCH_PARAMETER) long matchId,
             @Query(ROUND_PARAMETER) int roundNum,
             @Query(STORY_PARAMETER) String story);
 
-    @POST(VOTE_SVC_PATH)
-    public boolean submitVote(@Query(PLAYER_PARAMETER) Key playerKey,
-            @Query(MATCH_PARAMETER) Key matchKey,
+    @GET(VOTE_SVC_PATH)
+    public boolean submitVote(@Query(PLAYER_PARAMETER) long playerId,
+            @Query(MATCH_PARAMETER) long matchId,
             @Query(ROUND_PARAMETER) int roundNum,
-            @Query(IMAGE_PARAMETER) Key imageKey);
+            @Query(IMAGE_PARAMETER) long imageId);
 
 }

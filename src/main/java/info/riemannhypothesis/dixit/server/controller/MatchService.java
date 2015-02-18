@@ -34,15 +34,13 @@ public class MatchService implements MatchServiceApi {
     private PlayerRepository players;
 
     @Override
-    @RequestMapping(value = PATH, method = RequestMethod.POST)
+    @RequestMapping(value = PATH, method = RequestMethod.POST, produces = "application/json")
     public @ResponseBody Match addMatch(@RequestBody Set<Long> pIds) {
         Set<Key> pKeys = new HashSet<Key>();
 
         for (long pId : pIds) {
             pKeys.add(KeyFactory.createKey("Player", pId));
         }
-
-        System.out.println(pKeys);
 
         Match match = new Match(pKeys);
         match = matches.save(match);
@@ -63,15 +61,15 @@ public class MatchService implements MatchServiceApi {
     }
 
     @Override
-    @RequestMapping(value = PATH, method = RequestMethod.GET)
+    @RequestMapping(value = PATH, method = RequestMethod.GET, produces = "application/json")
     public @ResponseBody Iterable<Match> getMatchList() {
         return matches.findAll();
     }
 
     @Override
-    @RequestMapping(value = PATH + "/{key}", method = RequestMethod.GET)
-    public @ResponseBody Match getMatch(@PathVariable("key") Key key) {
-        return matches.findOne(key);
+    @RequestMapping(value = PATH + "/{id}", method = RequestMethod.GET, produces = "application/json")
+    public @ResponseBody Match getMatch(@PathVariable("id") long id) {
+        return matches.findOne(KeyFactory.createKey("Match", id));
     }
 
 }
