@@ -1,6 +1,6 @@
 package info.riemannhypothesis.dixit.server.objects;
 
-import info.riemannhypothesis.dixit.server.util.Utils;
+import info.riemannhypothesis.dixit.server.util.ListUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -62,17 +62,17 @@ public class Match {
     private int                timeout;
 
     public Match(Set<Key> playerKeySet) {
-        this(Utils.shuffledListFromSet(playerKeySet), playerKeySet.size(),
+        this(ListUtils.shuffledListFromSet(playerKeySet), playerKeySet.size(),
                 STANDARD_TIMEOUT);
     }
 
     public Match(Set<Key> playerKeySet, int totalRounds) {
-        this(Utils.shuffledListFromSet(playerKeySet), totalRounds,
+        this(ListUtils.shuffledListFromSet(playerKeySet), totalRounds,
                 STANDARD_TIMEOUT);
     }
 
     public Match(Set<Key> playerKeySet, int totalRounds, int timeOut) {
-        this(Utils.shuffledListFromSet(playerKeySet), totalRounds, timeOut);
+        this(ListUtils.shuffledListFromSet(playerKeySet), totalRounds, timeOut);
     }
 
     public Match(List<Key> playerKeys) {

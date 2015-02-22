@@ -161,8 +161,12 @@
 			<artifactId>datanucleus-appengine</artifactId>
 			<version>2.1.2</version>
 
-			<!-- <exclusions> <exclusion> <groupId>org.datanucleus</groupId> <artifactId>datanucleus-enhancer</artifactId> 
-				</exclusion> </exclusions> -->
+			<exclusions>
+				<exclusion>
+					<groupId>org.datanucleus</groupId>
+					<artifactId>datanucleus-enhancer</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.datanucleus</groupId>
@@ -174,7 +178,7 @@
 		<dependency>
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
-			<version>2.4</version>
+			<version>2.2</version>
 		</dependency>
 
 		<dependency>
@@ -227,17 +231,17 @@
 			<version>${spring.version}</version>
 		</dependency>
 
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-webmvc</artifactId>
-            <version>${spring.version}</version>
-        </dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-webmvc</artifactId>
+			<version>${spring.version}</version>
+		</dependency>
 
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-test</artifactId>
-            <version>${spring.version}</version>
-        </dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-test</artifactId>
+			<version>${spring.version}</version>
+		</dependency>
 
 		<dependency>
 			<groupId>com.google.guava</groupId>
@@ -263,9 +267,16 @@
 		</dependency>
 
 		<!-- The following two libraries should have been included in the guava -->
-		<!-- <dependency> <groupId>com.google.guava</groupId> <artifactId>guava-collections</artifactId> 
-			<version>r03</version> </dependency> <dependency> <groupId>com.google.guava</groupId> 
-			<artifactId>guava-base</artifactId> <version>r03</version> </dependency> -->
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava-collections</artifactId>
+			<version>r03</version>
+		</dependency>
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava-base</artifactId>
+			<version>r03</version>
+		</dependency>
 
 		<dependency>
 			<groupId>joda-time</groupId>
@@ -286,6 +297,16 @@
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 			<version>1.16.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-pool2</artifactId>
+			<version>2.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-dbcp2</artifactId>
+			<version>2.0.1</version>
 		</dependency>
 	</dependencies>
 

@@ -72,7 +72,7 @@ public class PlayerServiceClientApiTest {
 
             // String fileName = "image" + storyTellerId.getId();
             imageService.submitImage(new TypedFile("image/*", new File(
-                    "/Users/mschepke/Downloads/2014-02-13.jpg")), storyTellerId
+                    getClass().getResource("/pic.jpg").toURI())), storyTellerId
                     .getId(), match.getKey().getId(), r, "story " + r);
 
             for (Player player : players) {
@@ -80,7 +80,7 @@ public class PlayerServiceClientApiTest {
                 try {
                     // fileName = "image" + player.getKey().getId();
                     imageService.submitImage(new TypedFile("image/*", new File(
-                            "/Users/mschepke/Downloads/2014-02-13.jpg")),
+                            getClass().getResource("/pic.jpg").toURI())),
                             player.getKey().getId(), match.getKey().getId(), r,
                             null);
                 } catch (Exception e) {

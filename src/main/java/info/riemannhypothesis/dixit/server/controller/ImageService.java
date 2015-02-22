@@ -8,10 +8,17 @@ import info.riemannhypothesis.dixit.server.objects.Round.Status;
 import info.riemannhypothesis.dixit.server.repository.ImageRepository;
 import info.riemannhypothesis.dixit.server.repository.JDOCrudRepository.Callback;
 import info.riemannhypothesis.dixit.server.repository.MatchRepository;
+import info.riemannhypothesis.dixit.server.util.RequestUtils;
+import info.riemannhypothesis.dixit.server.util.RequestUtils.RequestFields;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.channels.Channels;
 
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.commons.fileupload.FileUploadException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,7 +26,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.multipart.MultipartFile;
 
 import retrofit.mime.TypedFile;
 
@@ -43,9 +49,16 @@ public class ImageService implements ImageServiceApi {
     @Autowired
     private ImageRepository  images;
 
+    // private final GcsService gcsService = GcsServiceFactory
+    // .createGcsService(RetryParams
+    // .getDefaultInstance());
     private final GcsService gcsService = GcsServiceFactory
-                                                .createGcsService(RetryParams
-                                                        .getDefaultInstance());
+                                                .createGcsService(new RetryParams.Builder()
+                                                        .initialRetryDelayMillis(
+                                                                10)
+                                                        .retryMaxAttempts(10)
+                                                        .totalRetryPeriodMillis(
+                                                                15000).build());
 
     @Override
     @RequestMapping(value = IMAGE_SVC_PATH, method = RequestMethod.GET, produces = "application/json")
@@ -62,16 +75,29 @@ public class ImageService implements ImageServiceApi {
     @Override
     public boolean submitImage(TypedFile file, long playerId, long matchId,
             int roundNum, String story) {
-        throw new UnsupportedOperationException();
+        try {
+            return submitImage(file.in(), playerId, matchId, roundNum, story);
+        } catch (IOException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 
     @RequestMapping(value = IMAGE_SVC_PATH, method = RequestMethod.POST, produces = "application/json")
-    public @ResponseBody boolean submitImage(
-            @RequestParam(value = IMAGE_PARAMETER, required = true) final MultipartFile file,
-            @RequestParam(value = PLAYER_PARAMETER, required = true) final long playerId,
-            @RequestParam(value = MATCH_PARAMETER, required = true) final long matchId,
-            @RequestParam(value = ROUND_PARAMETER, required = true) final int roundNum,
-            @RequestParam(value = STORY_PARAMETER, defaultValue = "") final String story) {
+    public @ResponseBody boolean submitImage(HttpServletRequest req)
+            throws FileUploadException, IOException {
+        RequestFields rf = RequestUtils.getRequestFields(req);
+        System.err.println(rf.fileFields);
+        System.err.println(rf.formFields);
+        InputStream imageIS = rf.fileFields.get(IMAGE_PARAMETER);
+        long playerId = Long.parseLong(rf.formFields.get(PLAYER_PARAMETER), 10);
+        long matchId = Long.parseLong(rf.formFields.get(MATCH_PARAMETER), 10);
+        int roundNum = Integer.parseInt(rf.formFields.get(ROUND_PARAMETER), 10);
+        String story = rf.formFields.get(STORY_PARAMETER);
+        return submitImage(imageIS, playerId, matchId, roundNum, story);
+    }
+
+    public boolean submitImage(final InputStream imageIS, final long playerId,
+            final long matchId, final int roundNum, final String story) {
         Callback<Match> callback = new Callback<Match>() {
             @Override
             public void apply(Match match) {
@@ -104,22 +130,29 @@ public class ImageService implements ImageServiceApi {
                     }
                 }
 
-                if (file.isEmpty()) {
-                    throw new IllegalArgumentException("The file "
-                            + file.getOriginalFilename() + " is empty.");
-                }
-
                 Image image = new Image();
-                final String path = file.getOriginalFilename();
+                final String path = "image/" + playerId + "/"
+                        + (int) (Math.random() * 10e10);
+
+                System.err.println(path);
 
                 try {
-                    byte[] bytes = file.getBytes();
+                    GcsFilename filename = new GcsFilename("dixit", path);
+
+                    System.err.println(filename);
+
+                    GcsFileOptions.Builder fileOptionsBuilder = new GcsFileOptions.Builder();
+                    fileOptionsBuilder.mimeType("image/jpeg");
+                    GcsFileOptions fileOptions = fileOptionsBuilder.build();
+                    fileOptions = GcsFileOptions.getDefaultInstance();
+
+                    System.err.println(fileOptions);
+
                     GcsOutputChannel outputChannel = gcsService
-                            .createOrReplace(
-                                    new GcsFilename("dixit-app", path),
-                                    GcsFileOptions.getDefaultInstance());
-                    outputChannel.write(ByteBuffer.wrap(bytes));
-                    outputChannel.close();
+                            .createOrReplace(filename, fileOptions);
+                    OutputStream os = Channels.newOutputStream(outputChannel);
+
+                    RequestUtils.copy(imageIS, os);
                 } catch (IOException e) {
                     throw new IllegalArgumentException(e);
                 }
@@ -128,8 +161,8 @@ public class ImageService implements ImageServiceApi {
 
                 image = images.save(image);
 
-                System.out.println(getClass() + "; " + image.getKey());
-                System.out.println(getClass() + "; " + round.getImages());
+                System.err.println(getClass() + "; " + image.getKey());
+                System.err.println(getClass() + "; " + round.getImages());
 
                 round.getImages().put(playerId, image.getKey().getId());
                 round.getImageToPlayer().put(image.getKey().getId(), playerId);
@@ -146,6 +179,26 @@ public class ImageService implements ImageServiceApi {
 
         return true;
     }
+
+    // @RequestMapping(value = IMAGE_SVC_PATH, method = RequestMethod.POST,
+    // produces = "application/json")
+    /* public @ResponseBody boolean submitImage(
+     * 
+     * @RequestParam(value = IMAGE_PARAMETER, required = true) final
+     * MultipartFile file,
+     * 
+     * @RequestParam(value = PLAYER_PARAMETER, required = true) final long
+     * playerId,
+     * 
+     * @RequestParam(value = MATCH_PARAMETER, required = true) final long
+     * matchId,
+     * 
+     * @RequestParam(value = ROUND_PARAMETER, required = true) final int
+     * roundNum,
+     * 
+     * @RequestParam(value = STORY_PARAMETER, defaultValue = "") final String
+     * story) throws IOException { return submitImage(file.getInputStream(),
+     * playerId, matchId, roundNum, story); } */
 
     @Override
     @RequestMapping(value = VOTE_SVC_PATH, method = RequestMethod.GET, produces = "application/json")
