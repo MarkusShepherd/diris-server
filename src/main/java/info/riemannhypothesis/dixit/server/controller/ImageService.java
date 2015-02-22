@@ -12,13 +12,13 @@ import info.riemannhypothesis.dixit.server.util.RequestUtils;
 import info.riemannhypothesis.dixit.server.util.RequestUtils.RequestFields;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.channels.Channels;
 
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.fileupload.FileUploadException;
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -76,7 +76,8 @@ public class ImageService implements ImageServiceApi {
     public boolean submitImage(TypedFile file, long playerId, long matchId,
             int roundNum, String story) {
         try {
-            return submitImage(file.in(), playerId, matchId, roundNum, story);
+            return submitImage(IOUtils.toByteArray(file.in()), playerId,
+                    matchId, roundNum, story);
         } catch (IOException e) {
             throw new IllegalArgumentException(e);
         }
@@ -88,15 +89,15 @@ public class ImageService implements ImageServiceApi {
         RequestFields rf = RequestUtils.getRequestFields(req);
         System.err.println(rf.fileFields);
         System.err.println(rf.formFields);
-        InputStream imageIS = rf.fileFields.get(IMAGE_PARAMETER);
+        byte[] imageBytes = rf.fileFields.get(IMAGE_PARAMETER);
         long playerId = Long.parseLong(rf.formFields.get(PLAYER_PARAMETER), 10);
         long matchId = Long.parseLong(rf.formFields.get(MATCH_PARAMETER), 10);
         int roundNum = Integer.parseInt(rf.formFields.get(ROUND_PARAMETER), 10);
         String story = rf.formFields.get(STORY_PARAMETER);
-        return submitImage(imageIS, playerId, matchId, roundNum, story);
+        return submitImage(imageBytes, playerId, matchId, roundNum, story);
     }
 
-    public boolean submitImage(final InputStream imageIS, final long playerId,
+    public boolean submitImage(final byte[] imageBytes, final long playerId,
             final long matchId, final int roundNum, final String story) {
         Callback<Match> callback = new Callback<Match>() {
             @Override
@@ -151,8 +152,8 @@ public class ImageService implements ImageServiceApi {
                     GcsOutputChannel outputChannel = gcsService
                             .createOrReplace(filename, fileOptions);
                     OutputStream os = Channels.newOutputStream(outputChannel);
-
-                    RequestUtils.copy(imageIS, os);
+                    os.write(imageBytes);
+                    os.close();
                 } catch (IOException e) {
                     throw new IllegalArgumentException(e);
                 }

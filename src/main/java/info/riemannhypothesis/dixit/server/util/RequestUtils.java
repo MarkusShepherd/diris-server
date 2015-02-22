@@ -65,7 +65,7 @@ public class RequestUtils {
                 String content = IOUtils.toString(stream, "UTF-8");
                 rf.formFields.put(name, content);
             } else {
-                rf.fileFields.put(name, stream);
+                rf.fileFields.put(name, IOUtils.toByteArray(stream));
             }
         }
 
@@ -73,7 +73,7 @@ public class RequestUtils {
     }
 
     public static class RequestFields {
-        public final Map<String, String>      formFields = new HashMap<String, String>();
-        public final Map<String, InputStream> fileFields = new HashMap<String, InputStream>();
+        public final Map<String, String> formFields = new HashMap<String, String>();
+        public final Map<String, byte[]> fileFields = new HashMap<String, byte[]>();
     }
 }
