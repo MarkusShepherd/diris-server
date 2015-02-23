@@ -14,6 +14,7 @@ import info.riemannhypothesis.dixit.server.util.RequestUtils.RequestFields;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.channels.Channels;
+import java.util.Random;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -45,20 +46,21 @@ import com.google.appengine.tools.cloudstorage.RetryParams;
 public class ImageService implements ImageServiceApi {
 
     @Autowired
-    private MatchRepository  matches;
+    private MatchRepository     matches;
     @Autowired
-    private ImageRepository  images;
+    private ImageRepository     images;
 
-    // private final GcsService gcsService = GcsServiceFactory
-    // .createGcsService(RetryParams
-    // .getDefaultInstance());
-    private final GcsService gcsService = GcsServiceFactory
-                                                .createGcsService(new RetryParams.Builder()
-                                                        .initialRetryDelayMillis(
-                                                                10)
-                                                        .retryMaxAttempts(10)
-                                                        .totalRetryPeriodMillis(
-                                                                15000).build());
+    public static final String  GCS_BUCKET = "dixit";
+    private final static Random RANDOM     = new Random();
+
+    private final GcsService    gcsService = GcsServiceFactory
+                                                   .createGcsService(new RetryParams.Builder()
+                                                           .initialRetryDelayMillis(
+                                                                   10)
+                                                           .retryMaxAttempts(10)
+                                                           .totalRetryPeriodMillis(
+                                                                   15000)
+                                                           .build());
 
     @Override
     @RequestMapping(value = IMAGE_SVC_PATH, method = RequestMethod.GET, produces = "application/json")
@@ -87,13 +89,13 @@ public class ImageService implements ImageServiceApi {
     public @ResponseBody boolean submitImage(HttpServletRequest req)
             throws FileUploadException, IOException {
         RequestFields rf = RequestUtils.getRequestFields(req);
-        System.err.println(rf.fileFields);
-        System.err.println(rf.formFields);
+
         byte[] imageBytes = rf.fileFields.get(IMAGE_PARAMETER);
         long playerId = Long.parseLong(rf.formFields.get(PLAYER_PARAMETER), 10);
         long matchId = Long.parseLong(rf.formFields.get(MATCH_PARAMETER), 10);
         int roundNum = Integer.parseInt(rf.formFields.get(ROUND_PARAMETER), 10);
         String story = rf.formFields.get(STORY_PARAMETER);
+
         return submitImage(imageBytes, playerId, matchId, roundNum, story);
     }
 
@@ -133,21 +135,15 @@ public class ImageService implements ImageServiceApi {
 
                 Image image = new Image();
                 final String path = "image/" + playerId + "/"
-                        + (int) (Math.random() * 10e10);
-
-                System.err.println(path);
+                        + Math.abs(RANDOM.nextInt()) + ".jpg";
 
                 try {
-                    GcsFilename filename = new GcsFilename("dixit", path);
-
-                    System.err.println(filename);
+                    GcsFilename filename = new GcsFilename(GCS_BUCKET, path);
 
                     GcsFileOptions.Builder fileOptionsBuilder = new GcsFileOptions.Builder();
-                    fileOptionsBuilder.mimeType("image/jpeg");
+                    fileOptionsBuilder.mimeType("image/jpeg").addUserMetadata(
+                            "user", Long.toString(playerId, 10));
                     GcsFileOptions fileOptions = fileOptionsBuilder.build();
-                    fileOptions = GcsFileOptions.getDefaultInstance();
-
-                    System.err.println(fileOptions);
 
                     GcsOutputChannel outputChannel = gcsService
                             .createOrReplace(filename, fileOptions);
@@ -161,9 +157,6 @@ public class ImageService implements ImageServiceApi {
                 image.setPath(path);
 
                 image = images.save(image);
-
-                System.err.println(getClass() + "; " + image.getKey());
-                System.err.println(getClass() + "; " + round.getImages());
 
                 round.getImages().put(playerId, image.getKey().getId());
                 round.getImageToPlayer().put(image.getKey().getId(), playerId);
@@ -180,26 +173,6 @@ public class ImageService implements ImageServiceApi {
 
         return true;
     }
-
-    // @RequestMapping(value = IMAGE_SVC_PATH, method = RequestMethod.POST,
-    // produces = "application/json")
-    /* public @ResponseBody boolean submitImage(
-     * 
-     * @RequestParam(value = IMAGE_PARAMETER, required = true) final
-     * MultipartFile file,
-     * 
-     * @RequestParam(value = PLAYER_PARAMETER, required = true) final long
-     * playerId,
-     * 
-     * @RequestParam(value = MATCH_PARAMETER, required = true) final long
-     * matchId,
-     * 
-     * @RequestParam(value = ROUND_PARAMETER, required = true) final int
-     * roundNum,
-     * 
-     * @RequestParam(value = STORY_PARAMETER, defaultValue = "") final String
-     * story) throws IOException { return submitImage(file.getInputStream(),
-     * playerId, matchId, roundNum, story); } */
 
     @Override
     @RequestMapping(value = VOTE_SVC_PATH, method = RequestMethod.GET, produces = "application/json")
