@@ -1,6 +1,9 @@
 package info.riemannhypothesis.dixit.server.client;
 
 import info.riemannhypothesis.dixit.server.objects.Image;
+
+import java.net.URL;
+
 import retrofit.http.GET;
 import retrofit.http.Multipart;
 import retrofit.http.POST;
@@ -33,7 +36,7 @@ public interface ImageServiceApi {
 
     @Multipart
     @POST(IMAGE_SVC_PATH)
-    public boolean submitImage(@Part(IMAGE_PARAMETER) TypedFile file,
+    public URL submitImage(@Part(IMAGE_PARAMETER) TypedFile file,
             @Part(PLAYER_PARAMETER) long playerId,
             @Part(MATCH_PARAMETER) long matchId,
             @Part(ROUND_PARAMETER) int roundNum,

@@ -1,5 +1,7 @@
 package info.riemannhypothesis.dixit.server.objects;
 
+import java.net.URL;
+
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
@@ -21,9 +23,9 @@ public class Image {
 
     @PrimaryKey
     @Persistent(valueStrategy = IdGeneratorStrategy.IDENTITY)
-    private Key    key;
+    private Key key;
 
     @Persistent
-    private String path;
+    private URL url;
 
 }

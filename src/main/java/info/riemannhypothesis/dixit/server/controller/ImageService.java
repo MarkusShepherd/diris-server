@@ -14,6 +14,8 @@ import info.riemannhypothesis.dixit.server.util.RequestUtils.RequestFields;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.channels.Channels;
 import java.util.Random;
 
@@ -75,7 +77,7 @@ public class ImageService implements ImageServiceApi {
     }
 
     @Override
-    public boolean submitImage(TypedFile file, long playerId, long matchId,
+    public URL submitImage(TypedFile file, long playerId, long matchId,
             int roundNum, String story) {
         try {
             return submitImage(IOUtils.toByteArray(file.in()), playerId,
@@ -86,7 +88,7 @@ public class ImageService implements ImageServiceApi {
     }
 
     @RequestMapping(value = IMAGE_SVC_PATH, method = RequestMethod.POST, produces = "application/json")
-    public @ResponseBody boolean submitImage(HttpServletRequest req)
+    public @ResponseBody URL submitImage(HttpServletRequest req)
             throws FileUploadException, IOException {
         RequestFields rf = RequestUtils.getRequestFields(req);
 
@@ -99,8 +101,9 @@ public class ImageService implements ImageServiceApi {
         return submitImage(imageBytes, playerId, matchId, roundNum, story);
     }
 
-    public boolean submitImage(final byte[] imageBytes, final long playerId,
+    public URL submitImage(final byte[] imageBytes, final long playerId,
             final long matchId, final int roundNum, final String story) {
+
         Callback<Match> callback = new Callback<Match>() {
             @Override
             public void apply(Match match) {
@@ -155,7 +158,13 @@ public class ImageService implements ImageServiceApi {
                     throw new IllegalArgumentException(e);
                 }
 
-                image.setPath(path);
+                try {
+                    URL url = new URL("http://storage.googleapis.com/"
+                            + Application.GCS_BUCKET + "/" + path);
+                    image.setUrl(url);
+                } catch (MalformedURLException e) {
+                    throw new IllegalStateException(e);
+                }
 
                 image = images.save(image);
 
@@ -170,9 +179,12 @@ public class ImageService implements ImageServiceApi {
             }
         };
 
-        matches.update(KeyFactory.createKey("Match", matchId), callback);
+        Match match = matches.update(KeyFactory.createKey("Match", matchId),
+                callback);
 
-        return true;
+        Round round = match.getRounds().get(roundNum);
+        long imageId = round.getImages().get(playerId);
+        return getImage(imageId).getUrl();
     }
 
     @Override
