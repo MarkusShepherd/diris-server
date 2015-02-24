@@ -10,16 +10,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
 @EnableWebMvc
 public class Application extends WebMvcConfigurerAdapter {
 
+    public static final String  GCS_BUCKET = "dixit";
+
     // We do not have the typical main method because we need
     // the Maven AppEngine plugin to launch / configure the
     // development server. However, we are still using this
     // class to define configuration information.
 
-    /*@Bean
-    public CommonsMultipartResolver multipartResolver() {
-        CommonsMultipartResolver commonsMultipartResolver = new CommonsMultipartResolver();
-        commonsMultipartResolver.setDefaultEncoding("utf-8");
-        commonsMultipartResolver.setMaxUploadSize(100000000);
-        return commonsMultipartResolver;
-    }*/
 }

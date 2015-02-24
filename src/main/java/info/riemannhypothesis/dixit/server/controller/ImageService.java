@@ -1,5 +1,6 @@
 package info.riemannhypothesis.dixit.server.controller;
 
+import info.riemannhypothesis.dixit.server.Application;
 import info.riemannhypothesis.dixit.server.client.ImageServiceApi;
 import info.riemannhypothesis.dixit.server.objects.Image;
 import info.riemannhypothesis.dixit.server.objects.Match;
@@ -50,7 +51,6 @@ public class ImageService implements ImageServiceApi {
     @Autowired
     private ImageRepository     images;
 
-    public static final String  GCS_BUCKET = "dixit";
     private final static Random RANDOM     = new Random();
 
     private final GcsService    gcsService = GcsServiceFactory
@@ -138,12 +138,13 @@ public class ImageService implements ImageServiceApi {
                         + Math.abs(RANDOM.nextInt()) + ".jpg";
 
                 try {
-                    GcsFilename filename = new GcsFilename(GCS_BUCKET, path);
+                    GcsFilename filename = new GcsFilename(
+                            Application.GCS_BUCKET, path);
 
-                    GcsFileOptions.Builder fileOptionsBuilder = new GcsFileOptions.Builder();
-                    fileOptionsBuilder.mimeType("image/jpeg").addUserMetadata(
-                            "user", Long.toString(playerId, 10));
-                    GcsFileOptions fileOptions = fileOptionsBuilder.build();
+                    GcsFileOptions fileOptions = new GcsFileOptions.Builder()
+                            .mimeType("image/jpeg")
+                            .addUserMetadata("user",
+                                    Long.toString(playerId, 10)).build();
 
                     GcsOutputChannel outputChannel = gcsService
                             .createOrReplace(filename, fileOptions);

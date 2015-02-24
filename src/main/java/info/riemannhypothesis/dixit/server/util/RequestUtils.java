@@ -20,7 +20,8 @@ import org.apache.commons.io.IOUtils;
  */
 public class RequestUtils {
 
-    public static final int DEFAULT_BUFFER_SIZE = 2 * 1024 * 1024;
+    public static final int DEFAULT_BUFFER_SIZE     = 2 * 1024 * 1024;
+    public static final int DEFAULT_MAX_UPLOAD_SIZE = 4 * 1024 * 1024;
 
     public static void copy(InputStream from, OutputStream to)
             throws IOException {
@@ -50,6 +51,11 @@ public class RequestUtils {
 
     public static RequestFields getRequestFields(HttpServletRequest req)
             throws FileUploadException, IOException {
+        return getRequestFields(req, DEFAULT_MAX_UPLOAD_SIZE);
+    }
+
+    public static RequestFields getRequestFields(HttpServletRequest req,
+            int maxUploadSize) throws FileUploadException, IOException {
         RequestFields rf = new RequestFields();
 
         ServletFileUpload upload = new ServletFileUpload();
@@ -65,11 +71,14 @@ public class RequestUtils {
                 String content = IOUtils.toString(stream, "UTF-8");
                 rf.formFields.put(name, content);
             } else {
-                rf.fileFields.put(name, IOUtils.toByteArray(stream));
+                final byte[] byteArray = IOUtils.toByteArray(stream);
+                if (byteArray.length <= maxUploadSize)
+                    rf.fileFields.put(name, byteArray);
             }
         }
 
         return rf;
+
     }
 
     public static class RequestFields {
