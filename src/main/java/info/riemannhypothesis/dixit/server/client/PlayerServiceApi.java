@@ -1,6 +1,9 @@
 package info.riemannhypothesis.dixit.server.client;
 
 import info.riemannhypothesis.dixit.server.objects.Player;
+
+import java.util.List;
+
 import retrofit.http.Body;
 import retrofit.http.GET;
 import retrofit.http.POST;
@@ -20,7 +23,13 @@ public interface PlayerServiceApi {
     @GET(PATH)
     public Iterable<Player> getPlayerList();
 
-    @GET(PATH + "/{id}")
+    @GET(PATH + "/id/{id}")
     public Player getPlayer(@Path("id") long id);
+
+    @GET(PATH + "/email/{email}")
+    public Player getPlayerByEmail(@Path("email") String email);
+
+    @GET(PATH + "/name/{name}")
+    public List<Player> getPlayerByName(@Path("name") String name);
 
 }

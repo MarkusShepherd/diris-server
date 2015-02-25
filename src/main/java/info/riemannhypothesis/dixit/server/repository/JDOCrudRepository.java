@@ -2,7 +2,6 @@ package info.riemannhypothesis.dixit.server.repository;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import javax.jdo.PersistenceManager;
@@ -49,10 +48,17 @@ public class JDOCrudRepository<T, ID extends Serializable> {
     }
 
     @SuppressWarnings("unchecked")
-    public Iterable<T> findAll() {
+    public List<T> findAll() {
         Query query = PMF.get().getPersistenceManager().newQuery(type_);
-        Object rslt = query.execute();
-        return (Collection<T>) rslt;
+        return (List<T>) query.execute();
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<T> findByField(String field, String parameter) {
+        Query query = PMF.get().getPersistenceManager().newQuery(type_);
+        query.setFilter(field + " == p");
+        query.declareParameters("String p");
+        return (List<T>) query.execute(parameter);
     }
 
     public void delete(ID id) {
