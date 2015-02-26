@@ -1,6 +1,11 @@
 package info.riemannhypothesis.dixit.server.objects;
 
+import info.riemannhypothesis.dixit.server.Application;
+import info.riemannhypothesis.dixit.server.util.Utils;
+
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.jdo.annotations.IdGeneratorStrategy;
@@ -37,8 +42,16 @@ public class Player {
     @Persistent
     private List<Key> matchKeys;
 
+    @Persistent
+    private String    created;
+    @Persistent
+    private String    lastModified;
+
     public Player() {
         this.matchKeys = new ArrayList<Key>();
+        final String now = Utils.now();
+        created = now;
+        lastModified = now;
     }
 
     public Player(String email, String name) {
@@ -55,4 +68,21 @@ public class Player {
         matchKeys.add(mKey);
     }
 
+    public Date getCreatedDate() {
+        try {
+            return Application.DATE_FORMATTER.parse(created);
+        } catch (ParseException e) {
+            e.printStackTrace(System.err);
+            return null;
+        }
+    }
+
+    public Date getLastModifiedDate() {
+        try {
+            return Application.DATE_FORMATTER.parse(lastModified);
+        } catch (ParseException e) {
+            e.printStackTrace(System.err);
+            return null;
+        }
+    }
 }

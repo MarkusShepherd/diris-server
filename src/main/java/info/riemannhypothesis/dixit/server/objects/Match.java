@@ -1,8 +1,11 @@
 package info.riemannhypothesis.dixit.server.objects;
 
-import info.riemannhypothesis.dixit.server.util.ListUtils;
+import info.riemannhypothesis.dixit.server.Application;
+import info.riemannhypothesis.dixit.server.util.Utils;
 
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,18 +64,23 @@ public class Match {
     @Persistent
     private int                timeout;
 
+    @Persistent
+    private String             created;
+    @Persistent
+    private String             lastModified;
+
     public Match(Set<Key> playerKeySet) {
-        this(ListUtils.shuffledListFromSet(playerKeySet), playerKeySet.size(),
+        this(Utils.shuffledListFromSet(playerKeySet), playerKeySet.size(),
                 STANDARD_TIMEOUT);
     }
 
     public Match(Set<Key> playerKeySet, int totalRounds) {
-        this(ListUtils.shuffledListFromSet(playerKeySet), totalRounds,
+        this(Utils.shuffledListFromSet(playerKeySet), totalRounds,
                 STANDARD_TIMEOUT);
     }
 
     public Match(Set<Key> playerKeySet, int totalRounds, int timeOut) {
-        this(ListUtils.shuffledListFromSet(playerKeySet), totalRounds, timeOut);
+        this(Utils.shuffledListFromSet(playerKeySet), totalRounds, timeOut);
     }
 
     public Match(List<Key> playerKeys) {
@@ -100,20 +108,21 @@ public class Match {
             int p = i % numPlayers;
             round.setStoryTellerKey(playerKeys.get(p));
 
-            if (i == 0) {
+            if (i == 0)
                 round.setStatus(Round.Status.SUBMIT_STORY);
-            }
 
             rounds.add(round);
         }
+
+        final String now = Utils.now();
+        created = now;
+        lastModified = now;
     }
 
     public int getPlayerPos(Key pKey) {
-        for (int i = 0; i < playerKeys.size(); i++) {
-            if (playerKeys.get(i).equals(pKey)) {
+        for (int i = 0; i < playerKeys.size(); i++)
+            if (playerKeys.get(i).equals(pKey))
                 return i;
-            }
-        }
         return -1;
     }
 
@@ -152,4 +161,21 @@ public class Match {
         standings = temp;
     }
 
+    public Date getCreatedDate() {
+        try {
+            return Application.DATE_FORMATTER.parse(created);
+        } catch (ParseException e) {
+            e.printStackTrace(System.err);
+            return null;
+        }
+    }
+
+    public Date getLastModifiedDate() {
+        try {
+            return Application.DATE_FORMATTER.parse(lastModified);
+        } catch (ParseException e) {
+            e.printStackTrace(System.err);
+            return null;
+        }
+    }
 }

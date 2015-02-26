@@ -11,6 +11,7 @@ import info.riemannhypothesis.dixit.server.repository.JDOCrudRepository.Callback
 import info.riemannhypothesis.dixit.server.repository.MatchRepository;
 import info.riemannhypothesis.dixit.server.util.RequestUtils;
 import info.riemannhypothesis.dixit.server.util.RequestUtils.RequestFields;
+import info.riemannhypothesis.dixit.server.util.Utils;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -136,7 +137,7 @@ public class ImageService implements ImageServiceApi {
                     }
                 }
 
-                Image image = new Image();
+                Image image = new Image(playerId);
                 final String path = "image/" + playerId + "/"
                         + Math.abs(RANDOM.nextInt()) + ".jpg";
 
@@ -176,6 +177,8 @@ public class ImageService implements ImageServiceApi {
                 } else if (round.submissionComplete()) {
                     round.setStatus(Status.SUBMIT_VOTES);
                 }
+
+                match.setLastModified(Utils.now());
             }
         };
 
