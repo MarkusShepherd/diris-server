@@ -7,9 +7,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
+// @EnableAutoConfiguration
 @Configuration
 @ComponentScan
 @EnableWebMvc
+// @Import(SocialConfig.class)
 public class Application extends WebMvcConfigurerAdapter {
 
     public static final String           GCS_BUCKET     = "dixit";

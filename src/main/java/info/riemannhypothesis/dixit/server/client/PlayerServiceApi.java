@@ -24,7 +24,7 @@ public interface PlayerServiceApi {
     public Iterable<Player> getPlayerList();
 
     @GET(PATH + "/id/{id}")
-    public Player getPlayer(@Path("id") long id);
+    public Player getPlayerById(@Path("id") long id);
 
     @GET(PATH + "/email/{email}")
     public Player getPlayerByEmail(@Path("email") String email);

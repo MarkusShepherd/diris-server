@@ -40,7 +40,7 @@ public class PlayerService implements PlayerServiceApi {
 
     @Override
     @RequestMapping(value = PATH + "/id/{id}", method = RequestMethod.GET, produces = "application/json")
-    public @ResponseBody Player getPlayer(@PathVariable("id") long id) {
+    public @ResponseBody Player getPlayerById(@PathVariable("id") long id) {
         return players.findOne(KeyFactory.createKey("Player", id));
     }
 
