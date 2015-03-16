@@ -3,6 +3,7 @@ package info.riemannhypothesis.dixit.server.client;
 import info.riemannhypothesis.dixit.server.objects.Image;
 
 import java.net.URL;
+import java.util.List;
 
 import retrofit.http.GET;
 import retrofit.http.Multipart;
@@ -29,7 +30,7 @@ public interface ImageServiceApi {
     public static final String PLAYER_PARAMETER = "player";
 
     @GET(IMAGE_SVC_PATH)
-    public Iterable<Image> getImageList();
+    public List<Image> getImageList();
 
     @GET(IMAGE_SVC_PATH + "/{id}")
     public Image getImage(@Path("id") long id);

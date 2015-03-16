@@ -2,6 +2,7 @@ package info.riemannhypothesis.dixit.server.client;
 
 import info.riemannhypothesis.dixit.server.objects.Match;
 
+import java.util.List;
 import java.util.Set;
 
 import retrofit.http.Body;
@@ -17,7 +18,7 @@ public interface MatchServiceApi {
     public Match addMatch(@Body Set<Long> keys);
 
     @GET(PATH)
-    public Iterable<Match> getMatchList();
+    public List<Match> getMatchList();
 
     @GET(PATH + "/{id}")
     public Match getMatch(@Path("id") long id);

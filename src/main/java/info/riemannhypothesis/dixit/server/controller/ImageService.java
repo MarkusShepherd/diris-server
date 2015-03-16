@@ -18,6 +18,7 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.channels.Channels;
+import java.util.List;
 import java.util.Random;
 
 import javax.servlet.http.HttpServletRequest;
@@ -67,14 +68,14 @@ public class ImageService implements ImageServiceApi {
 
     @Override
     @RequestMapping(value = IMAGE_SVC_PATH, method = RequestMethod.GET, produces = "application/json")
-    public @ResponseBody Iterable<Image> getImageList() {
+    public @ResponseBody List<Image> getImageList() {
         return images.findAll();
     }
 
     @Override
     @RequestMapping(value = IMAGE_SVC_PATH + "/{id}", method = RequestMethod.GET, produces = "application/json")
     public @ResponseBody Image getImage(@PathVariable("id") long id) {
-        return images.findOne(KeyFactory.createKey("Image", id));
+        return images.findById(KeyFactory.createKey("Image", id));
     }
 
     @Override

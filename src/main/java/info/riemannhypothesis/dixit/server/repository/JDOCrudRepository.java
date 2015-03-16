@@ -21,9 +21,8 @@ public class JDOCrudRepository<T, ID extends Serializable> {
 
     public <S extends T> List<S> save(Iterable<S> entities) {
         List<S> saved = new ArrayList<S>();
-        for (S entity : entities) {
+        for (S entity : entities)
             saved.add(save(entity));
-        }
         return saved;
     }
 
@@ -39,12 +38,19 @@ public class JDOCrudRepository<T, ID extends Serializable> {
         return e;
     }
 
-    public T findOne(ID id) {
-        return (T) PMF.get().getPersistenceManager().getObjectById(type_, id);
+    public T findById(ID id) {
+        return PMF.get().getPersistenceManager().getObjectById(type_, id);
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<T> findByIds(List<ID> ids) {
+        Query query = PMF.get().getPersistenceManager().newQuery(type_);
+        query.setFilter(":p.contains(key)");
+        return (List<T>) query.execute(ids);
     }
 
     public boolean exists(ID id) {
-        return findOne(id) != null;
+        return findById(id) != null;
     }
 
     @SuppressWarnings("unchecked")
@@ -87,10 +93,9 @@ public class JDOCrudRepository<T, ID extends Serializable> {
     }
 
     public void delete(ID id) {
-        T obj = findOne(id);
-        if (obj != null) {
+        T obj = findById(id);
+        if (obj != null)
             PMF.get().getPersistenceManager().deletePersistent(obj);
-        }
     }
 
     public void delete(T entity) {

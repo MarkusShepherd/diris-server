@@ -16,5 +16,4 @@ public class MatchRepository extends JDOCrudRepository<Match, Key> {
     public MatchRepository() {
         super(Match.class);
     }
-
 }

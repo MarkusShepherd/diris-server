@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<jdoconfig xmlns="http://java.sun.com/xml/ns/jdo/jdoconfig">
-
+<jdoconfig xmlns="http://java.sun.com/xml/ns/jdo/jdoconfig"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/jdo/jdoconfig http://java.sun.com/xml/ns/jdo/jdoconfig_3_0.xsd">
 	<persistence-manager-factory name="transactions-optional">
 		<property name="javax.jdo.PersistenceManagerFactoryClass"
 			value="org.datanucleus.api.jdo.JDOPersistenceManagerFactory" />
@@ -17,6 +18,5 @@
 			value="5000" />
 		<property name="javax.jdo.option.DatastoreWriteTimeoutMillis"
 			value="10000" />
-
 	</persistence-manager-factory>
 </jdoconfig>

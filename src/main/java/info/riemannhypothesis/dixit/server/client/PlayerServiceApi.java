@@ -1,5 +1,6 @@
 package info.riemannhypothesis.dixit.server.client;
 
+import info.riemannhypothesis.dixit.server.objects.Match;
 import info.riemannhypothesis.dixit.server.objects.Player;
 
 import java.util.List;
@@ -21,7 +22,7 @@ public interface PlayerServiceApi {
     public Player addPlayer(@Body Player player);
 
     @GET(PATH)
-    public Iterable<Player> getPlayerList();
+    public List<Player> getPlayerList();
 
     @GET(PATH + "/id/{id}")
     public Player getPlayerById(@Path("id") long id);
@@ -31,5 +32,12 @@ public interface PlayerServiceApi {
 
     @GET(PATH + "/name/{name}")
     public List<Player> getPlayerByName(@Path("name") String name);
+
+    @GET(PATH + "/id/{id}/matches")
+    public List<Match> getPlayerMatches(@Path("id") long id);
+
+    @GET(PATH + "/id/{id}/matches/{status}")
+    public List<Match> getPlayerMatches(@Path("id") long id,
+            @Path("status") String status);
 
 }

@@ -8,6 +8,7 @@ import info.riemannhypothesis.dixit.server.repository.MatchRepository;
 import info.riemannhypothesis.dixit.server.repository.PlayerRepository;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,14 +63,14 @@ public class MatchService implements MatchServiceApi {
 
     @Override
     @RequestMapping(value = PATH, method = RequestMethod.GET, produces = "application/json")
-    public @ResponseBody Iterable<Match> getMatchList() {
+    public @ResponseBody List<Match> getMatchList() {
         return matches.findAll();
     }
 
     @Override
     @RequestMapping(value = PATH + "/{id}", method = RequestMethod.GET, produces = "application/json")
     public @ResponseBody Match getMatch(@PathVariable("id") long id) {
-        return matches.findOne(KeyFactory.createKey("Match", id));
+        return matches.findById(KeyFactory.createKey("Match", id));
     }
 
 }
