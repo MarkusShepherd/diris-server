@@ -94,7 +94,13 @@ public class ImageService implements ImageServiceApi {
             throws FileUploadException, IOException {
         RequestFields rf = RequestUtils.getRequestFields(req);
 
+        // TODO hack - make sure files are not sent as form fields
         byte[] imageBytes = rf.fileFields.get(IMAGE_PARAMETER);
+        if (imageBytes == null || imageBytes.length == 0)
+            imageBytes = rf.formFields.get(IMAGE_PARAMETER).getBytes();
+        if (imageBytes == null || imageBytes.length == 0)
+            throw new IllegalArgumentException("Need to submit an image");
+
         long playerId = Long.parseLong(rf.formFields.get(PLAYER_PARAMETER), 10);
         long matchId = Long.parseLong(rf.formFields.get(MATCH_PARAMETER), 10);
         int roundNum = Integer.parseInt(rf.formFields.get(ROUND_PARAMETER), 10);

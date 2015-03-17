@@ -11,6 +11,7 @@ import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import retrofit.RestAdapter;
@@ -63,6 +64,8 @@ public class PlayerServiceClientApiTest {
         }
 
         Match match = matchService.addMatch(playerKeys);
+
+        Assert.assertTrue(false);
 
         for (int r = 0; r < match.getTotalRounds(); r++) {
             Round thisRound = match.getRounds().get(r);

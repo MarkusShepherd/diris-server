@@ -2,6 +2,7 @@ package info.riemannhypothesis.dixit.server.repository;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import javax.jdo.PersistenceManager;
@@ -44,6 +45,9 @@ public class JDOCrudRepository<T, ID extends Serializable> {
 
     @SuppressWarnings("unchecked")
     public List<T> findByIds(List<ID> ids) {
+        if (ids.isEmpty())
+            return new LinkedList<T>();
+
         Query query = PMF.get().getPersistenceManager().newQuery(type_);
         query.setFilter(":p.contains(key)");
         return (List<T>) query.execute(ids);

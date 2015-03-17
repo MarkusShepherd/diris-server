@@ -36,6 +36,7 @@ public class PlayerService implements PlayerServiceApi {
     @Override
     @RequestMapping(value = PATH, method = RequestMethod.POST, produces = "application/json")
     public @ResponseBody Player addPlayer(@RequestBody Player player) {
+        // TODO verify that name and email do not exist yet
         return players.save(player);
     }
 

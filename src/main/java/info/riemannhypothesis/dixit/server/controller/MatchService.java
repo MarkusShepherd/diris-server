@@ -8,6 +8,7 @@ import info.riemannhypothesis.dixit.server.repository.MatchRepository;
 import info.riemannhypothesis.dixit.server.repository.PlayerRepository;
 
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -71,6 +72,15 @@ public class MatchService implements MatchServiceApi {
     @RequestMapping(value = PATH + "/{id}", method = RequestMethod.GET, produces = "application/json")
     public @ResponseBody Match getMatch(@PathVariable("id") long id) {
         return matches.findById(KeyFactory.createKey("Match", id));
+    }
+
+    @Override
+    @RequestMapping(value = PATH + "/{id}/players", method = RequestMethod.GET, produces = "application/json")
+    public @ResponseBody List<Player> getPlayers(@PathVariable("id") long id) {
+        Match match = getMatch(id);
+        if (match == null)
+            return new LinkedList<Player>();
+        return players.findByIds(match.getPlayerKeys());
     }
 
 }

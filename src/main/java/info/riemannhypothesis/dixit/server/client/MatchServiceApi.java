@@ -1,6 +1,7 @@
 package info.riemannhypothesis.dixit.server.client;
 
 import info.riemannhypothesis.dixit.server.objects.Match;
+import info.riemannhypothesis.dixit.server.objects.Player;
 
 import java.util.List;
 import java.util.Set;
@@ -22,5 +23,8 @@ public interface MatchServiceApi {
 
     @GET(PATH + "/{id}")
     public Match getMatch(@Path("id") long id);
+
+    @GET(PATH + "/{id}/players")
+    public List<Player> getPlayers(@Path("id") long id);
 
 }
