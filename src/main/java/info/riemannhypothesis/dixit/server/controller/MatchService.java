@@ -1,12 +1,16 @@
 package info.riemannhypothesis.dixit.server.controller;
 
 import info.riemannhypothesis.dixit.server.client.MatchServiceApi;
+import info.riemannhypothesis.dixit.server.objects.Image;
 import info.riemannhypothesis.dixit.server.objects.Match;
 import info.riemannhypothesis.dixit.server.objects.Player;
+import info.riemannhypothesis.dixit.server.repository.ImageRepository;
 import info.riemannhypothesis.dixit.server.repository.JDOCrudRepository.Callback;
 import info.riemannhypothesis.dixit.server.repository.MatchRepository;
 import info.riemannhypothesis.dixit.server.repository.PlayerRepository;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -34,6 +38,8 @@ public class MatchService implements MatchServiceApi {
     private MatchRepository  matches;
     @Autowired
     private PlayerRepository players;
+    @Autowired
+    private ImageRepository  images;
 
     @Override
     @RequestMapping(value = PATH, method = RequestMethod.POST, produces = "application/json")
@@ -81,6 +87,24 @@ public class MatchService implements MatchServiceApi {
         if (match == null)
             return new LinkedList<Player>();
         return players.findByIds(match.getPlayerKeys());
+    }
+
+    @Override
+    @RequestMapping(value = PATH + "/{id}/images/{rNo}", method = RequestMethod.GET, produces = "application/json")
+    public @ResponseBody List<Image> getImages(@PathVariable("id") long id,
+            @PathVariable("rNo") int rNo) {
+        Match match = getMatch(id);
+        if (match == null)
+            return new LinkedList<Image>();
+
+        List<Key> keys = new ArrayList<Key>();
+        for (long iId : match.getRounds().get(rNo).getImages().values())
+            keys.add(KeyFactory.createKey("Image", iId));
+
+        final ArrayList<Image> list = new ArrayList<Image>(
+                images.findByIds(keys));
+        Collections.shuffle(list);
+        return list;
     }
 
 }
