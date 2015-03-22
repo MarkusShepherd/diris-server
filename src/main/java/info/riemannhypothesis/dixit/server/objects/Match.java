@@ -95,7 +95,11 @@ public class Match {
         this.playerKeys = playerKeys;
         this.totalRounds = totalRounds;
         this.currentRound = 0;
+
         this.standings = new HashMap<Long, Integer>();
+        for (Key pKey : playerKeys)
+            this.standings.put(pKey.getId(), 0);
+
         this.timeout = timeOut;
         this.status = Status.IN_PROGRESS;
 

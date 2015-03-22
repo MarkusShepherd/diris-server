@@ -137,13 +137,14 @@ public class Round {
                 tempScores.put(pKey.getId(), score);
             }
         } else {
+            Long storyTellerImage = images.get(storyTellerKey.getId());
             for (Key pKey : match.getPlayerKeys()) {
                 Integer score = tempScores.get(pKey.getId());
                 if (score == null)
                     score = 0;
                 if (pKey.equals(storyTellerKey))
                     score += NOT_ALL_CORRECT_OR_WRONG_STORYTELLER_SCORE;
-                else if (votes.get(pKey.getId()).equals(storyTellerKey.getId()))
+                else if (storyTellerImage.equals(votes.get(pKey.getId())))
                     score += NOT_ALL_CORRECT_OR_WRONG_SCORE;
                 tempScores.put(pKey.getId(), score);
             }
