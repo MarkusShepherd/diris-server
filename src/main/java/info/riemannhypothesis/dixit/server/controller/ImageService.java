@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import retrofit.mime.TypedFile;
 
+import com.google.api.client.util.Base64;
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.tools.cloudstorage.GcsFileOptions;
 import com.google.appengine.tools.cloudstorage.GcsFilename;
@@ -96,8 +97,10 @@ public class ImageService implements ImageServiceApi {
 
         // TODO hack - make sure files are not sent as form fields
         byte[] imageBytes = rf.fileFields.get(IMAGE_PARAMETER);
-        if (imageBytes == null || imageBytes.length == 0)
-            imageBytes = rf.formFields.get(IMAGE_PARAMETER).getBytes();
+        if (imageBytes == null || imageBytes.length == 0) {
+            String temp = rf.formFields.get(IMAGE_PARAMETER);
+            imageBytes = Base64.decodeBase64(temp);
+        }
         if (imageBytes == null || imageBytes.length == 0)
             throw new IllegalArgumentException("Need to submit an image");
 

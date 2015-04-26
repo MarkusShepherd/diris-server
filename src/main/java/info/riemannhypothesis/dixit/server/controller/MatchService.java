@@ -4,6 +4,7 @@ import info.riemannhypothesis.dixit.server.client.MatchServiceApi;
 import info.riemannhypothesis.dixit.server.objects.Image;
 import info.riemannhypothesis.dixit.server.objects.Match;
 import info.riemannhypothesis.dixit.server.objects.Player;
+import info.riemannhypothesis.dixit.server.objects.Round;
 import info.riemannhypothesis.dixit.server.repository.ImageRepository;
 import info.riemannhypothesis.dixit.server.repository.JDOCrudRepository.Callback;
 import info.riemannhypothesis.dixit.server.repository.MatchRepository;
@@ -87,6 +88,24 @@ public class MatchService implements MatchServiceApi {
         if (match == null)
             return new LinkedList<Player>();
         return players.findByIds(match.getPlayerKeys());
+    }
+
+    @Override
+    @RequestMapping(value = PATH + "/{id}/images", method = RequestMethod.GET, produces = "application/json")
+    public @ResponseBody List<Image> getImages(@PathVariable("id") long id) {
+        Match match = getMatch(id);
+        if (match == null)
+            return new LinkedList<Image>();
+
+        List<Key> keys = new ArrayList<Key>();
+        for (Round round : match.getRounds())
+            for (long iId : round.getImages().values())
+                keys.add(KeyFactory.createKey("Image", iId));
+
+        final ArrayList<Image> list = new ArrayList<Image>(
+                images.findByIds(keys));
+        Collections.shuffle(list);
+        return list;
     }
 
     @Override

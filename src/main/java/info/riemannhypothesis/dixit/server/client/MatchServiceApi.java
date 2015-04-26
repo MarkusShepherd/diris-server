@@ -28,6 +28,9 @@ public interface MatchServiceApi {
     @GET(PATH + "/{id}/players")
     public List<Player> getPlayers(@Path("id") long id);
 
+    @GET(PATH + "/{id}/images")
+    public List<Image> getImages(@Path("id") long id);
+
     @GET(PATH + "/{id}/images/{rNo}")
     public List<Image> getImages(@Path("id") long id, @Path("rNo") int rNo);
 
