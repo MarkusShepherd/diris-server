@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.google.appengine.api.datastore.KeyFactory;
@@ -53,9 +54,19 @@ public class PlayerService implements PlayerServiceApi {
     }
 
     @Override
-    @RequestMapping(value = PATH + "/email/{email}", method = RequestMethod.GET, produces = "application/json")
+    @RequestMapping(value = PATH + "/id/{id}/external", method = RequestMethod.GET, produces = "application/json")
+    public @ResponseBody Player getPlayerByExternalId(@PathVariable("id") String id) {
+        final List<Player> list = players.findByField("externalID", id);
+        if (list.size() > 0)
+            return list.get(0);
+        else
+            return null;
+    }
+
+    @Override
+    @RequestMapping(value = PATH + "/email", method = RequestMethod.GET, produces = "application/json")
     public @ResponseBody Player getPlayerByEmail(
-            @PathVariable("email") String email) {
+            @RequestParam(value = "email", required = true) final String email) {
         final List<Player> list = players.findByField("email", email);
         if (list.size() > 0)
             return list.get(0);

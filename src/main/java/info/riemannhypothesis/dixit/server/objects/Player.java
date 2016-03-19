@@ -34,10 +34,16 @@ public class Player {
     private Key       key;
 
     @Persistent
+    private String    externalID;
+
+    @Persistent
     private String    name;
 
     @Persistent
     private String    email;
+
+    @Persistent
+    private String    avatarURL;
 
     @Persistent
     private List<Key> matchKeys;

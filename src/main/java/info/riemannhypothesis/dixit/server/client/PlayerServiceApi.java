@@ -9,6 +9,7 @@ import retrofit.http.Body;
 import retrofit.http.GET;
 import retrofit.http.POST;
 import retrofit.http.Path;
+import retrofit.http.Query;
 
 /**
  * @author Markus Schepke
@@ -27,8 +28,11 @@ public interface PlayerServiceApi {
     @GET(PATH + "/id/{id}")
     public Player getPlayerById(@Path("id") long id);
 
-    @GET(PATH + "/email/{email}")
-    public Player getPlayerByEmail(@Path("email") String email);
+    @GET(PATH + "/id/{id}/external")
+    public Player getPlayerByExternalId(@Path("id") String id);
+
+    @GET(PATH + "/email")
+    public Player getPlayerByEmail(@Query("email") String email);
 
     @GET(PATH + "/name/{name}")
     public List<Player> getPlayerByName(@Path("name") String name);
