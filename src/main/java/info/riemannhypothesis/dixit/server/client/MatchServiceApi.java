@@ -5,7 +5,6 @@ import info.riemannhypothesis.dixit.server.objects.Match;
 import info.riemannhypothesis.dixit.server.objects.Player;
 
 import java.util.List;
-import java.util.Set;
 
 import retrofit.http.Body;
 import retrofit.http.GET;
@@ -14,24 +13,27 @@ import retrofit.http.Path;
 
 public interface MatchServiceApi {
 
-    public static final String PATH = "/match";
+	public static final String PATH = "/match";
 
-    @POST(PATH)
-    public Match addMatch(@Body Set<Long> keys);
+	@POST(PATH)
+	public Match addMatch(@Body List<Long> keys);
 
-    @GET(PATH)
-    public List<Match> getMatchList();
+	@GET(PATH)
+	public List<Match> getMatchList();
 
-    @GET(PATH + "/{id}")
-    public Match getMatch(@Path("id") long id);
+	@GET(PATH + "/{id}")
+	public Match getMatch(@Path("id") long id);
 
-    @GET(PATH + "/{id}/players")
-    public List<Player> getPlayers(@Path("id") long id);
+	@POST(PATH + "/{mId}/accept/{pId}")
+	public Match acceptMatch(@Path("mId") long mId, @Path("pId") long pId);
 
-    @GET(PATH + "/{id}/images")
-    public List<Image> getImages(@Path("id") long id);
+	@GET(PATH + "/{id}/players")
+	public List<Player> getPlayers(@Path("id") long id);
 
-    @GET(PATH + "/{id}/images/{rNo}")
-    public List<Image> getImages(@Path("id") long id, @Path("rNo") int rNo);
+	@GET(PATH + "/{id}/images")
+	public List<Image> getImages(@Path("id") long id);
+
+	@GET(PATH + "/{id}/images/{rNo}")
+	public List<Image> getImages(@Path("id") long id, @Path("rNo") int rNo);
 
 }
