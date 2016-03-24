@@ -10,6 +10,7 @@ import info.riemannhypothesis.dixit.server.repository.JDOCrudRepository.Callback
 import info.riemannhypothesis.dixit.server.repository.MatchRepository;
 import info.riemannhypothesis.dixit.server.repository.PlayerRepository;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -51,7 +52,8 @@ public class MatchService implements MatchServiceApi {
 			pKeys.add(KeyFactory.createKey("Player", pId));
 		}
 
-		Match match = new Match(pKeys, pIds.get(0));
+		final Long invitingPlayer = pIds.get(0);
+		Match match = new Match(pKeys, invitingPlayer);
 		match = matches.save(match);
 
 		final Key mKey = match.getKey();
@@ -59,6 +61,14 @@ public class MatchService implements MatchServiceApi {
 			@Override
 			public void apply(Player player) {
 				player.addMatch(mKey);
+				if (player.getKey().getId() != invitingPlayer)
+					try {
+						player.sendPushNotification("New invitation",
+								"You've been invited to a new match!");
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 			}
 		};
 
