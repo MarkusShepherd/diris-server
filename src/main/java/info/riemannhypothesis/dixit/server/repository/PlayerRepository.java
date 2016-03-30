@@ -13,8 +13,8 @@ import com.google.appengine.api.datastore.Key;
 @Service
 public class PlayerRepository extends JDOCrudRepository<Player, Key> {
 
-    public PlayerRepository() {
-        super(Player.class);
-    }
+	public PlayerRepository() {
+		super(Player.class);
+	}
 
 }

@@ -51,206 +51,187 @@ import com.google.appengine.tools.cloudstorage.RetryParams;
 @Controller
 public class ImageService implements ImageServiceApi {
 
-    @Autowired
-    private MatchRepository     matches;
-    @Autowired
-    private ImageRepository     images;
+	@Autowired
+	private MatchRepository matches;
+	@Autowired
+	private ImageRepository images;
 
-    private final static Random RANDOM     = new Random();
+	private final static Random RANDOM = new Random();
 
-    private final GcsService    gcsService = GcsServiceFactory
-                                                   .createGcsService(new RetryParams.Builder()
-                                                           .initialRetryDelayMillis(
-                                                                   10)
-                                                           .retryMaxAttempts(10)
-                                                           .totalRetryPeriodMillis(
-                                                                   15000)
-                                                           .build());
+	private final GcsService gcsService = GcsServiceFactory
+			.createGcsService(new RetryParams.Builder()
+					.initialRetryDelayMillis(10).retryMaxAttempts(10)
+					.totalRetryPeriodMillis(15000).build());
 
-    @Override
-    @RequestMapping(value = IMAGE_SVC_PATH, method = RequestMethod.GET, produces = "application/json")
-    public @ResponseBody List<Image> getImageList() {
-        return images.findAll();
-    }
+	@Override
+	@RequestMapping(value = IMAGE_SVC_PATH, method = RequestMethod.GET, produces = "application/json")
+	public @ResponseBody List<Image> getImageList() {
+		return images.findAll();
+	}
 
-    @Override
-    @RequestMapping(value = IMAGE_SVC_PATH + "/{id}", method = RequestMethod.GET, produces = "application/json")
-    public @ResponseBody Image getImage(@PathVariable("id") long id) {
-        return images.findById(KeyFactory.createKey("Image", id));
-    }
+	@Override
+	@RequestMapping(value = IMAGE_SVC_PATH + "/{id}", method = RequestMethod.GET, produces = "application/json")
+	public @ResponseBody Image getImage(@PathVariable("id") long id) {
+		return images.findById(KeyFactory.createKey("Image", id));
+	}
 
-    @Override
-    public URL submitImage(TypedFile file, long playerId, long matchId,
-            int roundNum, String story) {
-        try {
-            return submitImage(IOUtils.toByteArray(file.in()), playerId,
-                    matchId, roundNum, story);
-        } catch (IOException e) {
-            throw new IllegalArgumentException(e);
-        }
-    }
+	@Override
+	public URL submitImage(TypedFile file, long playerId, long matchId,
+			int roundNum, String story) {
+		try {
+			return submitImage(IOUtils.toByteArray(file.in()), playerId,
+					matchId, roundNum, story);
+		} catch (IOException e) {
+			throw new IllegalArgumentException(e);
+		}
+	}
 
-    @RequestMapping(value = IMAGE_SVC_PATH, method = RequestMethod.POST, produces = "application/json")
-    public @ResponseBody URL submitImage(HttpServletRequest req)
-            throws FileUploadException, IOException {
-        RequestFields rf = RequestUtils.getRequestFields(req);
+	@RequestMapping(value = IMAGE_SVC_PATH, method = RequestMethod.POST, produces = "application/json")
+	public @ResponseBody URL submitImage(HttpServletRequest req)
+			throws FileUploadException, IOException {
+		RequestFields rf = RequestUtils.getRequestFields(req);
 
-        // TODO hack - make sure files are not sent as form fields
-        byte[] imageBytes = rf.fileFields.get(IMAGE_PARAMETER);
-        if (imageBytes == null || imageBytes.length == 0) {
-            String temp = rf.formFields.get(IMAGE_PARAMETER);
-            imageBytes = Base64.decodeBase64(temp);
-        }
-        if (imageBytes == null || imageBytes.length == 0)
-            throw new IllegalArgumentException("Need to submit an image");
+		// TODO hack - make sure files are not sent as form fields
+		byte[] imageBytes = rf.fileFields.get(IMAGE_PARAMETER);
+		if (imageBytes == null || imageBytes.length == 0) {
+			String temp = rf.formFields.get(IMAGE_PARAMETER);
+			imageBytes = Base64.decodeBase64(temp);
+		}
+		if (imageBytes == null || imageBytes.length == 0)
+			throw new IllegalArgumentException("Need to submit an image");
 
-        long playerId = Long.parseLong(rf.formFields.get(PLAYER_PARAMETER), 10);
-        long matchId = Long.parseLong(rf.formFields.get(MATCH_PARAMETER), 10);
-        int roundNum = Integer.parseInt(rf.formFields.get(ROUND_PARAMETER), 10);
-        String story = rf.formFields.get(STORY_PARAMETER);
+		long playerId = Long.parseLong(rf.formFields.get(PLAYER_PARAMETER), 10);
+		long matchId = Long.parseLong(rf.formFields.get(MATCH_PARAMETER), 10);
+		int roundNum = Integer.parseInt(rf.formFields.get(ROUND_PARAMETER), 10);
+		String story = rf.formFields.get(STORY_PARAMETER);
 
-        return submitImage(imageBytes, playerId, matchId, roundNum, story);
-    }
+		return submitImage(imageBytes, playerId, matchId, roundNum, story);
+	}
 
-    public URL submitImage(final byte[] imageBytes, final long playerId,
-            final long matchId, final int roundNum, final String story) {
+	public URL submitImage(final byte[] imageBytes, final long playerId,
+			final long matchId, final int roundNum, final String story) {
+		Callback<Match> callback = new Callback<Match>() {
+			@Override
+			public void apply(Match match) {
+				Round round = match.getRounds().get(roundNum);
 
-        Callback<Match> callback = new Callback<Match>() {
-            @Override
-            public void apply(Match match) {
-                Round round = match.getRounds().get(roundNum);
+				if (round.getStatus() != Status.SUBMIT_STORY
+						&& round.getStatus() != Status.SUBMIT_OTHERS)
+					throw new IllegalArgumentException("Status "
+							+ round.getStatus() + "; not expecting image.");
 
-                if (round.getStatus() != Status.SUBMIT_STORY
-                        && round.getStatus() != Status.SUBMIT_OTHERS) {
-                    throw new IllegalArgumentException("Status "
-                            + round.getStatus() + "; not expecting image.");
-                }
+				if (round.getStatus() == Status.SUBMIT_STORY) {
+					if (round.getStoryTellerKey().getId() != playerId)
+						throw new IllegalArgumentException("Player " + playerId
+								+ " is not the storyteller.");
 
-                if (round.getStatus() == Status.SUBMIT_STORY) {
-                    if (round.getStoryTellerKey().getId() != playerId) {
-                        throw new IllegalArgumentException("Player " + playerId
-                                + " is not the storyteller.");
-                    }
+					if (story == null || story.length() == 0)
+						throw new IllegalArgumentException(
+								"Storyteller must submit a story.");
 
-                    if (story == null || story.length() == 0) {
-                        throw new IllegalArgumentException(
-                                "Storyteller must submit a story.");
-                    }
+					round.setStory(story);
+				} else if (round.getStoryTellerKey().getId() == playerId)
+					throw new IllegalArgumentException("Player " + playerId
+							+ " is the storyteller and cannot submit again.");
 
-                    round.setStory(story);
-                } else {
-                    if (round.getStoryTellerKey().getId() == playerId) {
-                        throw new IllegalArgumentException(
-                                "Player "
-                                        + playerId
-                                        + " is the storyteller and cannot submit again.");
-                    }
-                }
+				Image image = new Image(playerId);
+				final String path = "image/" + playerId + "/"
+						+ Math.abs(RANDOM.nextInt()) + ".jpg";
 
-                Image image = new Image(playerId);
-                final String path = "image/" + playerId + "/"
-                        + Math.abs(RANDOM.nextInt()) + ".jpg";
+				try {
+					GcsFilename filename = new GcsFilename(
+							Application.GCS_BUCKET, path);
 
-                try {
-                    GcsFilename filename = new GcsFilename(
-                            Application.GCS_BUCKET, path);
+					GcsFileOptions fileOptions = new GcsFileOptions.Builder()
+							.mimeType("image/jpeg")
+							.addUserMetadata("user",
+									Long.toString(playerId, 10)).build();
 
-                    GcsFileOptions fileOptions = new GcsFileOptions.Builder()
-                            .mimeType("image/jpeg")
-                            .addUserMetadata("user",
-                                    Long.toString(playerId, 10)).build();
+					GcsOutputChannel outputChannel = gcsService
+							.createOrReplace(filename, fileOptions);
+					OutputStream os = Channels.newOutputStream(outputChannel);
+					os.write(imageBytes);
+					os.close();
+				} catch (IOException e) {
+					throw new IllegalArgumentException(e);
+				}
 
-                    GcsOutputChannel outputChannel = gcsService
-                            .createOrReplace(filename, fileOptions);
-                    OutputStream os = Channels.newOutputStream(outputChannel);
-                    os.write(imageBytes);
-                    os.close();
-                } catch (IOException e) {
-                    throw new IllegalArgumentException(e);
-                }
+				try {
+					URL url = new URL("http://storage.googleapis.com/"
+							+ Application.GCS_BUCKET + "/" + path);
+					image.setUrl(url);
+				} catch (MalformedURLException e) {
+					throw new IllegalStateException(e);
+				}
 
-                try {
-                    URL url = new URL("http://storage.googleapis.com/"
-                            + Application.GCS_BUCKET + "/" + path);
-                    image.setUrl(url);
-                } catch (MalformedURLException e) {
-                    throw new IllegalStateException(e);
-                }
+				image = images.save(image);
 
-                image = images.save(image);
+				round.getImages().put(playerId, image.getKey().getId());
+				round.getImageToPlayer().put(image.getKey().getId(), playerId);
 
-                round.getImages().put(playerId, image.getKey().getId());
-                round.getImageToPlayer().put(image.getKey().getId(), playerId);
+				if (round.getStatus() == Status.SUBMIT_STORY)
+					round.setStatus(Status.SUBMIT_OTHERS);
+				else if (round.submissionComplete())
+					round.setStatus(Status.SUBMIT_VOTES);
 
-                if (round.getStatus() == Status.SUBMIT_STORY) {
-                    round.setStatus(Status.SUBMIT_OTHERS);
-                } else if (round.submissionComplete()) {
-                    round.setStatus(Status.SUBMIT_VOTES);
-                }
+				match.setLastModified(Utils.now());
+			}
+		};
 
-                match.setLastModified(Utils.now());
-            }
-        };
+		Match match = matches.update(KeyFactory.createKey("Match", matchId),
+				callback);
 
-        Match match = matches.update(KeyFactory.createKey("Match", matchId),
-                callback);
+		Round round = match.getRounds().get(roundNum);
+		long imageId = round.getImages().get(playerId);
+		return getImage(imageId).getUrl();
+	}
 
-        Round round = match.getRounds().get(roundNum);
-        long imageId = round.getImages().get(playerId);
-        return getImage(imageId).getUrl();
-    }
+	@Override
+	@RequestMapping(value = VOTE_SVC_PATH, method = RequestMethod.GET, produces = "application/json")
+	public @ResponseBody boolean submitVote(
+			@RequestParam(value = PLAYER_PARAMETER, required = true) final long playerId,
+			@RequestParam(value = MATCH_PARAMETER, required = true) final long matchId,
+			@RequestParam(value = ROUND_PARAMETER, required = true) final int roundNum,
+			@RequestParam(value = IMAGE_PARAMETER, required = true) final long imageId) {
 
-    @Override
-    @RequestMapping(value = VOTE_SVC_PATH, method = RequestMethod.GET, produces = "application/json")
-    public @ResponseBody boolean submitVote(
-            @RequestParam(value = PLAYER_PARAMETER, required = true) final long playerId,
-            @RequestParam(value = MATCH_PARAMETER, required = true) final long matchId,
-            @RequestParam(value = ROUND_PARAMETER, required = true) final int roundNum,
-            @RequestParam(value = IMAGE_PARAMETER, required = true) final long imageId) {
+		Callback<Match> callback = new Callback<Match>() {
+			@Override
+			public void apply(Match match) {
+				Round round = match.getRounds().get(roundNum);
 
-        Callback<Match> callback = new Callback<Match>() {
-            @Override
-            public void apply(Match match) {
-                Round round = match.getRounds().get(roundNum);
+				if (round.getStatus() != Status.SUBMIT_VOTES)
+					throw new IllegalArgumentException("Status "
+							+ round.getStatus() + "; not expecting votes.");
 
-                if (round.getStatus() != Status.SUBMIT_VOTES) {
-                    throw new IllegalArgumentException("Status "
-                            + round.getStatus() + "; not expecting votes.");
-                }
+				if (round.getStoryTellerKey().getId() == playerId)
+					throw new IllegalArgumentException("Player " + playerId
+							+ " is the storyteller and cannot submit a vote.");
 
-                if (round.getStoryTellerKey().getId() == playerId) {
-                    throw new IllegalArgumentException("Player " + playerId
-                            + " is the storyteller and cannot submit a vote.");
-                }
+				if (!round.getImages().containsValue(imageId))
+					throw new IllegalArgumentException("Image " + imageId
+							+ " not found in match " + matchId + ", round "
+							+ roundNum + ".");
 
-                if (!round.getImages().containsValue(imageId)) {
-                    throw new IllegalArgumentException("Image " + imageId
-                            + " not found in match " + matchId + ", round "
-                            + roundNum + ".");
-                }
+				if (round.getImages().get(playerId).equals(imageId))
+					throw new IllegalArgumentException("Player " + playerId
+							+ " cannot vote for their own image " + imageId
+							+ ", match " + matchId + ", round " + roundNum
+							+ ".");
 
-                if (round.getImages().get(playerId).equals(imageId)) {
-                    throw new IllegalArgumentException("Player " + playerId
-                            + " cannot vote for their own image " + imageId
-                            + ", match " + matchId + ", round " + roundNum
-                            + ".");
-                }
+				if (round.getVotes().containsKey(playerId))
+					throw new IllegalArgumentException("Player " + playerId
+							+ " has already voted" + ", match " + matchId
+							+ ", round " + roundNum + ".");
 
-                if (round.getVotes().containsKey(playerId)) {
-                    throw new IllegalArgumentException("Player " + playerId
-                            + " has already voted" + ", match " + matchId
-                            + ", round " + roundNum + ".");
-                }
+				round.getVotes().put(playerId, imageId);
 
-                round.getVotes().put(playerId, imageId);
+				round.calculateScores();
+			}
+		};
 
-                round.calculateScores();
-            }
-        };
+		matches.update(KeyFactory.createKey("Match", matchId), callback);
 
-        matches.update(KeyFactory.createKey("Match", matchId), callback);
-
-        return true;
-    }
+		return true;
+	}
 
 }

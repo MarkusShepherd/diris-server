@@ -101,6 +101,8 @@ public class Player {
 
 	public Result sendPushNotification(String title, String message)
 			throws IOException {
+		if (gcmRegistrationID == null)
+			return null;
 		Sender sender = new Sender("AIzaSyCnTKD1IDUtwKYkH9rPZONUiU4xbln3GNk");
 		Message msg = new Message.Builder().addData("message", message)
 				.addData("title", title).build();

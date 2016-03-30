@@ -20,69 +20,69 @@ import org.apache.commons.io.IOUtils;
  */
 public class RequestUtils {
 
-    public static final int DEFAULT_BUFFER_SIZE     = 2 * 1024 * 1024;
-    public static final int DEFAULT_MAX_UPLOAD_SIZE = 4 * 1024 * 1024;
+	public static final int DEFAULT_BUFFER_SIZE = 2 * 1024 * 1024;
+	public static final int DEFAULT_MAX_UPLOAD_SIZE = 4 * 1024 * 1024;
 
-    public static void copy(InputStream from, OutputStream to)
-            throws IOException {
-        copy(from, to, DEFAULT_BUFFER_SIZE);
-    }
+	public static void copy(InputStream from, OutputStream to)
+			throws IOException {
+		copy(from, to, DEFAULT_BUFFER_SIZE);
+	}
 
-    /**
-     * Transfer the data from the inputStream to the outputStream. Then close
-     * both streams.
-     * 
-     * @throws IOException
-     */
-    public static void copy(InputStream from, OutputStream to, int bufferSize)
-            throws IOException {
-        try {
-            byte[] buffer = new byte[bufferSize];
-            int bytesRead = from.read(buffer);
-            while (bytesRead != -1) {
-                to.write(buffer, 0, bytesRead);
-                bytesRead = from.read(buffer);
-            }
-        } finally {
-            from.close();
-            to.close();
-        }
-    }
+	/**
+	 * Transfer the data from the inputStream to the outputStream. Then close
+	 * both streams.
+	 * 
+	 * @throws IOException
+	 */
+	public static void copy(InputStream from, OutputStream to, int bufferSize)
+			throws IOException {
+		try {
+			byte[] buffer = new byte[bufferSize];
+			int bytesRead = from.read(buffer);
+			while (bytesRead != -1) {
+				to.write(buffer, 0, bytesRead);
+				bytesRead = from.read(buffer);
+			}
+		} finally {
+			from.close();
+			to.close();
+		}
+	}
 
-    public static RequestFields getRequestFields(HttpServletRequest req)
-            throws FileUploadException, IOException {
-        return getRequestFields(req, DEFAULT_MAX_UPLOAD_SIZE);
-    }
+	public static RequestFields getRequestFields(HttpServletRequest req)
+			throws FileUploadException, IOException {
+		return getRequestFields(req, DEFAULT_MAX_UPLOAD_SIZE);
+	}
 
-    public static RequestFields getRequestFields(HttpServletRequest req,
-            int maxUploadSize) throws FileUploadException, IOException {
-        RequestFields rf = new RequestFields();
+	public static RequestFields getRequestFields(HttpServletRequest req,
+			int maxUploadSize) throws FileUploadException, IOException {
+		RequestFields rf = new RequestFields();
 
-        ServletFileUpload upload = new ServletFileUpload();
-        FileItemIterator iterator = upload.getItemIterator(req);
+		ServletFileUpload upload = new ServletFileUpload();
+		FileItemIterator iterator = upload.getItemIterator(req);
 
-        while (iterator.hasNext()) {
-            FileItemStream item = iterator.next();
-            InputStream stream = item.openStream();
+		while (iterator.hasNext()) {
+			FileItemStream item = iterator.next();
+			InputStream stream = item.openStream();
 
-            String name = item.getFieldName();
+			String name = item.getFieldName();
 
-            if (item.isFormField()) {
-                String content = IOUtils.toString(stream, "UTF-8");
-                rf.formFields.put(name, content);
-            } else {
-                final byte[] byteArray = IOUtils.toByteArray(stream);
-                if (byteArray.length <= maxUploadSize)
-                    rf.fileFields.put(name, byteArray);
-            }
-        }
+			if (item.isFormField()) {
+				String content = IOUtils.toString(stream, "UTF-8");
+				rf.formFields.put(name, content);
+			} else {
+				final byte[] byteArray = IOUtils.toByteArray(stream);
+				if (byteArray.length <= maxUploadSize)
+					rf.fileFields.put(name, byteArray);
+			}
+		}
 
-        return rf;
+		return rf;
 
-    }
+	}
 
-    public static class RequestFields {
-        public final Map<String, String> formFields = new HashMap<String, String>();
-        public final Map<String, byte[]> fileFields = new HashMap<String, byte[]>();
-    }
+	public static class RequestFields {
+		public final Map<String, String> formFields = new HashMap<String, String>();
+		public final Map<String, byte[]> fileFields = new HashMap<String, byte[]>();
+	}
 }

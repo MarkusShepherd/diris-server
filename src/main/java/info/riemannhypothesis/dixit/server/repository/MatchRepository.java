@@ -13,7 +13,7 @@ import com.google.appengine.api.datastore.Key;
 @Service
 public class MatchRepository extends JDOCrudRepository<Match, Key> {
 
-    public MatchRepository() {
-        super(Match.class);
-    }
+	public MatchRepository() {
+		super(Match.class);
+	}
 }

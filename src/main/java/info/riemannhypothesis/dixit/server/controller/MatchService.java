@@ -52,8 +52,10 @@ public class MatchService implements MatchServiceApi {
 			pKeys.add(KeyFactory.createKey("Player", pId));
 		}
 
-		final Long invitingPlayer = pIds.get(0);
-		Match match = new Match(pKeys, invitingPlayer);
+		final Long invitingPlayerId = pIds.get(0);
+		final Player invitingPlayer = players.findById(KeyFactory.createKey(
+				"Player", invitingPlayerId));
+		Match match = new Match(pKeys, invitingPlayerId);
 		match = matches.save(match);
 
 		final Key mKey = match.getKey();
@@ -61,12 +63,13 @@ public class MatchService implements MatchServiceApi {
 			@Override
 			public void apply(Player player) {
 				player.addMatch(mKey);
-				if (player.getKey().getId() != invitingPlayer)
+				if (player.getKey().getId() != invitingPlayerId)
 					try {
 						player.sendPushNotification("New invitation",
-								"You've been invited to a new match!");
+								invitingPlayer.getName()
+										+ " invited you to their match! "
+										+ "Would you like to join?");
 					} catch (IOException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 			}
@@ -110,7 +113,16 @@ public class MatchService implements MatchServiceApi {
 		final Callback<Match> callback = new Callback<Match>() {
 			@Override
 			public void apply(Match match) {
-				match.accept(pId);
+				if (match.accept(pId)) {
+					Player player = players.findById(match.getRounds().get(0)
+							.getStoryTellerKey());
+					try {
+						player.sendPushNotification("It's your turn",
+								"Please tell us your story!");
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
 			}
 		};
 

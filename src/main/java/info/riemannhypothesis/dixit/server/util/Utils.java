@@ -14,13 +14,13 @@ import java.util.Set;
  */
 public class Utils {
 
-    public static <T> List<T> shuffledListFromSet(Set<T> set) {
-        List<T> list = new ArrayList<T>(set);
-        Collections.shuffle(list);
-        return list;
-    }
+	public static <T> List<T> shuffledListFromSet(Set<T> set) {
+		List<T> list = new ArrayList<T>(set);
+		Collections.shuffle(list);
+		return list;
+	}
 
-    public static String now() {
-        return Application.DATE_FORMATTER.format(new Date());
-    }
+	public static String now() {
+		return Application.DATE_FORMATTER.format(new Date());
+	}
 }
