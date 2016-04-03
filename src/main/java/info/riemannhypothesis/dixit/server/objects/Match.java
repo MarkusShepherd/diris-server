@@ -156,13 +156,13 @@ public class Match {
 
 		for (int i = 0; i < rounds.size(); i++) {
 			Round round = rounds.get(i);
-			if (round.getStatus() == Round.Status.FINISHED) {
+			if (round.getStatus() == Round.Status.FINISHED)
 				for (Entry<Long, Integer> e : round.getScores().entrySet()) {
 					Long pId = e.getKey();
 					Integer score = temp.get(pId) + e.getValue();
 					temp.put(pId, score);
 				}
-			} else {
+			else {
 				currentRound = i;
 				if (round.getStatus() == Round.Status.WAITING)
 					round.setStatus(Round.Status.SUBMIT_STORY);

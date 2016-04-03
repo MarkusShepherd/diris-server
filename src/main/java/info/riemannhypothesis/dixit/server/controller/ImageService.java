@@ -4,11 +4,13 @@ import info.riemannhypothesis.dixit.server.Application;
 import info.riemannhypothesis.dixit.server.client.ImageServiceApi;
 import info.riemannhypothesis.dixit.server.objects.Image;
 import info.riemannhypothesis.dixit.server.objects.Match;
+import info.riemannhypothesis.dixit.server.objects.Player;
 import info.riemannhypothesis.dixit.server.objects.Round;
 import info.riemannhypothesis.dixit.server.objects.Round.Status;
 import info.riemannhypothesis.dixit.server.repository.ImageRepository;
 import info.riemannhypothesis.dixit.server.repository.JDOCrudRepository.Callback;
 import info.riemannhypothesis.dixit.server.repository.MatchRepository;
+import info.riemannhypothesis.dixit.server.repository.PlayerRepository;
 import info.riemannhypothesis.dixit.server.util.RequestUtils;
 import info.riemannhypothesis.dixit.server.util.RequestUtils.RequestFields;
 import info.riemannhypothesis.dixit.server.util.Utils;
@@ -36,6 +38,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import retrofit.mime.TypedFile;
 
 import com.google.api.client.util.Base64;
+import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.tools.cloudstorage.GcsFileOptions;
 import com.google.appengine.tools.cloudstorage.GcsFilename;
@@ -53,6 +56,8 @@ public class ImageService implements ImageServiceApi {
 
 	@Autowired
 	private MatchRepository matches;
+	@Autowired
+	private PlayerRepository players;
 	@Autowired
 	private ImageRepository images;
 
@@ -169,10 +174,24 @@ public class ImageService implements ImageServiceApi {
 				round.getImages().put(playerId, image.getKey().getId());
 				round.getImageToPlayer().put(image.getKey().getId(), playerId);
 
-				if (round.getStatus() == Status.SUBMIT_STORY)
+				if (round.getStatus() == Status.SUBMIT_STORY) {
 					round.setStatus(Status.SUBMIT_OTHERS);
-				else if (round.submissionComplete())
+					Key pKey = KeyFactory.createKey("Player", playerId);
+					Player submittingPlayer = players.findById(pKey);
+					players.sendPushNotifications(
+							"It's your turn",
+							submittingPlayer.getName()
+									+ " has told their story - now submit an image that fits the story!",
+							match.getPlayerKeys(), pKey);
+				} else if (round.submissionComplete()) {
 					round.setStatus(Status.SUBMIT_VOTES);
+					Key pKey = round.getStoryTellerKey();
+					Player storyteller = players.findById(pKey);
+					players.sendPushNotifications("It's your turn",
+							"Everybody has submitted their image - now vote which image fits "
+									+ storyteller.getName() + "'s story!",
+							match.getPlayerKeys(), pKey);
+				}
 
 				match.setLastModified(Utils.now());
 			}
@@ -225,7 +244,27 @@ public class ImageService implements ImageServiceApi {
 
 				round.getVotes().put(playerId, imageId);
 
-				round.calculateScores();
+				if (round.calculateScores())
+					// TODO send notification with scores of this round
+
+					if (match.getStatus() == Match.Status.FINISHED)
+						// TODO individual messages with scores and positions
+						players.sendPushNotifications(
+								"Your match has finished",
+								"Open the overview to see how you did!",
+								match.getPlayerKeys());
+
+					else
+						try {
+							players.findById(
+									match.getRounds()
+											.get(match.getCurrentRound())
+											.getStoryTellerKey())
+									.sendPushNotification("It's your turn",
+											"Please tell us your story!");
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
 			}
 		};
 
