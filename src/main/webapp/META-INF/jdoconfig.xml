@@ -14,6 +14,8 @@
 			value="true" />
 		<property name="datanucleus.appengine.datastoreReadConsistency"
 			value="EVENTUAL" />
+		<!--property name="datanucleus.cache.level2.type" value="none" / -->
+		<property name="datanucleus.cache.level2.timeout" value="0" />
 		<property name="javax.jdo.option.DatastoreReadTimeoutMillis"
 			value="5000" />
 		<property name="javax.jdo.option.DatastoreWriteTimeoutMillis"
