@@ -10,6 +10,7 @@ import info.riemannhypothesis.dixit.server.repository.JDOCrudRepository.Callback
 import info.riemannhypothesis.dixit.server.repository.MatchRepository;
 import info.riemannhypothesis.dixit.server.repository.PlayerRepository;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -51,7 +52,10 @@ public class MatchService implements MatchServiceApi {
 			pKeys.add(KeyFactory.createKey("Player", pId));
 		}
 
-		Match match = new Match(pKeys, pIds.get(0));
+		final Long invitingPlayerId = pIds.get(0);
+		final Player invitingPlayer = players.findById(KeyFactory.createKey(
+				"Player", invitingPlayerId));
+		Match match = new Match(pKeys, invitingPlayerId);
 		match = matches.save(match);
 
 		final Key mKey = match.getKey();
@@ -59,6 +63,15 @@ public class MatchService implements MatchServiceApi {
 			@Override
 			public void apply(Player player) {
 				player.addMatch(mKey);
+				if (player.getKey().getId() != invitingPlayerId)
+					try {
+						player.sendPushNotification("New invitation",
+								invitingPlayer.getName()
+										+ " invited you to their match! "
+										+ "Would you like to join?");
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 			}
 		};
 
@@ -100,7 +113,16 @@ public class MatchService implements MatchServiceApi {
 		final Callback<Match> callback = new Callback<Match>() {
 			@Override
 			public void apply(Match match) {
-				match.accept(pId);
+				if (match.accept(pId)) {
+					Player player = players.findById(match.getRounds().get(0)
+							.getStoryTellerKey());
+					try {
+						player.sendPushNotification("It's your turn",
+								"Please tell us your story!");
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
 			}
 		};
 

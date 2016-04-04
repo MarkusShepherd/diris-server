@@ -17,31 +17,34 @@ import retrofit.http.Query;
  */
 public interface PlayerServiceApi {
 
-    public static final String PATH = "/player";
+	public static final String PATH = "/player";
 
-    @POST(PATH)
-    public Player addPlayer(@Body Player player);
+	@POST(PATH)
+	public Player addPlayer(@Body Player player);
 
-    @GET(PATH)
-    public List<Player> getPlayerList();
+	@POST(PATH + "/update/{id}")
+	public Player updatePlayer(@Path("id") long id, @Body Player uPlayer);
 
-    @GET(PATH + "/id/{id}")
-    public Player getPlayerById(@Path("id") long id);
+	@GET(PATH)
+	public List<Player> getPlayerList();
 
-    @GET(PATH + "/id/{id}/external")
-    public Player getPlayerByExternalId(@Path("id") String id);
+	@GET(PATH + "/id/{id}")
+	public Player getPlayerById(@Path("id") long id);
 
-    @GET(PATH + "/email")
-    public Player getPlayerByEmail(@Query("email") String email);
+	@GET(PATH + "/id/{id}/external")
+	public Player getPlayerByExternalId(@Path("id") String id);
 
-    @GET(PATH + "/name/{name}")
-    public List<Player> getPlayerByName(@Path("name") String name);
+	@GET(PATH + "/email")
+	public Player getPlayerByEmail(@Query("email") String email);
 
-    @GET(PATH + "/id/{id}/matches")
-    public List<Match> getPlayerMatches(@Path("id") long id);
+	@GET(PATH + "/name/{name}")
+	public List<Player> getPlayerByName(@Path("name") String name);
 
-    @GET(PATH + "/id/{id}/matches/{status}")
-    public List<Match> getPlayerMatches(@Path("id") long id,
-            @Path("status") String status);
+	@GET(PATH + "/id/{id}/matches")
+	public List<Match> getPlayerMatches(@Path("id") long id);
+
+	@GET(PATH + "/id/{id}/matches/{status}")
+	public List<Match> getPlayerMatches(@Path("id") long id,
+			@Path("status") String status);
 
 }

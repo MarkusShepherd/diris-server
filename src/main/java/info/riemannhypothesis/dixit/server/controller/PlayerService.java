@@ -3,8 +3,10 @@ package info.riemannhypothesis.dixit.server.controller;
 import info.riemannhypothesis.dixit.server.client.PlayerServiceApi;
 import info.riemannhypothesis.dixit.server.objects.Match;
 import info.riemannhypothesis.dixit.server.objects.Player;
+import info.riemannhypothesis.dixit.server.repository.JDOCrudRepository.Callback;
 import info.riemannhypothesis.dixit.server.repository.MatchRepository;
 import info.riemannhypothesis.dixit.server.repository.PlayerRepository;
+import info.riemannhypothesis.dixit.server.util.Utils;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,94 +31,115 @@ import com.google.appengine.api.datastore.KeyFactory;
 @Controller
 public class PlayerService implements PlayerServiceApi {
 
-    @Autowired
-    private PlayerRepository players;
-    @Autowired
-    private MatchRepository  matches;
+	@Autowired
+	private PlayerRepository players;
+	@Autowired
+	private MatchRepository matches;
 
-    @Override
-    @RequestMapping(value = PATH, method = RequestMethod.POST, produces = "application/json")
-    public @ResponseBody Player addPlayer(@RequestBody Player player) {
-        // TODO verify that name and email do not exist yet
-        return players.save(player);
-    }
+	@Override
+	@RequestMapping(value = PATH, method = RequestMethod.POST, produces = "application/json")
+	public @ResponseBody Player addPlayer(@RequestBody Player player) {
+		// TODO verify that name and email do not exist yet
+		return players.save(player);
+	}
 
-    @Override
-    @RequestMapping(value = PATH, method = RequestMethod.GET, produces = "application/json")
-    public @ResponseBody List<Player> getPlayerList() {
-        return players.findAll();
-    }
+	@Override
+	@RequestMapping(value = PATH + "/update/{id}", method = RequestMethod.POST, produces = "application/json")
+	public @ResponseBody Player updatePlayer(@PathVariable("id") long id,
+			@RequestBody final Player uPlayer) {
+		System.out.println(uPlayer.toString());
 
-    @Override
-    @RequestMapping(value = PATH + "/id/{id}", method = RequestMethod.GET, produces = "application/json")
-    public @ResponseBody Player getPlayerById(@PathVariable("id") long id) {
-        return players.findById(KeyFactory.createKey("Player", id));
-    }
+		final Callback<Player> callback = new Callback<Player>() {
+			@Override
+			public void apply(Player player) {
+				if (uPlayer.getAvatarURL() != null)
+					player.setAvatarURL(uPlayer.getAvatarURL());
+				if (uPlayer.getGcmRegistrationID() != null)
+					player.setGcmRegistrationID(uPlayer.getGcmRegistrationID());
+				player.setLastModified(Utils.now());
+			}
+		};
 
-    @Override
-    @RequestMapping(value = PATH + "/id/{id}/external", method = RequestMethod.GET, produces = "application/json")
-    public @ResponseBody Player getPlayerByExternalId(@PathVariable("id") String id) {
-        final List<Player> list = players.findByField("externalID", id);
-        if (list.size() > 0)
-            return list.get(0);
-        else
-            return null;
-    }
+		return players.update(KeyFactory.createKey("Player", id), callback);
+	}
 
-    @Override
-    @RequestMapping(value = PATH + "/email", method = RequestMethod.GET, produces = "application/json")
-    public @ResponseBody Player getPlayerByEmail(
-            @RequestParam(value = "email", required = true) final String email) {
-        final List<Player> list = players.findByField("email", email);
-        if (list.size() > 0)
-            return list.get(0);
-        else
-            return null;
-    }
+	@Override
+	@RequestMapping(value = PATH, method = RequestMethod.GET, produces = "application/json")
+	public @ResponseBody List<Player> getPlayerList() {
+		return players.findAll();
+	}
 
-    @Override
-    @RequestMapping(value = PATH + "/name/{name}", method = RequestMethod.GET, produces = "application/json")
-    public @ResponseBody List<Player> getPlayerByName(
-            @PathVariable("name") String name) {
-        return players.findByField("name", name);
-    }
+	@Override
+	@RequestMapping(value = PATH + "/id/{id}", method = RequestMethod.GET, produces = "application/json")
+	public @ResponseBody Player getPlayerById(@PathVariable("id") long id) {
+		return players.findById(KeyFactory.createKey("Player", id));
+	}
 
-    @Override
-    @RequestMapping(value = PATH + "/id/{id}/matches", method = RequestMethod.GET, produces = "application/json")
-    public @ResponseBody List<Match> getPlayerMatches(
-            @PathVariable("id") long id) {
-        Player player = getPlayerById(id);
-        if (player == null)
-            return new LinkedList<Match>();
-        Collection<Match> m = matches.findByIds(player.getMatchKeys());
-        return new ArrayList<Match>(m);
-    }
+	@Override
+	@RequestMapping(value = PATH + "/id/{id}/external", method = RequestMethod.GET, produces = "application/json")
+	public @ResponseBody Player getPlayerByExternalId(
+			@PathVariable("id") String id) {
+		final List<Player> list = players.findByField("externalID", id);
+		if (list.size() > 0)
+			return list.get(0);
+		else
+			return null;
+	}
 
-    private List<Match> getPlayerMatchesByStatus(long id, Match.Status status) {
-        // TODO use query filter instead
-        List<Match> list = getPlayerMatches(id);
-        List<Match> result = new ArrayList<Match>(list.size());
+	@Override
+	@RequestMapping(value = PATH + "/email", method = RequestMethod.GET, produces = "application/json")
+	public @ResponseBody Player getPlayerByEmail(
+			@RequestParam(value = "email", required = true) final String email) {
+		final List<Player> list = players.findByField("email", email);
+		if (list.size() > 0)
+			return list.get(0);
+		else
+			return null;
+	}
 
-        for (Match match : list) {
-            if (match.getStatus() == status)
-                result.add(match);
-        }
+	@Override
+	@RequestMapping(value = PATH + "/name/{name}", method = RequestMethod.GET, produces = "application/json")
+	public @ResponseBody List<Player> getPlayerByName(
+			@PathVariable("name") String name) {
+		return players.findByField("name", name);
+	}
 
-        return result;
-    }
+	@Override
+	@RequestMapping(value = PATH + "/id/{id}/matches", method = RequestMethod.GET, produces = "application/json")
+	public @ResponseBody List<Match> getPlayerMatches(
+			@PathVariable("id") long id) {
+		Player player = getPlayerById(id);
+		if (player == null)
+			return new LinkedList<Match>();
+		Collection<Match> m = matches.findByIds(player.getMatchKeys());
+		return new ArrayList<Match>(m);
+	}
 
-    @Override
-    @RequestMapping(value = PATH + "/id/{id}/matches/{status}", method = RequestMethod.GET, produces = "application/json")
-    public @ResponseBody List<Match> getPlayerMatches(
-            @PathVariable("id") long id, @PathVariable("status") String status) {
-        if ("waiting".equals(status))
-            return getPlayerMatchesByStatus(id, Match.Status.WAITING);
-        else if ("inprogress".equals(status))
-            return getPlayerMatchesByStatus(id, Match.Status.IN_PROGRESS);
-        else if ("finished".equals(status))
-            return getPlayerMatchesByStatus(id, Match.Status.FINISHED);
-        else
-            throw new IllegalArgumentException("Unknown status: " + status);
-    }
+	private List<Match> getPlayerMatchesByStatus(long id, Match.Status status) {
+		// TODO use query filter instead
+		List<Match> list = getPlayerMatches(id);
+		List<Match> result = new ArrayList<Match>(list.size());
+
+		for (Match match : list) {
+			if (match.getStatus() == status)
+				result.add(match);
+		}
+
+		return result;
+	}
+
+	@Override
+	@RequestMapping(value = PATH + "/id/{id}/matches/{status}", method = RequestMethod.GET, produces = "application/json")
+	public @ResponseBody List<Match> getPlayerMatches(
+			@PathVariable("id") long id, @PathVariable("status") String status) {
+		if ("waiting".equals(status))
+			return getPlayerMatchesByStatus(id, Match.Status.WAITING);
+		else if ("inprogress".equals(status))
+			return getPlayerMatchesByStatus(id, Match.Status.IN_PROGRESS);
+		else if ("finished".equals(status))
+			return getPlayerMatchesByStatus(id, Match.Status.FINISHED);
+		else
+			throw new IllegalArgumentException("Unknown status: " + status);
+	}
 
 }

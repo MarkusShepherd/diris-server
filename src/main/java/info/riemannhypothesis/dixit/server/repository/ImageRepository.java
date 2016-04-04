@@ -13,8 +13,8 @@ import com.google.appengine.api.datastore.Key;
 @Service
 public class ImageRepository extends JDOCrudRepository<Image, Key> {
 
-    public ImageRepository() {
-        super(Image.class);
-    }
+	public ImageRepository() {
+		super(Image.class);
+	}
 
 }

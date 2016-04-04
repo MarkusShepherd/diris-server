@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" output="target/dixit-0-0-3-SNAPSHOT/WEB-INF/classes" path="src/main/java">
+	<classpathentry kind="src" output="target/dixit-0-0-4-SNAPSHOT/WEB-INF/classes" path="src/main/java">
 		<attributes>
 			<attribute name="optional" value="true"/>
 			<attribute name="maven.pomderived" value="true"/>
@@ -29,7 +29,7 @@
 			<attribute name="owner.project.facets" value="jpt.jpa"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry excluding="**" kind="src" output="target/dixit-0-0-3-SNAPSHOT/WEB-INF/classes" path="src/main/resources">
+	<classpathentry excluding="**" kind="src" output="target/dixit-0-0-4-SNAPSHOT/WEB-INF/classes" path="src/main/resources">
 		<attributes>
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
@@ -44,5 +44,5 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="output" path="target/dixit-0-0-3-SNAPSHOT/WEB-INF/classes"/>
+	<classpathentry kind="output" path="target/dixit-0-0-4-SNAPSHOT/WEB-INF/classes"/>
 </classpath>
