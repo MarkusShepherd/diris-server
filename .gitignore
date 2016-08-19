@@ -2,9 +2,52 @@ target
 .recommenders
 .metadata
 .gradle
-bin
 .DS_Store
-build
 .private
 .idea
 *.iml
+
+*.py[co]
+
+# Packages
+*.egg
+*.egg-info
+dist
+build
+eggs
+parts
+bin
+var
+sdist
+develop-eggs
+.installed.cfg
+pip-selfcheck.json
+
+# Installer logs
+pip-log.txt
+
+# Unit test / coverage reports
+.coverage
+.tox
+
+# Translations
+*.mo
+
+# Mr Developer
+.mr.developer.cfg
+
+# Django files
+include
+lib
+local
+man
+share
+Scripts
+.Python
+*.pyc
+*~
+*.db
+
+# MacOSX
+.DS_Store
+

@@ -1,0 +1,7 @@
+* url: /_ah/(mapreduce|queue|warmup).*
+  script: dixit.wsgi.application
+  login: admin
+
+* url: /.*
+  script: dixit.wsgi.application
+
