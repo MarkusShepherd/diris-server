@@ -1,41 +1,44 @@
-from rest_framework import status
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
 from matches.models import Match
 from matches.serializers import MatchSerializer
+from django.http import Http404
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
 
-@api_view(['GET', 'POST'])
-def match_list(request, format=None):
-    if request.method == 'GET':
+class MatchList(APIView):
+    def get(self, request, format=None):
         matches = Match.objects.all()
         serializer = MatchSerializer(matches, many=True)
         return Response(serializer.data)
 
-    elif request.method == 'POST':
+    def post(self, request, format=None):
         serializer = MatchSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['GET', 'PUT', 'DELETE'])
-def match_detail(request, pk, format=None):
-    try:
-        match = Match.objects.get(pk=pk)
-    except Match.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
+class MatchDetail(APIView):
+    def get_object(self, pk):
+        try:
+            return Match.objects.get(pk=pk)
+        except Match.DoesNotExist:
+            raise Http404
 
-    if request.method == 'GET':
+    def get(self, request, pk, format=None):
+        match = self.get_object(pk)
         serializer = MatchSerializer(match)
         return Response(serializer.data)
 
-    elif request.method == 'PUT':
+    def put(self, request, pk, format=None):
+        match = self.get_object(pk)
         serializer = MatchSerializer(match, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    elif request.method == 'DELETE':
+    def delete(self, request, pk, format=None):
+        match = self.get_object(pk)
         match.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
