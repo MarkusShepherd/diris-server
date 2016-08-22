@@ -11,7 +11,7 @@ class Match(models.Model):
     )
     STANDARD_TIMEOUT = 60 * 60 * 24 # 24h
 
-    players = models.ManyToManyField(Player, through='PlayerMatchDetails')
+    players = models.ManyToManyField('Player', through='PlayerMatchDetails')
     total_rounds = models.PositiveSmallIntegerField()
     status = models.CharField(max_length=1, choices=MATCH_STATUSES, default=WAITING)
     timeout = models.PositiveIntegerField(default=STANDARD_TIMEOUT)
@@ -22,7 +22,7 @@ class Match(models.Model):
         return ', '.join(self.players)
 
     class Meta:
-        ordering = ('created')
+        ordering = ('created',)
 
 class Round(models.Model):
     WAITING = 'w'
@@ -39,7 +39,7 @@ class Round(models.Model):
     )
 
     match = models.ForeignKey(Match, on_delete=models.CASCADE)
-    players = models.ManyToManyField(Player, through='PlayerRoundDetails', through_fields=('player', 'round'))
+    players = models.ManyToManyField('Player', through='PlayerRoundDetails', through_fields=('round', 'player'))
     number = models.PositiveSmallIntegerField()
     is_current_round = models.BooleanField(default=False)
     status = models.CharField(max_length=1, choices=ROUND_STATUSES, default=WAITING)
@@ -50,13 +50,13 @@ class Round(models.Model):
         return 'Round #%d' % self.number
 
     class Meta:
-        ordering = ('number')
+        ordering = ('number',)
 
-class Player(modes.Model):
+class Player(models.Model):
     external_id = models.CharField(max_length=100, unique=True)
     name = models.CharField(max_length=100, unique=True)
     email = models.EmailField(unique=True)
-    avatar = models.ForeignKey(Image, blank=True, null=True, on_delete=models.SET_NULL)
+    avatar = models.ForeignKey('Image', blank=True, null=True, on_delete=models.SET_NULL)
     gcm_registration_id = models.CharField(max_length=100, blank=True)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
@@ -65,9 +65,9 @@ class Player(modes.Model):
         return self.name
 
     class Meta:
-        ordering = ('name')
+        ordering = ('name',)
 
-class Image(modes.Model):
+class Image(models.Model):
     url = models.URLField()
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
@@ -76,7 +76,7 @@ class Image(modes.Model):
         return self.url
 
     class Meta:
-        ordering = ('created')
+        ordering = ('created',)
 
 class PlayerMatchDetails(models.Model):
     INVITED = 'i'
@@ -97,10 +97,10 @@ class PlayerMatchDetails(models.Model):
     score = models.PositiveSmallIntegerField(default=0)
 
 class PlayerRoundDetails(models.Model):
-    player = models.ForeignKey(Player, on_delete=models.PROTECT)
+    player = models.ForeignKey(Player, related_name='players', on_delete=models.PROTECT)
     round = models.ForeignKey(Round, on_delete=models.CASCADE)
     is_storyteller = models.BooleanField(default=False)
     image = models.ForeignKey(Image, blank=True, on_delete=models.PROTECT)
     score = models.PositiveSmallIntegerField(default=0)
-    vote = models.ForeignKey(Player, blank=True, on_delete=models.PROTECT)
+    vote = models.ForeignKey(Player, related_name='votes', blank=True, on_delete=models.PROTECT)
 
