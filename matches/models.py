@@ -19,7 +19,8 @@ class Match(models.Model):
     last_modified = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return ', '.join(self.players)
+        # return ', '.join(self.players)
+        return str(self.id)
 
     class Meta:
         ordering = ('created',)
