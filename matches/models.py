@@ -11,7 +11,7 @@ class Match(models.Model):
     )
     STANDARD_TIMEOUT = 60 * 60 * 24 # 24h
 
-    players = models.ManyToManyField('Player', through='PlayerMatchDetails')
+    players = models.ManyToManyField('Player', related_name='matches', through='PlayerMatchDetails')
     total_rounds = models.PositiveSmallIntegerField()
     status = models.CharField(max_length=1, choices=MATCH_STATUSES, default=WAITING)
     timeout = models.PositiveIntegerField(default=STANDARD_TIMEOUT)
@@ -39,8 +39,11 @@ class Round(models.Model):
         (FINISHED, 'finished'),
     )
 
-    match = models.ForeignKey(Match, on_delete=models.CASCADE)
-    players = models.ManyToManyField('Player', through='PlayerRoundDetails', through_fields=('round', 'player'))
+    match = models.ForeignKey(Match, related_name='rounds', on_delete=models.CASCADE)
+    players = models.ManyToManyField('Player',
+        related_name='rounds',
+        through='PlayerRoundDetails',
+        through_fields=('round', 'player'))
     number = models.PositiveSmallIntegerField()
     is_current_round = models.BooleanField(default=False)
     status = models.CharField(max_length=1, choices=ROUND_STATUSES, default=WAITING)
@@ -57,7 +60,10 @@ class Player(models.Model):
     external_id = models.CharField(max_length=100, unique=True)
     name = models.CharField(max_length=100, unique=True)
     email = models.EmailField(unique=True)
-    avatar = models.ForeignKey('Image', blank=True, null=True, on_delete=models.SET_NULL)
+    avatar = models.ForeignKey('Image',
+        related_name='used_as_avatars',
+        blank=True, null=True,
+        on_delete=models.SET_NULL)
     gcm_registration_id = models.CharField(max_length=100, blank=True)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
@@ -89,8 +95,8 @@ class PlayerMatchDetails(models.Model):
         (DECLINED, 'declined'),
     )
 
-    player = models.ForeignKey(Player, on_delete=models.PROTECT)
-    match = models.ForeignKey(Match, on_delete=models.CASCADE)
+    player = models.ForeignKey(Player, related_name='player_match_details', on_delete=models.PROTECT)
+    match = models.ForeignKey(Match, related_name='player_match_details', on_delete=models.CASCADE)
     is_inviting_player = models.BooleanField(default=False)
     date_invited = models.DateTimeField(auto_now_add=True)
     invitation_status = models.CharField(max_length=1, choices=INVITATION_STATUSES, default=INVITED)
@@ -98,10 +104,15 @@ class PlayerMatchDetails(models.Model):
     score = models.PositiveSmallIntegerField(default=0)
 
 class PlayerRoundDetails(models.Model):
-    player = models.ForeignKey(Player, related_name='players', on_delete=models.PROTECT)
-    round = models.ForeignKey(Round, on_delete=models.CASCADE)
+    player = models.ForeignKey(Player, related_name='player_round_details', on_delete=models.PROTECT)
+    round = models.ForeignKey(Round, related_name='player_round_details', on_delete=models.CASCADE)
     is_storyteller = models.BooleanField(default=False)
-    image = models.ForeignKey(Image, blank=True, on_delete=models.PROTECT)
+    image = models.ForeignKey(Image,
+        related_name='used_in_round_details',
+        blank=True, null=True,
+        on_delete=models.PROTECT)
     score = models.PositiveSmallIntegerField(default=0)
-    vote = models.ForeignKey(Player, related_name='votes', blank=True, on_delete=models.PROTECT)
-
+    vote = models.ForeignKey(Player,
+        related_name='voted_by',
+        blank=True, null=True,
+        on_delete=models.PROTECT)
