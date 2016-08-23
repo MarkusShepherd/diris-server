@@ -19,8 +19,8 @@ class Match(models.Model):
     last_modified = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        # return ', '.join(self.players)
-        return str(self.id)
+        return '#%d: %s' % (self.id, ', '.join([str(p) for p in self.players.all()]))
+        # return str(self.id)
 
     class Meta:
         ordering = ('created',)
@@ -51,7 +51,7 @@ class Round(models.Model):
     last_modified = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return 'Round #%d' % self.number
+        return 'Match #%d Round #%d' % (self.match.id, self.number)
 
     class Meta:
         ordering = ('number',)
@@ -75,12 +75,12 @@ class Player(models.Model):
         ordering = ('name',)
 
 class Image(models.Model):
-    url = models.URLField()
+    image_url = models.URLField()
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.url
+        return self.image_url
 
     class Meta:
         ordering = ('created',)
@@ -103,6 +103,9 @@ class PlayerMatchDetails(models.Model):
     date_responded = models.DateTimeField(blank=True)
     score = models.PositiveSmallIntegerField(default=0)
 
+    def __str__(self):
+        return '%s in Match #%d' % (self.player.name, self.match.id)
+
 class PlayerRoundDetails(models.Model):
     player = models.ForeignKey(Player, related_name='player_round_details', on_delete=models.PROTECT)
     round = models.ForeignKey(Round, related_name='player_round_details', on_delete=models.CASCADE)
@@ -116,3 +119,6 @@ class PlayerRoundDetails(models.Model):
         related_name='voted_by',
         blank=True, null=True,
         on_delete=models.PROTECT)
+
+    def __str__(self):
+        return '%s in %s' % (self.player.name, str(self.round))

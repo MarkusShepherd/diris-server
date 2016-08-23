@@ -1,5 +1,4 @@
 djangae==0.9.7
 django==1.10
 djangorestframework==3.4.4
-coreapi
-coreapi-cli
+coreapi==1.32.3
