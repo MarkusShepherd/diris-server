@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 class Match(models.Model):
     WAITING = 'w'
@@ -20,7 +21,6 @@ class Match(models.Model):
 
     def __str__(self):
         return '#%d: %s' % (self.id, ', '.join([str(p) for p in self.players.all()]))
-        # return str(self.id)
 
     class Meta:
         ordering = ('created',)
@@ -57,22 +57,21 @@ class Round(models.Model):
         ordering = ('number',)
 
 class Player(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     external_id = models.CharField(max_length=100, unique=True)
-    name = models.CharField(max_length=100, unique=True)
-    email = models.EmailField(unique=True)
+    gcm_registration_id = models.CharField(max_length=100, blank=True)
     avatar = models.ForeignKey('Image',
         related_name='used_as_avatars',
         blank=True, null=True,
         on_delete=models.SET_NULL)
-    gcm_registration_id = models.CharField(max_length=100, blank=True)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.name
+        return self.user.username
 
     class Meta:
-        ordering = ('name',)
+        ordering = ('user',)
 
 class Image(models.Model):
     image_url = models.URLField()
@@ -100,11 +99,11 @@ class PlayerMatchDetails(models.Model):
     is_inviting_player = models.BooleanField(default=False)
     date_invited = models.DateTimeField(auto_now_add=True)
     invitation_status = models.CharField(max_length=1, choices=INVITATION_STATUSES, default=INVITED)
-    date_responded = models.DateTimeField(blank=True)
+    date_responded = models.DateTimeField(blank=True, null=True)
     score = models.PositiveSmallIntegerField(default=0)
 
     def __str__(self):
-        return '%s in Match #%d' % (self.player.name, self.match.id)
+        return '%s in Match #%d' % (self.player.user.username, self.match.id)
 
 class PlayerRoundDetails(models.Model):
     player = models.ForeignKey(Player, related_name='player_round_details', on_delete=models.PROTECT)
@@ -121,4 +120,4 @@ class PlayerRoundDetails(models.Model):
         on_delete=models.PROTECT)
 
     def __str__(self):
-        return '%s in %s' % (self.player.name, str(self.round))
+        return '%s in %s' % (self.player.user.username, str(self.round))
