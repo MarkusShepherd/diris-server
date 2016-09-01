@@ -1,5 +1,56 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
+import random
+
+class MatchManager(models.Manager):
+    def create_match(self, player_details=None, players=None, total_rounds=0, timeout=0):
+        if not player_details:
+            if not players:
+                raise ValueError('Need to give players in the match')
+
+            player_details = [{'player': player, 'is_inviting_player': False}
+                for player in players]
+            player_details[0]['is_inviting_player'] = True
+
+        if not total_rounds:
+            total_rounds = len(player_details)
+        data = {'total_rounds': total_rounds}
+
+        if timeout:
+            data['timeout'] = timeout
+
+        match = self.create(**data)
+
+        for player_detail in player_details:
+            is_inviting_player = player_detail.get('is_inviting_player', False)
+            player_detail['match'] = match
+            player_detail['invitation_status'] = (PlayerMatchDetails.ACCEPTED
+                if is_inviting_player else PlayerMatchDetails.INVITED)
+            player_detail['date_responded'] = timezone.now() if is_inviting_player else None
+            PlayerMatchDetails.objects.create(**player_detail)
+
+        players = [player_detail['player'] for player_detail in player_details]
+        random.shuffle(players)
+
+        for i in range(total_rounds):
+            data = {
+                'match': match,
+                'number': i + 1,
+                'is_current_round': i == 0,
+                'status': Round.WAITING,
+            }
+            round = Round.objects.create(**data)
+
+            for player in players:
+                data = {
+                    'player': player,
+                    'round': round,
+                    'is_storyteller': players[i % len(players)] == player,
+                }
+                PlayerRoundDetails.objects.create(**data)
+
+        return match
 
 class Match(models.Model):
     WAITING = 'w'
@@ -11,6 +62,8 @@ class Match(models.Model):
         (FINISHED, 'finished'),
     )
     STANDARD_TIMEOUT = 60 * 60 * 24 # 24h
+
+    objects = MatchManager()
 
     players = models.ManyToManyField('Player', related_name='matches', through='PlayerMatchDetails')
     total_rounds = models.PositiveSmallIntegerField()

@@ -1,8 +1,6 @@
 from rest_framework import serializers
 from matches.models import Match, Round, Player, Image, PlayerMatchDetails, PlayerRoundDetails
 from django.contrib.auth.models import User
-import datetime
-import random
 
 class PlayerMatchDetailsSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
@@ -29,7 +27,8 @@ class RoundSerializer(serializers.HyperlinkedModelSerializer):
             'status', 'story', 'last_modified')
 
 class MatchSerializer(serializers.HyperlinkedModelSerializer):
-    players = serializers.HyperlinkedRelatedField(many=True,
+    players = serializers.HyperlinkedRelatedField(
+        many=True,
         required=False,
         view_name='player-detail',
         queryset=Player.objects.all())
@@ -45,53 +44,14 @@ class MatchSerializer(serializers.HyperlinkedModelSerializer):
             'timeout', 'created', 'last_modified')
 
     def create(self, validated_data):
-        player_details_data = validated_data.pop('player_match_details', None)
+        data = {
+            'player_details': validated_data.get('player_match_details'),
+            'players': validated_data.get('players'),
+            'total_rounds': validated_data.get('total_rounds'),
+            'timeout': validated_data.get('timeout'),
+        }
 
-        if not player_details_data:
-            players_data = validated_data.pop('players', None)
-            if not players_data:
-                # TODO some meaningful error
-                raise Error()
-            player_details_data = [{'player': player, 'is_inviting_player': False}
-                for player in players_data]
-            player_details_data[0]['is_inviting_player'] = True
-
-        total_rounds = validated_data.get('total_rounds', len(player_details_data))
-        data = {'total_rounds': total_rounds}
-        if validated_data.get('timeout'):
-            data['timeout'] = validated_data['timeout']
-
-        match = Match.objects.create(**data)
-
-        for player_detail in player_details_data:
-            is_inviting_player = player_detail.get('is_inviting_player', False)
-            player_detail['match'] = match
-            player_detail['invitation_status'] = (PlayerMatchDetails.ACCEPTED
-                if is_inviting_player else PlayerMatchDetails.INVITED)
-            player_detail['date_responded'] = datetime.datetime.now() if is_inviting_player else None
-            PlayerMatchDetails.objects.create(**player_detail)
-
-        players = [player_detail['player'] for player_detail in player_details_data]
-        random.shuffle(players)
-
-        for i in range(total_rounds):
-            data = {
-                'match': match,
-                'number': i + 1,
-                'is_current_round': i == 0,
-                'status': Round.WAITING,
-            }
-            round = Round.objects.create(**data)
-
-            for player in players:
-                data = {
-                    'player': player,
-                    'round': round,
-                    'is_storyteller': players[i % len(players)] == player,
-                }
-                PlayerRoundDetails.objects.create(**data)
-
-        return match
+        return Match.objects.create_match(**data)
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
