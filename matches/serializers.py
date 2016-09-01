@@ -5,43 +5,69 @@ from django.contrib.auth.models import User
 class PlayerMatchDetailsSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = PlayerMatchDetails
-        fields = ('pk', 'id',
-            'player', 'is_inviting_player', 'date_invited',
-            'invitation_status', 'date_responded', 'score')
+        fields = (
+            'pk',
+            'player',
+            'is_inviting_player',
+            'date_invited',
+            'invitation_status',
+            'date_responded',
+            'score',
+        )
 
 class PlayerRoundDetailsSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = PlayerRoundDetails
-        fields = ('pk', 'id',
-            'player', 'is_storyteller', 'image',
-            'score', 'vote')
+        fields = (
+            'pk',
+            'player',
+            'is_storyteller',
+            'image',
+            'score',
+            'vote',
+        )
 
 class RoundSerializer(serializers.HyperlinkedModelSerializer):
     player_round_details = PlayerRoundDetailsSerializer(many=True)
 
     class Meta:
         model = Round
-        fields = ('pk', 'id',
-            'match', 'number',
-            'is_current_round', 'player_round_details',
-            'status', 'story', 'last_modified')
+        fields = (
+            'pk',
+            'match',
+            'number',
+            'is_current_round',
+            'player_round_details',
+            'status',
+            'story',
+            'last_modified',
+        )
 
 class MatchSerializer(serializers.HyperlinkedModelSerializer):
     players = serializers.HyperlinkedRelatedField(
         many=True,
         required=False,
         view_name='player-detail',
-        queryset=Player.objects.all())
+        queryset=Player.objects.all(),
+    )
     player_match_details = PlayerMatchDetailsSerializer(many=True, required=False)
     rounds = RoundSerializer(many=True, required=False)
     total_rounds = serializers.IntegerField(required=False)
 
     class Meta:
         model = Match
-        fields = ('url', 'pk', 'id',
-            'players', 'player_match_details',
-            'total_rounds', 'rounds', 'status',
-            'timeout', 'created', 'last_modified')
+        fields = (
+            'url',
+            'pk',
+            'players',
+            'player_match_details',
+            'total_rounds',
+            'rounds',
+            'status',
+            'timeout',
+            'created',
+            'last_modified',
+        )
 
     def create(self, validated_data):
         data = {
@@ -56,18 +82,33 @@ class MatchSerializer(serializers.HyperlinkedModelSerializer):
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = User
-        fields = ('pk', 'id', 'username', 'email')
+        fields = (
+            'pk',
+            'username',
+            'email',
+        )
 
 class PlayerSerializer(serializers.HyperlinkedModelSerializer):
     user = UserSerializer()
-    matches = serializers.HyperlinkedRelatedField(many=True, view_name='match-detail', read_only=True)
+    matches = serializers.HyperlinkedRelatedField(
+        many=True,
+        view_name='match-detail',
+        read_only=True,
+    )
 
     class Meta:
         model = Player
-        fields = ('url', 'pk', 'id',
-            'external_id', 'gcm_registration_id',
-            'avatar', 'matches',
-            'created', 'last_modified', 'user')
+        fields = (
+            'url',
+            'pk',
+            'user',
+            'external_id',
+            'gcm_registration_id',
+            'avatar',
+            'matches',
+            'created',
+            'last_modified',
+        )
 
     def create(self, validated_data):
         user_data = validated_data.pop('user')
@@ -78,4 +119,8 @@ class PlayerSerializer(serializers.HyperlinkedModelSerializer):
 class ImageSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Image
-        fields = ('url', 'pk', 'id', 'image_url')
+        fields = (
+            'url',
+            'pk',
+            'image_url',
+        )
