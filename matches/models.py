@@ -24,6 +24,7 @@ class Match(models.Model):
 
     class Meta:
         ordering = ('created',)
+        verbose_name_plural = 'matches'
 
 class Round(models.Model):
     WAITING = 'w'
