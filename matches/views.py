@@ -1,5 +1,5 @@
-# from rest_framework.decorators import detail_route
-# from rest_framework.response import Response
+from rest_framework.decorators import detail_route
+from rest_framework.response import Response
 from rest_framework import viewsets
 from matches.models import Match, Player, Image
 from matches.serializers import MatchSerializer, PlayerSerializer, ImageSerializer
@@ -11,6 +11,15 @@ class MatchViewSet(viewsets.ModelViewSet):
 class PlayerViewSet(viewsets.ModelViewSet):
     queryset = Player.objects.all()
     serializer_class = PlayerSerializer
+
+    @detail_route()
+    def matches(self, request, pk=None, *args, **kwargs):
+        player = self.get_object()
+        matches = player.matches.all()
+        if request.query_params.get('status'):
+            matches = matches.filter(status=request.query_params['status'])
+        matches = matches.order_by('-last_modified')
+        return Response(MatchSerializer(matches, many=True, context={'request': request}).data)
 
 class ImageViewSet(viewsets.ModelViewSet):
     queryset = Image.objects.all()

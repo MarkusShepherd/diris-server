@@ -76,7 +76,7 @@ class Match(models.Model):
         return '#%d: %s' % (self.id, ', '.join([str(p) for p in self.players.all()]))
 
     class Meta:
-        ordering = ('created',)
+        ordering = ('last_modified',)
         verbose_name_plural = 'matches'
 
 class Round(models.Model):
