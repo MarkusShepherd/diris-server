@@ -13,6 +13,10 @@ class MatchManager(models.Manager):
                 for player in players]
             player_details[0]['is_inviting_player'] = True
 
+        if len(player_details) < Match.MINIMUM_PLAYER:
+            raise ValueError('Not enough players - need to give at least %d players to create a match'
+                % Match.MINIMUM_PLAYER)
+
         if not total_rounds:
             total_rounds = len(player_details)
         data = {'total_rounds': total_rounds}
@@ -62,6 +66,7 @@ class Match(models.Model):
         (FINISHED, 'finished'),
     )
     STANDARD_TIMEOUT = 60 * 60 * 24 # 24h
+    MINIMUM_PLAYER = 4
 
     objects = MatchManager()
 
