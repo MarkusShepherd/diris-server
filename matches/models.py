@@ -72,6 +72,28 @@ class Match(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 
+    def respond(self, player_pk, accept=False):
+        player_details = self.player_match_details.get(player=player_pk)
+        if player_details.invitation_status != PlayerMatchDetails.INVITED:
+            raise ValueError('Player already responded to this invitation')
+
+        player_details.invitation_status = \
+            PlayerMatchDetails.ACCEPTED if accept else PlayerMatchDetails.DECLINED
+        player_details.date_responded = timezone.now()
+        player_details.save()
+
+        if all([detail.invitation_status == PlayerMatchDetails.ACCEPTED
+            for detail in self.player_match_details.all()]):
+            self.status = Match.IN_PROGESS
+            self.save()
+
+            first_round = self.rounds.get(number=1)
+            first_round.is_current_round = True
+            first_round.status = Round.SUBMIT_STORY
+            first_round.save()
+
+        return self
+
     def __str__(self):
         return '#%d: %s' % (self.id, ', '.join([str(p) for p in self.players.all()]))
 
