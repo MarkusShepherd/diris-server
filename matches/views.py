@@ -1,12 +1,13 @@
 from rest_framework.decorators import detail_route
 from rest_framework.response import Response
-from rest_framework import viewsets
+from rest_framework import viewsets, permissions
 from matches.models import Match, Player, Image, PlayerRoundDetails
 from matches.serializers import MatchSerializer, PlayerSerializer, ImageSerializer
 
 class MatchViewSet(viewsets.ModelViewSet):
     queryset = Match.objects.all()
     serializer_class = MatchSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
     @detail_route(methods=['post'])
     def accept(self, request, pk=None, *args, **kwargs):
