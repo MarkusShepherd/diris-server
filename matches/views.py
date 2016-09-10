@@ -1,6 +1,7 @@
 from rest_framework.decorators import detail_route
 from rest_framework.response import Response
-from rest_framework import viewsets, permissions
+from rest_framework.parsers import FileUploadParser
+from rest_framework import views, viewsets, permissions
 from matches.models import Match, Player, Image, PlayerRoundDetails
 from matches.serializers import MatchSerializer, PlayerSerializer, ImageSerializer
 
@@ -44,3 +45,19 @@ class PlayerViewSet(viewsets.ModelViewSet):
 class ImageViewSet(viewsets.ModelViewSet):
     queryset = Image.objects.all()
     serializer_class = ImageSerializer
+
+class ImageUploadView(views.APIView):
+    parser_classes = (FileUploadParser,)
+
+    def put(self, request, filename=None):
+        print(request.data)
+        file = request.data.get('file')
+        print(file.name)
+        print(file.size)
+        print(file.content_type)
+        print(file.content_type_extra)
+        print(file.charset)
+        # TODO do something useful
+        image = Image.objects.create(file=file, image_url='http://test/' + request.data['file'].name)
+        serializer = ImageSerializer(image, context={'request': request})
+        return Response(serializer.data)

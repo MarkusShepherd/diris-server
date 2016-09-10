@@ -2,5 +2,5 @@ djangae==0.9.7
 django==1.10
 djangorestframework==3.4.4
 coreapi==1.32.3
-pytz=2016.6.1
+pytz==2016.6.1
 

@@ -42,6 +42,9 @@ class RoundSerializer(serializers.HyperlinkedModelSerializer):
             'story',
             'last_modified',
         )
+        read_only_fields = (
+            'last_modified',
+        )
 
 class MatchSerializer(serializers.HyperlinkedModelSerializer):
     players = serializers.HyperlinkedRelatedField(
@@ -68,6 +71,10 @@ class MatchSerializer(serializers.HyperlinkedModelSerializer):
             'created',
             'last_modified',
         )
+        read_only_fields = (
+            'created',
+            'last_modified',
+        )
 
     def create(self, validated_data):
         data = {
@@ -78,6 +85,9 @@ class MatchSerializer(serializers.HyperlinkedModelSerializer):
         }
 
         return Match.objects.create_match(**data)
+
+    def update(self, instance, validated_data):
+        pass
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
@@ -109,12 +119,20 @@ class PlayerSerializer(serializers.HyperlinkedModelSerializer):
             'created',
             'last_modified',
         )
+        read_only_fields = (
+            'created',
+            'last_modified',
+        )
 
     def create(self, validated_data):
         user_data = validated_data.pop('user')
         user = User.objects.create(**user_data)
         player = Player.objects.create(user=user, **validated_data)
         return player
+
+    def update(self, instance, validated_data):
+        # TODO do something
+        pass
 
 class ImageSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
@@ -123,4 +141,12 @@ class ImageSerializer(serializers.HyperlinkedModelSerializer):
             'url',
             'pk',
             'image_url',
+            'file',
+            'created',
+            'last_modified',
+        )
+        read_only_fields = (
+            'file',
+            'created',
+            'last_modified',
         )

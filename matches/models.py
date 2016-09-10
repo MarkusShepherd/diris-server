@@ -156,6 +156,7 @@ class Player(models.Model):
 
 class Image(models.Model):
     image_url = models.URLField()
+    file = models.FileField(upload_to='uploads/%Y/%m/%d/%H/%M/', blank=True, null=True)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 
