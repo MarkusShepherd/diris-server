@@ -1,6 +1,36 @@
+from __future__ import print_function
+
 from rest_framework import serializers
 from matches.models import Match, Round, Player, Image, PlayerMatchDetails, PlayerRoundDetails
-from django.contrib.auth.models import User
+# from django.contrib.auth.models import User
+# from diris.settings import AUTH_USER_MODEL
+from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
+
+# from importlib import import_module
+
+# def class_from_path(path):
+#     """load an object from the dotted path"""
+
+#     parts = path.split('.')
+
+#     try:
+#         if len(parts) == 1:
+#             return globals().get(path) or import_module(path)
+
+#         else:
+#             obj = import_module(parts[0])
+#             for part in parts[1:]:
+#                 if not obj:
+#                     break
+#                 obj = getattr(obj, part, None)
+#             return obj
+
+#     except ImportError:
+#         return None
+
+# print(AUTH_USER_MODEL)
+# User = class_from_path(AUTH_USER_MODEL)
+# print(User)
 
 class PlayerMatchDetailsSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
@@ -91,7 +121,7 @@ class MatchSerializer(serializers.HyperlinkedModelSerializer):
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
-        model = User
+        model = GaeDatastoreUser
         fields = (
             'pk',
             'username',
@@ -105,6 +135,11 @@ class PlayerSerializer(serializers.HyperlinkedModelSerializer):
         view_name='match-detail',
         read_only=True,
     )
+    images = serializers.HyperlinkedRelatedField(
+        many=True,
+        view_name='image-detail',
+        read_only=True,
+    )
 
     class Meta:
         model = Player
@@ -112,10 +147,11 @@ class PlayerSerializer(serializers.HyperlinkedModelSerializer):
             'url',
             'pk',
             'user',
-            'external_id',
-            'gcm_registration_id',
+            # 'external_id',
+            # 'gcm_registration_id',
             'avatar',
             'matches',
+            'images',
             'created',
             'last_modified',
         )
@@ -126,7 +162,7 @@ class PlayerSerializer(serializers.HyperlinkedModelSerializer):
 
     def create(self, validated_data):
         user_data = validated_data.pop('user')
-        user = User.objects.create(**user_data)
+        user = GaeDatastoreUser.objects.create(**user_data)
         player = Player.objects.create(user=user, **validated_data)
         return player
 
@@ -142,11 +178,12 @@ class ImageSerializer(serializers.HyperlinkedModelSerializer):
             'pk',
             'image_url',
             'file',
+            'owner',
             'created',
             'last_modified',
         )
         read_only_fields = (
-            'file',
+            'image_url',
             'created',
             'last_modified',
         )

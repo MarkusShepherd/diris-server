@@ -110,6 +110,7 @@ DATABASES = {
     }
 }
 
+DJANGAE_DISABLE_CONSTRAINT_CHECKS = True
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.6/topics/i18n/
@@ -151,3 +152,9 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
 }
+
+# AUTH_USER_MODEL = 'djangae.contrib.gauth.datastore.models.GaeDatastoreUser'
+
+AUTHENTICATION_BACKENDS = (
+    'djangae.contrib.gauth.datastore.backends.AppEngineUserAPIBackend',
+)

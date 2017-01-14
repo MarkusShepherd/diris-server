@@ -1,8 +1,12 @@
 from django.db import models
 # from django.contrib.auth.models import User
 from diris.settings import AUTH_USER_MODEL
+# from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
 from django.utils import timezone
+from djangae import fields, storage
 import random
+
+STORAGE = storage.CloudStorage(bucket='images', google_acl='public-read')
 
 class MatchManager(models.Manager):
     def create_match(self, player_details=None, players=None, total_rounds=0, timeout=0):
@@ -11,16 +15,20 @@ class MatchManager(models.Manager):
                 raise ValueError('Need to give players in the match')
 
             player_details = [{'player': player, 'is_inviting_player': False}
-                for player in players]
+                              for player in players]
             player_details[0]['is_inviting_player'] = True
+
+        else:
+            player_details = tuple(player_details)
 
         if len(player_details) < Match.MINIMUM_PLAYER:
             raise ValueError('Not enough players - need to give at least %d players to create a match'
-                % Match.MINIMUM_PLAYER)
+                             % Match.MINIMUM_PLAYER)
 
+        players = {detail['player'] for detail in player_details}
         if not total_rounds:
             total_rounds = len(player_details)
-        data = {'total_rounds': total_rounds}
+        data = {'players': players, 'total_rounds': total_rounds}
 
         if timeout:
             data['timeout'] = timeout
@@ -28,10 +36,11 @@ class MatchManager(models.Manager):
         match = self.create(**data)
 
         for player_detail in player_details:
-            is_inviting_player = player_detail.get('is_inviting_player', False)
+            is_inviting_player = player_detail.get('is_inviting_player') or False
             player_detail['match'] = match
             player_detail['invitation_status'] = (PlayerMatchDetails.ACCEPTED
-                if is_inviting_player else PlayerMatchDetails.INVITED)
+                                                  if is_inviting_player
+                                                  else PlayerMatchDetails.INVITED)
             player_detail['date_responded'] = timezone.now() if is_inviting_player else None
             PlayerMatchDetails.objects.create(**player_detail)
 
@@ -45,12 +54,12 @@ class MatchManager(models.Manager):
                 'is_current_round': i == 0,
                 'status': Round.WAITING,
             }
-            round = Round.objects.create(**data)
+            match_round = Round.objects.create(**data)
 
             for player in players:
                 data = {
                     'player': player,
-                    'round': round,
+                    'match_round': match_round,
                     'is_storyteller': players[i % len(players)] == player,
                 }
                 PlayerRoundDetails.objects.create(**data)
@@ -71,9 +80,10 @@ class Match(models.Model):
 
     objects = MatchManager()
 
-    players = models.ManyToManyField('Player', related_name='matches', through='PlayerMatchDetails')
+    # players = models.ManyToManyField('Player', related_name='matches', through='PlayerMatchDetails')
+    players = fields.RelatedSetField('Player', related_name='matches')
     total_rounds = models.PositiveSmallIntegerField()
-    status = models.CharField(max_length=1, choices=MATCH_STATUSES, default=WAITING)
+    status = fields.CharField(max_length=1, choices=MATCH_STATUSES, default=WAITING)
     timeout = models.PositiveIntegerField(default=STANDARD_TIMEOUT)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
@@ -89,7 +99,7 @@ class Match(models.Model):
         player_details.save()
 
         if all([detail.invitation_status == PlayerMatchDetails.ACCEPTED
-            for detail in self.player_match_details.all()]):
+                for detail in self.player_match_details.all()]):
             self.status = Match.IN_PROGESS
             self.save()
 
@@ -122,14 +132,15 @@ class Round(models.Model):
     )
 
     match = models.ForeignKey(Match, related_name='rounds', on_delete=models.CASCADE)
-    players = models.ManyToManyField('Player',
-        related_name='rounds',
-        through='PlayerRoundDetails',
-        through_fields=('round', 'player'))
+    # players = models.ManyToManyField('Player',
+    #     related_name='rounds',
+    #     through='PlayerRoundDetails',
+    #     through_fields=('round', 'player'))
+    players = fields.RelatedSetField('Player', related_name='rounds')
     number = models.PositiveSmallIntegerField()
     is_current_round = models.BooleanField(default=False)
-    status = models.CharField(max_length=1, choices=ROUND_STATUSES, default=WAITING)
-    story = models.CharField(max_length=256, blank=True)
+    status = fields.CharField(max_length=1, choices=ROUND_STATUSES, default=WAITING)
+    story = fields.CharField(max_length=256, blank=True)
     last_modified = models.DateTimeField(auto_now=True)
 
     def __str__(self):
@@ -140,8 +151,8 @@ class Round(models.Model):
 
 class Player(models.Model):
     user = models.OneToOneField(AUTH_USER_MODEL, on_delete=models.CASCADE)
-    external_id = models.CharField(max_length=100, unique=True)
-    gcm_registration_id = models.CharField(max_length=100, blank=True)
+    # external_id = fields.CharField(max_length=100, unique=True)
+    # gcm_registration_id = fields.CharField(max_length=100, blank=True)
     avatar = models.ForeignKey('Image',
         related_name='used_as_avatars',
         blank=True, null=True,
@@ -156,8 +167,11 @@ class Player(models.Model):
         ordering = ('user',)
 
 class Image(models.Model):
-    image_url = models.URLField()
-    file = models.FileField(upload_to='uploads/%Y/%m/%d/%H/%M/', blank=True, null=True)
+    image_url = models.URLField(blank=True, null=True)
+    # file = models.FileField(upload_to='uploads/%Y/%m/%d/%H/%M/', blank=True, null=True)
+    file = models.ImageField(upload_to='uploads/%Y/%m/%d/%H/%M/', storage=STORAGE)
+    owner = models.ForeignKey(Player, related_name='images',
+                              blank=True, null=True, on_delete=models.PROTECT)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 
@@ -181,7 +195,7 @@ class PlayerMatchDetails(models.Model):
     match = models.ForeignKey(Match, related_name='player_match_details', on_delete=models.CASCADE)
     is_inviting_player = models.BooleanField(default=False)
     date_invited = models.DateTimeField(auto_now_add=True)
-    invitation_status = models.CharField(max_length=1, choices=INVITATION_STATUSES, default=INVITED)
+    invitation_status = fields.CharField(max_length=1, choices=INVITATION_STATUSES, default=INVITED)
     date_responded = models.DateTimeField(blank=True, null=True)
     score = models.PositiveSmallIntegerField(default=0)
 
@@ -190,17 +204,17 @@ class PlayerMatchDetails(models.Model):
 
 class PlayerRoundDetails(models.Model):
     player = models.ForeignKey(Player, related_name='player_round_details', on_delete=models.PROTECT)
-    round = models.ForeignKey(Round, related_name='player_round_details', on_delete=models.CASCADE)
+    match_round = models.ForeignKey(Round, related_name='player_round_details', on_delete=models.CASCADE)
     is_storyteller = models.BooleanField(default=False)
     image = models.ForeignKey(Image,
-        related_name='used_in_round_details',
-        blank=True, null=True,
-        on_delete=models.PROTECT)
+                              related_name='used_in_round_details',
+                              blank=True, null=True,
+                              on_delete=models.PROTECT)
     score = models.PositiveSmallIntegerField(default=0)
     vote = models.ForeignKey(Player,
-        related_name='voted_by',
-        blank=True, null=True,
-        on_delete=models.PROTECT)
+                             related_name='voted_by',
+                             blank=True, null=True,
+                             on_delete=models.PROTECT)
 
     def __str__(self):
-        return '%s in %s' % (self.player.user.username, str(self.round))
+        return '%s in %s' % (self.player.user.username, str(self.match_round))

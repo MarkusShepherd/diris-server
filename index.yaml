@@ -37,3 +37,18 @@ indexes:
   properties:
   - name: app
   - name: name
+
+- kind: matches_image
+  properties:
+  - name: owner_id
+  - name: created
+
+- kind: matches_match
+  properties:
+  - name: players_ids
+  - name: last_modified
+
+- kind: matches_round
+  properties:
+  - name: match_id
+  - name: number
