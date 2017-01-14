@@ -1,5 +1,6 @@
 from django.db import models
-from django.contrib.auth.models import User
+# from django.contrib.auth.models import User
+from diris.settings import AUTH_USER_MODEL
 from django.utils import timezone
 import random
 
@@ -138,7 +139,7 @@ class Round(models.Model):
         ordering = ('number',)
 
 class Player(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(AUTH_USER_MODEL, on_delete=models.CASCADE)
     external_id = models.CharField(max_length=100, unique=True)
     gcm_registration_id = models.CharField(max_length=100, blank=True)
     avatar = models.ForeignKey('Image',
