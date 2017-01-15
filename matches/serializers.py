@@ -176,14 +176,13 @@ class ImageSerializer(serializers.HyperlinkedModelSerializer):
         fields = (
             'url',
             'pk',
-            'image_url',
             'file',
             'owner',
             'created',
             'last_modified',
         )
         read_only_fields = (
-            'image_url',
+            'file',
             'created',
             'last_modified',
         )

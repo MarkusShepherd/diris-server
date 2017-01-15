@@ -1,9 +1,15 @@
+from __future__ import absolute_import, print_function, unicode_literals
+
+import os
+
 from rest_framework.decorators import detail_route
 from rest_framework.response import Response
 from rest_framework.parsers import FileUploadParser
 from rest_framework import views, viewsets, permissions
 from matches.models import Match, Player, Image, PlayerRoundDetails
 from matches.serializers import MatchSerializer, PlayerSerializer, ImageSerializer
+
+from .utils import random_string
 
 class MatchViewSet(viewsets.ModelViewSet):
     queryset = Match.objects.all()
@@ -24,7 +30,16 @@ class MatchViewSet(viewsets.ModelViewSet):
 
     @detail_route()
     def images(self, request, pk=None, *args, **kwargs):
-        images = Image.objects.filter(used_in_round_details__round__match__pk=pk)
+        # images = Image.objects.filter(used_in_round_details__match_round__match__pk=pk)
+        images = []
+        rounds = self.get_object().rounds
+        if request.query_params.get('round'):
+            rounds = rounds.filter(number=request.query_params['round'])
+        for round_ in rounds.all():
+            for details in round_.player_round_details.all():
+                if details.image:
+                    images.append(details.image)
+
         serializer = ImageSerializer(images, many=True, context={'request': request})
         return Response(serializer.data)
 
@@ -49,15 +64,10 @@ class ImageViewSet(viewsets.ModelViewSet):
 class ImageUploadView(views.APIView):
     parser_classes = (FileUploadParser,)
 
-    def put(self, request, filename=None):
-        print(request.data)
+    def post(self, request, filename=None, format=None):
         file = request.data.get('file')
-        print(file.name)
-        print(file.size)
-        print(file.content_type)
-        print(file.content_type_extra)
-        print(file.charset)
-        # TODO do something useful
-        image = Image.objects.create(file=file, image_url='http://test/' + request.data['file'].name)
+        file.name = random_string() + os.path.splitext(file.name)[1]
+        owner = request.user.player if hasattr(request, 'user') and hasattr(request.user, 'player') else None
+        image = Image.objects.create(file=file, owner=owner)
         serializer = ImageSerializer(image, context={'request': request})
         return Response(serializer.data)

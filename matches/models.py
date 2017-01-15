@@ -167,16 +167,14 @@ class Player(models.Model):
         ordering = ('user',)
 
 class Image(models.Model):
-    image_url = models.URLField(blank=True, null=True)
-    # file = models.FileField(upload_to='uploads/%Y/%m/%d/%H/%M/', blank=True, null=True)
-    file = models.ImageField(upload_to='uploads/%Y/%m/%d/%H/%M/', storage=STORAGE)
+    file = models.ImageField(upload_to='%Y/%m/%d/%H/%M/', storage=STORAGE)
     owner = models.ForeignKey(Player, related_name='images',
                               blank=True, null=True, on_delete=models.PROTECT)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.image_url
+        return self.file
 
     class Meta:
         ordering = ('created',)
@@ -218,3 +216,34 @@ class PlayerRoundDetails(models.Model):
 
     def __str__(self):
         return '%s in %s' % (self.player.user.username, str(self.match_round))
+
+    def add_image(self, image, story=None):
+        if self.image:
+            raise ValueError('image already exists')
+
+        if not image:
+            # TODO other validations
+            raise ValueError('image is required')
+
+        if self.is_storyteller:
+            if self.match_round.status != Round.SUBMIT_STORY:
+                raise ValueError('not ready for submission')
+
+            if not story:
+                # TODO validate story further
+                raise ValueError('story is required')
+
+            self.match_round.story = story
+            self.match_round.status = Round.SUBMIT_OTHERS
+
+        else:
+            if self.match_round.status != Round.SUBMIT_OTHERS:
+                raise ValueError('not ready for submission')
+
+            if all(details.image for details in self.match_round.player_round_details.exclude(pk=self.pk)):
+                self.match_round.status = Round.SUBMIT_VOTES
+
+        self.image = image
+
+        self.save()
+        self.match_round.save()
