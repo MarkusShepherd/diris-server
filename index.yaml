@@ -54,6 +54,17 @@ indexes:
   - name: last_modified
     direction: desc
 
+- kind: matches_player
+  properties:
+  - name: user_id
+  - name: __key__
+    direction: desc
+
+- kind: matches_playermatchdetails
+  properties:
+  - name: match_id
+  - name: player_id
+
 - kind: matches_round
   properties:
   - name: match_id

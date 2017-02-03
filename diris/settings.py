@@ -43,7 +43,8 @@ INSTALLED_APPS = (
     'cspreports',
     'djangae.contrib.gauth.datastore',
     'djangae.contrib.security',
-    # 'diris',
+    'djangae.contrib.consistency',
+    'diris',
     'rest_framework',
     'matches.apps.MatchesConfig',
     # 'djangae.contrib.uniquetool',
@@ -158,3 +159,7 @@ REST_FRAMEWORK = {
 AUTHENTICATION_BACKENDS = (
     'djangae.contrib.gauth.datastore.backends.AppEngineUserAPIBackend',
 )
+
+CONSISTENCY_CONFIG = {
+    'defaults': {'cache_on_modification': True}
+}

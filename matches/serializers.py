@@ -6,31 +6,22 @@ from matches.models import Match, Round, Player, Image, PlayerMatchDetails, Play
 # from diris.settings import AUTH_USER_MODEL
 from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
 
-# from importlib import import_module
-
-# def class_from_path(path):
-#     """load an object from the dotted path"""
-
-#     parts = path.split('.')
-
-#     try:
-#         if len(parts) == 1:
-#             return globals().get(path) or import_module(path)
-
-#         else:
-#             obj = import_module(parts[0])
-#             for part in parts[1:]:
-#                 if not obj:
-#                     break
-#                 obj = getattr(obj, part, None)
-#             return obj
-
-#     except ImportError:
-#         return None
-
-# print(AUTH_USER_MODEL)
-# User = class_from_path(AUTH_USER_MODEL)
-# print(User)
+class ImageSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Image
+        fields = (
+            'url',
+            'pk',
+            'file',
+            'owner',
+            'created',
+            'last_modified',
+        )
+        read_only_fields = (
+            'file',
+            'created',
+            'last_modified',
+        )
 
 class PlayerMatchDetailsSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
@@ -46,6 +37,8 @@ class PlayerMatchDetailsSerializer(serializers.HyperlinkedModelSerializer):
         )
 
 class PlayerRoundDetailsSerializer(serializers.HyperlinkedModelSerializer):
+    image = ImageSerializer(read_only=True)
+
     class Meta:
         model = PlayerRoundDetails
         fields = (
@@ -135,11 +128,12 @@ class PlayerSerializer(serializers.HyperlinkedModelSerializer):
         view_name='match-detail',
         read_only=True,
     )
-    images = serializers.HyperlinkedRelatedField(
-        many=True,
-        view_name='image-detail',
-        read_only=True,
-    )
+    # images = serializers.HyperlinkedRelatedField(
+    #     many=True,
+    #     view_name='image-detail',
+    #     read_only=True,
+    # )
+    # images = ImageSerializer(many=True, read_only=True)
 
     class Meta:
         model = Player
@@ -151,7 +145,7 @@ class PlayerSerializer(serializers.HyperlinkedModelSerializer):
             # 'gcm_registration_id',
             'avatar',
             'matches',
-            'images',
+            # 'images',
             'created',
             'last_modified',
         )
@@ -169,20 +163,3 @@ class PlayerSerializer(serializers.HyperlinkedModelSerializer):
     def update(self, instance, validated_data):
         # TODO do something
         pass
-
-class ImageSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = Image
-        fields = (
-            'url',
-            'pk',
-            'file',
-            'owner',
-            'created',
-            'last_modified',
-        )
-        read_only_fields = (
-            'file',
-            'created',
-            'last_modified',
-        )

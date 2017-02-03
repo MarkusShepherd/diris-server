@@ -1,10 +1,20 @@
+# -*- coding: utf-8 -*-
+
+from __future__ import absolute_import, division, print_function
+
+import random
+
+from collections import defaultdict
+
 from django.db import models
 # from django.contrib.auth.models import User
 from diris.settings import AUTH_USER_MODEL
 # from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
 from django.utils import timezone
 from djangae import fields, storage
-import random
+# from djangae.db.consistency import ensure_instance_consistent
+
+from .utils import ensure_consistency
 
 STORAGE = storage.CloudStorage(bucket='images', google_acl='public-read')
 
@@ -25,7 +35,7 @@ class MatchManager(models.Manager):
             raise ValueError('Not enough players - need to give at least %d players to create a match'
                              % Match.MINIMUM_PLAYER)
 
-        players = {detail['player'] for detail in player_details}
+        players = {details['player'] for details in player_details}
         if not total_rounds:
             total_rounds = len(player_details)
         data = {'players': players, 'total_rounds': total_rounds}
@@ -98,8 +108,9 @@ class Match(models.Model):
         player_details.date_responded = timezone.now()
         player_details.save()
 
-        if all([detail.invitation_status == PlayerMatchDetails.ACCEPTED
-                for detail in self.player_match_details.all()]):
+        if all(details.invitation_status == PlayerMatchDetails.ACCEPTED
+               for details in ensure_consistency(self.player_match_details, (player_details.pk,))
+                             .exclude(player=player_pk)):
             self.status = Match.IN_PROGESS
             self.save()
 
@@ -109,6 +120,48 @@ class Match(models.Model):
             first_round.save()
 
         return self
+
+    def check_status(self, last_updated=None):
+        player_details = ensure_consistency(self.player_match_details, last_updated).all()
+
+        if any(details.invitation_status != PlayerMatchDetails.ACCEPTED
+               for details in player_details):
+            self.status = Match.WAITING
+            self.save()
+
+        round_ = None
+        rounds = ensure_consistency(self.rounds, last_updated, self.pk).order_by('number')
+        updated = [self.pk]
+
+        for round_ in rounds:
+            round_.check_status(updated)
+            updated.append(round_)
+            updated.extend(round_.player_round_details.all())
+
+        if round_.status == Round.FINISHED:
+            self.status = Match.FINISHED
+
+        self.save()
+
+        return self
+
+    def score(self, last_updated=None):
+        rounds = ensure_consistency(self.rounds, last_updated).order_by('number')
+
+        updated = []
+
+        scores = defaultdict(int)
+
+        for round_ in rounds:
+            round_scores = round_.score(last_updated)
+            for player, value in round_scores.items():
+                scores[player] += value
+
+        for details in ensure_consistency(self.player_match_details, last_updated):
+            details.score = scores[details.player.pk]
+            details.save()
+
+        return scores
 
     def __str__(self):
         return '#%d: %s' % (self.id, ', '.join([str(p) for p in self.players.all()]))
@@ -131,17 +184,89 @@ class Round(models.Model):
         (FINISHED, 'finished'),
     )
 
+    MAX_DECEIVED_VOTE_SCORE = 3
+    DECEIVED_VOTE_SCORE = 1
+    ALL_CORRECT_SCORE = 2
+    ALL_CORRECT_STORYTELLER_SCORE = 0
+    ALL_WRONG_SCORE = 2
+    ALL_WRONG_STORYTELLER_SCORE = 0
+    NOT_ALL_CORRECT_OR_WRONG_SCORE = 3
+    NOT_ALL_CORRECT_OR_WRONG_STORYTELLER_SCORE = 3
+
     match = models.ForeignKey(Match, related_name='rounds', on_delete=models.CASCADE)
-    # players = models.ManyToManyField('Player',
-    #     related_name='rounds',
-    #     through='PlayerRoundDetails',
-    #     through_fields=('round', 'player'))
     players = fields.RelatedSetField('Player', related_name='rounds')
     number = models.PositiveSmallIntegerField()
     is_current_round = models.BooleanField(default=False)
     status = fields.CharField(max_length=1, choices=ROUND_STATUSES, default=WAITING)
     story = fields.CharField(max_length=256, blank=True)
     last_modified = models.DateTimeField(auto_now=True)
+
+    def check_status(self, last_updated=None):
+        round_details = ensure_consistency(self.player_round_details, last_updated).all()
+        storyteller_details = round_details.get(is_storyteller=True)
+
+        if all(details.vote for details in round_details.exclude(is_storyteller=True)):
+            self.status = Round.FINISHED
+
+        elif all(details.image for details in round_details):
+            self.status = Round.SUBMIT_VOTES
+
+        elif storyteller_details.image and storyteller_details.story:
+            self.status = Round.SUBMIT_OTHERS
+
+        elif self.number == 1:
+            match = (ensure_consistency(Match.objects, last_updated, self.match.pk)
+                     .get(pk=self.match.pk) or self.match)
+            self.status = (Round.SUBMIT_STORY if match.status == Match.IN_PROGESS
+                           else Round.WAITING)
+
+        else:
+            prev_round = round_details.get(match_round__number=self.number - 1)
+            self.status = (Round.SUBMIT_STORY if prev_round.status == Round.FINISHED
+                           else Round.WAITING)
+
+        self.is_current_round = self.status != Round.FINISHED and self.status != Round.WAITING
+
+        self.save()
+
+        return self
+
+    def score(self, last_updated=None):
+        if self.status != Round.FINISHED:
+            return self
+
+        round_details = ensure_consistency(self.player_round_details, last_updated).all()
+        storyteller_details = round_details.get(is_storyteller=True)
+        storyteller = storyteller_details.player
+
+        scores = defaultdict(int)
+
+        for details in round_details.exclude(is_storyteller=True).exclude(vote=storyteller):
+            if scores[details.vote.pk] < Round.MAX_DECEIVED_VOTE_SCORE:
+                scores[details.vote.pk] += Round.DECEIVED_VOTE_SCORE
+
+        if all(details.vote.pk == storyteller.pk
+               for details in round_details.exclude(is_storyteller=True)):
+            scores[storyteller.pk] += Round.ALL_CORRECT_STORYTELLER_SCORE
+            for details in round_details.exclude(is_storyteller=True):
+                scores[details.player.pk] += Round.ALL_CORRECT_SCORE
+
+        elif all(details.vote.pk != storyteller.pk
+                 for details in round_details.exclude(is_storyteller=True)):
+            scores[storyteller.pk] += Round.ALL_WRONG_STORYTELLER_SCORE
+            for details in round_details.exclude(is_storyteller=True):
+                scores[details.player.pk] += Round.ALL_WRONG_SCORE
+
+        else:
+            scores[storyteller.pk] += Round.NOT_ALL_CORRECT_OR_WRONG_STORYTELLER_SCORE
+            for details in round_details.filter(vote=storyteller):
+                scores[details.player.pk] += Round.NOT_ALL_CORRECT_OR_WRONG_SCORE
+
+        for details in round_details:
+            details.score = scores[details.player.pk]
+            details.save()
+
+        return scores
 
     def __str__(self):
         return 'Match #%d Round #%d' % (self.match.id, self.number)
@@ -151,12 +276,10 @@ class Round(models.Model):
 
 class Player(models.Model):
     user = models.OneToOneField(AUTH_USER_MODEL, on_delete=models.CASCADE)
-    # external_id = fields.CharField(max_length=100, unique=True)
-    # gcm_registration_id = fields.CharField(max_length=100, blank=True)
     avatar = models.ForeignKey('Image',
-        related_name='used_as_avatars',
-        blank=True, null=True,
-        on_delete=models.SET_NULL)
+                               related_name='used_as_avatars',
+                               blank=True, null=True,
+                               on_delete=models.SET_NULL)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 
@@ -174,7 +297,7 @@ class Image(models.Model):
     last_modified = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.file
+        return str(self.file)
 
     class Meta:
         ordering = ('created',)
@@ -217,7 +340,7 @@ class PlayerRoundDetails(models.Model):
     def __str__(self):
         return '%s in %s' % (self.player.user.username, str(self.match_round))
 
-    def add_image(self, image, story=None):
+    def submit_image(self, image, story=None):
         if self.image:
             raise ValueError('image already exists')
 
@@ -240,10 +363,37 @@ class PlayerRoundDetails(models.Model):
             if self.match_round.status != Round.SUBMIT_OTHERS:
                 raise ValueError('not ready for submission')
 
-            if all(details.image for details in self.match_round.player_round_details.exclude(pk=self.pk)):
+            if all(details.image for details
+                   in self.match_round.player_round_details.exclude(pk=self.pk)):
                 self.match_round.status = Round.SUBMIT_VOTES
 
         self.image = image
 
         self.save()
         self.match_round.save()
+
+    def submit_vote(self, player_pk):
+        if self.is_storyteller:
+            raise ValueError('storyteller cannot vote')
+
+        if self.vote:
+            raise ValueError('vote already exists')
+
+        if not player_pk:
+            # TODO other validations
+            raise ValueError('player is required')
+
+        if player_pk == self.player.pk:
+            raise ValueError('players cannote vote for themselves')
+
+        if self.match_round.status != Round.SUBMIT_VOTES:
+            raise ValueError('not ready for submission')
+
+        self.vote = player_pk
+        self.save()
+
+        if all(details.image for details
+               in ensure_consistency(self.match_round.player_round_details, self.pk)
+                  .exclude(pk=self.pk).exclude(is_storyteller=True)):
+            self.match_round.check_status(self.pk)
+            self.match_round.score(self.pk)
