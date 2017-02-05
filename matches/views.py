@@ -1,5 +1,6 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
+import logging
 import os
 
 from rest_framework.decorators import detail_route
@@ -8,17 +9,21 @@ from rest_framework.parsers import FileUploadParser
 from rest_framework import views, viewsets, permissions
 # from djangae.contrib.improve_queryset_consistency import improve_queryset_consistency
 # from djangae.contrib.consistency import improve_queryset_consistency
+from django.contrib.auth import authenticate, login
+from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
 
 from matches.models import Match, Player, Image, PlayerRoundDetails
 from matches.serializers import MatchSerializer, PlayerSerializer, ImageSerializer, RoundSerializer
 
 from .utils import random_string
 
+LOGGER = logging.getLogger(__name__)
+
 class MatchViewSet(viewsets.ModelViewSet):
     # queryset = improve_queryset_consistency(Match.objects.all())
     queryset = Match.objects.all()
     serializer_class = MatchSerializer
-    # permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
     # def get_queryset(self):
     #     return Match.objects.all()
@@ -28,14 +33,15 @@ class MatchViewSet(viewsets.ModelViewSet):
         match = self.get_object()
         # match = self.get_queryset().get(pk=pk)
         match = match.respond(request.user.player.pk, accept=True)
-        return Response(match)
+        serializer = MatchSerializer(match, context={'request': request})
+        return Response(serializer.data)
 
     @detail_route(methods=['post'])
     def decline(self, request, pk, *args, **kwargs):
         match = self.get_object()
         # match = self.get_queryset().get(pk=pk)
-        match = match.respond(request.user.player.pk, accept=False)
-        return Response(match)
+        serializer = MatchSerializer(match, context={'request': request})
+        return Response(serializer.data)
 
     @detail_route()
     def images(self, request, pk=None, *args, **kwargs):
@@ -56,13 +62,16 @@ class MatchViewSet(viewsets.ModelViewSet):
 
 class MatchApiView(views.APIView):
     parser_classes = (FileUploadParser,)
+    permission_classes = (permissions.IsAuthenticated,)
 
     def post(self, request, match_pk, round_number, filename):
-        try:
-            player = request.user.player
-        except Exception:
-            # print(request.query_params.get('player'))
-            player = Player.objects.get(pk=request.query_params.get('player'))
+        # try:
+        #     player = request.user.player
+        # except Exception:
+        #     # print(request.query_params.get('player'))
+        #     player = Player.objects.get(pk=request.query_params.get('player'))
+
+        player = request.user.player
 
         match = Match.objects.get(pk=match_pk)
         round_ = match.rounds.get(number=round_number)
@@ -84,6 +93,14 @@ class PlayerViewSet(viewsets.ModelViewSet):
 
     # def get_queryset(self):
     #     return Player.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        response = super(PlayerViewSet, self).create(request, *args, **kwargs)
+        player = response.data
+        user = GaeDatastoreUser.objects.get(pk=player['user']['pk'])
+        user.backend = 'django.contrib.auth.backends.ModelBackend'
+        login(request, user)
+        return response
 
     @detail_route()
     def matches(self, request, pk=None, *args, **kwargs):

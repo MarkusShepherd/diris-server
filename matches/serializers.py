@@ -1,10 +1,17 @@
-from __future__ import print_function
+from __future__ import absolute_import, print_function, unicode_literals
+
+import logging
+import random
+import re
+import string
 
 from rest_framework import serializers
 from matches.models import Match, Round, Player, Image, PlayerMatchDetails, PlayerRoundDetails
 # from django.contrib.auth.models import User
 # from diris.settings import AUTH_USER_MODEL
 from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
+
+LOGGER = logging.getLogger(__name__)
 
 class ImageSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
@@ -119,7 +126,11 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
             'pk',
             'username',
             'email',
+            'password',
+            'first_name',
+            'last_name',
         )
+        extra_kwargs = {'password': {'write_only': True}}
 
 class PlayerSerializer(serializers.HyperlinkedModelSerializer):
     user = UserSerializer()
@@ -155,9 +166,18 @@ class PlayerSerializer(serializers.HyperlinkedModelSerializer):
         )
 
     def create(self, validated_data):
+        LOGGER.info(validated_data)
         user_data = validated_data.pop('user')
-        user = GaeDatastoreUser.objects.create(**user_data)
+        password = user_data.pop('password')
+
+        user = GaeDatastoreUser.objects.create_user(**user_data)
+
+        user.set_password(password)
+        user.save()
+
+        LOGGER.info('created new user %s', user)
         player = Player.objects.create(user=user, **validated_data)
+
         return player
 
     def update(self, instance, validated_data):

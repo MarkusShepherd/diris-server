@@ -3,6 +3,9 @@ from django.conf.urls import include, url
 from django.conf.urls.static import static
 from django.contrib.staticfiles.views import serve
 
+from rest_framework_jwt.views import obtain_jwt_token
+from rest_framework.authtoken.views import obtain_auth_token
+
 import session_csrf
 session_csrf.monkeypatch()
 
@@ -21,8 +24,11 @@ urlpatterns = (
 
     url(r'^csp/', include('cspreports.urls')),
 
-    url(r'^auth/', include('djangae.contrib.gauth.urls')),
+    # url(r'^auth/', include('django.contrib.auth.urls')),
+    # url(r'^gauth/', include('djangae.contrib.gauth.urls')),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+    # url(r'^api-token-auth/', obtain_auth_token),
+    url(r'^api-jwt-auth/', obtain_jwt_token),
 )
 
 if settings.DEBUG:

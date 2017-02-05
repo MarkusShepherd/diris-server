@@ -9,9 +9,11 @@ from collections import defaultdict
 from django.db import models
 # from django.contrib.auth.models import User
 from diris.settings import AUTH_USER_MODEL
-# from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
+from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
 from django.utils import timezone
+from django.utils.translation import ugettext_lazy as _
 from djangae import fields, storage
+from djangae.fields import CharField
 # from djangae.db.consistency import ensure_instance_consistent
 
 from .utils import ensure_consistency
@@ -20,6 +22,8 @@ STORAGE = storage.CloudStorage(bucket='images', google_acl='public-read')
 
 class MatchManager(models.Manager):
     def create_match(self, player_details=None, players=None, total_rounds=0, timeout=0):
+        # TODO use request user to mark inviting player
+
         if not player_details:
             if not players:
                 raise ValueError('Need to give players in the match')
@@ -30,6 +34,8 @@ class MatchManager(models.Manager):
 
         else:
             player_details = tuple(player_details)
+
+        # TODO make sure there are no duplicates
 
         if len(player_details) < Match.MINIMUM_PLAYER:
             raise ValueError('Not enough players - need to give at least %d players to create a match'
@@ -274,8 +280,15 @@ class Round(models.Model):
     class Meta:
         ordering = ('number',)
 
+# class User(GaeDatastoreUser):
+#     username = CharField(
+#         _('User ID'), unique=True, blank=True, null=True, default=None,
+#         # max_length=21, validators=[validate_google_user_id]
+#     )
+
 class Player(models.Model):
-    user = models.OneToOneField(AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.OneToOneField(GaeDatastoreUser, on_delete=models.CASCADE)
+    # name = fields.CharField(max_length=10)
     avatar = models.ForeignKey('Image',
                                related_name='used_as_avatars',
                                blank=True, null=True,
