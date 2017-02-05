@@ -65,6 +65,11 @@ indexes:
   - name: match_id
   - name: player_id
 
+- kind: matches_playerrounddetails
+  properties:
+  - name: match_round_id
+  - name: is_storyteller
+
 - kind: matches_round
   properties:
   - name: match_id

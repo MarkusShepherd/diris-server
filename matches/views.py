@@ -60,7 +60,7 @@ class MatchViewSet(viewsets.ModelViewSet):
         serializer = ImageSerializer(images, many=True, context={'request': request})
         return Response(serializer.data)
 
-class MatchApiView(views.APIView):
+class MatchImageView(views.APIView):
     parser_classes = (FileUploadParser,)
     permission_classes = (permissions.IsAuthenticated,)
 
@@ -82,6 +82,21 @@ class MatchApiView(views.APIView):
         image = Image.objects.create(file=file, owner=player)
 
         details.submit_image(image, story=request.query_params.get('story'))
+
+        serializer = RoundSerializer(round_, context={'request': request})
+        return Response(serializer.data)
+
+class MatchVoteView(views.APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request, match_pk, round_number, vote):
+        player = request.user.player
+
+        match = Match.objects.get(pk=match_pk)
+        round_ = match.rounds.get(number=round_number)
+        details = round_.player_round_details.get(player=player)
+
+        details.submit_vote(vote)
 
         serializer = RoundSerializer(round_, context={'request': request})
         return Response(serializer.data)

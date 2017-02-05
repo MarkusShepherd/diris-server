@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import, division, print_function
 
+import logging
 import random
 
 from collections import defaultdict
@@ -18,6 +19,7 @@ from djangae.fields import CharField
 
 from .utils import ensure_consistency
 
+LOGGER = logging.getLogger(__name__)
 STORAGE = storage.CloudStorage(bucket='images', google_acl='public-read')
 
 class MatchManager(models.Manager):
@@ -163,7 +165,7 @@ class Match(models.Model):
             for player, value in round_scores.items():
                 scores[player] += value
 
-        for details in ensure_consistency(self.player_match_details, last_updated):
+        for details in ensure_consistency(self.player_match_details.all(), last_updated):
             details.score = scores[details.player.pk]
             details.save()
 
@@ -221,13 +223,13 @@ class Round(models.Model):
             self.status = Round.SUBMIT_OTHERS
 
         elif self.number == 1:
-            match = (ensure_consistency(Match.objects, last_updated, self.match.pk)
-                     .get(pk=self.match.pk) or self.match)
-            self.status = (Round.SUBMIT_STORY if match.status == Match.IN_PROGESS
+            # match = (ensure_consistency(Match.objects, last_updated, self.match.pk)
+            #          .get(pk=self.match.pk) or self.match)
+            self.status = (Round.SUBMIT_STORY if self.match.status == Match.IN_PROGESS
                            else Round.WAITING)
 
         else:
-            prev_round = round_details.get(match_round__number=self.number - 1)
+            prev_round = self.match.rounds.get(number=self.number - 1)
             self.status = (Round.SUBMIT_STORY if prev_round.status == Round.FINISHED
                            else Round.WAITING)
 
@@ -239,7 +241,7 @@ class Round(models.Model):
 
     def score(self, last_updated=None):
         if self.status != Round.FINISHED:
-            return self
+            return defaultdict(int)
 
         round_details = ensure_consistency(self.player_round_details, last_updated).all()
         storyteller_details = round_details.get(is_storyteller=True)
@@ -247,8 +249,9 @@ class Round(models.Model):
 
         scores = defaultdict(int)
 
-        for details in round_details.exclude(is_storyteller=True).exclude(vote=storyteller):
-            if scores[details.vote.pk] < Round.MAX_DECEIVED_VOTE_SCORE:
+        for details in round_details.exclude(is_storyteller=True):
+            if (details.vote.pk != storyteller.pk
+                    and scores[details.vote.pk] < Round.MAX_DECEIVED_VOTE_SCORE):
                 scores[details.vote.pk] += Round.DECEIVED_VOTE_SCORE
 
         if all(details.vote.pk == storyteller.pk
@@ -345,6 +348,7 @@ class PlayerRoundDetails(models.Model):
                               blank=True, null=True,
                               on_delete=models.PROTECT)
     score = models.PositiveSmallIntegerField(default=0)
+    # TODO vote needs to be for an image
     vote = models.ForeignKey(Player,
                              related_name='voted_by',
                              blank=True, null=True,
@@ -396,17 +400,20 @@ class PlayerRoundDetails(models.Model):
             # TODO other validations
             raise ValueError('player is required')
 
-        if player_pk == self.player.pk:
+        player = Player.objects.get(pk=player_pk)
+
+        if player.pk == self.player.pk:
             raise ValueError('players cannote vote for themselves')
 
         if self.match_round.status != Round.SUBMIT_VOTES:
             raise ValueError('not ready for submission')
 
-        self.vote = player_pk
+        self.vote = player
         self.save()
 
-        if all(details.image for details
+        if all(details.vote for details
                in ensure_consistency(self.match_round.player_round_details, self.pk)
                   .exclude(pk=self.pk).exclude(is_storyteller=True)):
+            LOGGER.info('time to score %s', self.match_round)
             self.match_round.check_status(self.pk)
             self.match_round.score(self.pk)

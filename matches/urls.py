@@ -12,5 +12,7 @@ urlpatterns = [
     url(r'^', include(router.urls)),
     url(r'^upload/(?P<filename>[^/]+)$', views.ImageUploadView.as_view()),
     url(r'^matches/(?P<match_pk>[^/]+)/(?P<round_number>[^/]+)/image/(?P<filename>[^/]+)$',
-        views.MatchApiView.as_view()),
+        views.MatchImageView.as_view()),
+    url(r'^matches/(?P<match_pk>[^/]+)/(?P<round_number>[^/]+)/vote/(?P<vote>[^/]+)$',
+        views.MatchVoteView.as_view()),
 ]
