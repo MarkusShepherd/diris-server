@@ -10,9 +10,9 @@ router.register(r'images', views.ImageViewSet, base_name='image')
 
 urlpatterns = [
     url(r'^', include(router.urls)),
-    url(r'^upload/(?P<filename>[^/]+)$', views.ImageUploadView.as_view()),
-    url(r'^matches/(?P<match_pk>[^/]+)/(?P<round_number>[^/]+)/image/(?P<filename>[^/]+)$',
+    url(r'^upload/(?P<filename>[^/]+)/?$', views.ImageUploadView.as_view()),
+    url(r'^matches/(?P<match_pk>[^/]+)/(?P<round_number>[^/]+)/image/(?P<filename>[^/]+)/?$',
         views.MatchImageView.as_view()),
-    url(r'^matches/(?P<match_pk>[^/]+)/(?P<round_number>[^/]+)/vote/(?P<vote>[^/]+)$',
+    url(r'^matches/(?P<match_pk>[^/]+)/(?P<round_number>[^/]+)/vote/(?P<vote>[^/]+)/?$',
         views.MatchVoteView.as_view()),
 ]

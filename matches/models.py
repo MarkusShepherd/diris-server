@@ -389,6 +389,8 @@ class PlayerRoundDetails(models.Model):
         self.save()
         self.match_round.save()
 
+        self.match_round.match.check_status()
+
     def submit_vote(self, player_pk):
         if self.is_storyteller:
             raise ValueError('storyteller cannot vote')
@@ -405,15 +407,13 @@ class PlayerRoundDetails(models.Model):
         if player.pk == self.player.pk:
             raise ValueError('players cannote vote for themselves')
 
+        # TODO check that player actually takes part in the match
+
         if self.match_round.status != Round.SUBMIT_VOTES:
             raise ValueError('not ready for submission')
 
         self.vote = player
         self.save()
 
-        if all(details.vote for details
-               in ensure_consistency(self.match_round.player_round_details, self.pk)
-                  .exclude(pk=self.pk).exclude(is_storyteller=True)):
-            LOGGER.info('time to score %s', self.match_round)
-            self.match_round.check_status(self.pk)
-            self.match_round.score(self.pk)
+        self.match_round.match.check_status(self.pk)
+        self.match_round.match.score(self.pk)
