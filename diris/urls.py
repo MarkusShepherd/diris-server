@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+
+'''URLs'''
+
+from __future__ import absolute_import, division, print_function, unicode_literals, with_statement
+
 from django.conf import settings
 from django.conf.urls import include, url
 from django.conf.urls.static import static

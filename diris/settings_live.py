@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+
+'''settings'''
+
+from __future__ import absolute_import, division, print_function, unicode_literals, with_statement
+
 from diris.settings import *
 
 SESSION_COOKIE_SECURE = True

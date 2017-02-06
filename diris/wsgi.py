@@ -1,16 +1,14 @@
-"""
-WSGI config for diris project.
+# -*- coding: utf-8 -*-
 
-It exposes the WSGI callable as a module-level variable named ``application``.
+'''WSGI'''
 
-For more information on this file, see
-https://docs.djangoproject.com/en/1.6/howto/deployment/wsgi/
-"""
+from __future__ import absolute_import, division, print_function, unicode_literals, with_statement
+
+import os
 
 from diris.boot import fix_path
 fix_path()
 
-import os
 from django.core.wsgi import get_wsgi_application
 from djangae.environment import is_production_environment
 from djangae.wsgi import DjangaeApplication

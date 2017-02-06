@@ -1,6 +1,13 @@
+# -*- coding: utf-8 -*-
+
+'''URLs'''
+
+from __future__ import absolute_import, division, print_function, unicode_literals, with_statement
+
 from django.conf.urls import url, include
 from rest_framework.routers import DefaultRouter
-from matches import views
+
+from . import views
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter() # schema_title='Diris Matches API'

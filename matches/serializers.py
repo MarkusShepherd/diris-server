@@ -1,20 +1,20 @@
-from __future__ import absolute_import, print_function, unicode_literals
+# -*- coding: utf-8 -*-
+
+'''serializers'''
+
+from __future__ import absolute_import, division, print_function, unicode_literals, with_statement
 
 import logging
-import random
-import re
-import string
 
 from rest_framework import serializers
-from matches.models import Match, Round, Player, Image, PlayerMatchDetails, PlayerRoundDetails
-# from django.contrib.auth.models import User
-# from diris.settings import AUTH_USER_MODEL
 from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
+
+from .models import Match, Round, Player, Image, PlayerMatchDetails, PlayerRoundDetails
 
 LOGGER = logging.getLogger(__name__)
 
 class ImageSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
+    class Meta(object):
         model = Image
         fields = (
             'url',
@@ -31,7 +31,7 @@ class ImageSerializer(serializers.HyperlinkedModelSerializer):
         )
 
 class PlayerMatchDetailsSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
+    class Meta(object):
         model = PlayerMatchDetails
         fields = (
             'pk',
@@ -46,7 +46,7 @@ class PlayerMatchDetailsSerializer(serializers.HyperlinkedModelSerializer):
 class PlayerRoundDetailsSerializer(serializers.HyperlinkedModelSerializer):
     image = ImageSerializer(read_only=True)
 
-    class Meta:
+    class Meta(object):
         model = PlayerRoundDetails
         fields = (
             'pk',
@@ -60,7 +60,7 @@ class PlayerRoundDetailsSerializer(serializers.HyperlinkedModelSerializer):
 class RoundSerializer(serializers.HyperlinkedModelSerializer):
     player_round_details = PlayerRoundDetailsSerializer(many=True)
 
-    class Meta:
+    class Meta(object):
         model = Round
         fields = (
             'pk',
@@ -87,7 +87,7 @@ class MatchSerializer(serializers.HyperlinkedModelSerializer):
     rounds = RoundSerializer(many=True, required=False)
     total_rounds = serializers.IntegerField(required=False)
 
-    class Meta:
+    class Meta(object):
         model = Match
         fields = (
             'url',
@@ -120,7 +120,7 @@ class MatchSerializer(serializers.HyperlinkedModelSerializer):
         pass
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
+    class Meta(object):
         model = GaeDatastoreUser
         fields = (
             'pk',
@@ -146,7 +146,7 @@ class PlayerSerializer(serializers.HyperlinkedModelSerializer):
     # )
     # images = ImageSerializer(many=True, read_only=True)
 
-    class Meta:
+    class Meta(object):
         model = Player
         fields = (
             'url',

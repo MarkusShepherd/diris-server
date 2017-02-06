@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import absolute_import, division, print_function
+'''utility functions'''
+
+from __future__ import absolute_import, division, print_function, unicode_literals, with_statement
 
 import random
 import string
@@ -11,9 +13,9 @@ from django.db.models import Model
 from djangae.db.consistency import ensure_instance_consistent
 
 try:
-  str = unicode
+    str = unicode
 except NameError:
-  pass # Forward compatibility with Py3k
+    pass # Forward compatibility with Py3k
 
 try:
     long

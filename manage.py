@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+'''command line script'''
+
+from __future__ import absolute_import, division, print_function, unicode_literals, with_statement
+
 import os
 import sys
 

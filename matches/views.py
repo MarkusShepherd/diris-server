@@ -1,20 +1,22 @@
-from __future__ import absolute_import, print_function, unicode_literals
+# -*- coding: utf-8 -*-
+
+'''views'''
+
+from __future__ import absolute_import, division, print_function, unicode_literals, with_statement
 
 import logging
 import os
 
+from django.contrib.auth import login
+from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
+from rest_framework import views, viewsets, permissions
 from rest_framework.decorators import detail_route
 from rest_framework.response import Response
 from rest_framework.parsers import FileUploadParser
-from rest_framework import views, viewsets, permissions
-# from djangae.contrib.improve_queryset_consistency import improve_queryset_consistency
-# from djangae.contrib.consistency import improve_queryset_consistency
-from django.contrib.auth import authenticate, login
-from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
 
-from matches.models import Match, Player, Image, PlayerRoundDetails
-from matches.serializers import MatchSerializer, PlayerSerializer, ImageSerializer, RoundSerializer
 
+from .models import Match, Player, Image
+from .serializers import MatchSerializer, PlayerSerializer, ImageSerializer, RoundSerializer
 from .utils import random_string
 
 LOGGER = logging.getLogger(__name__)

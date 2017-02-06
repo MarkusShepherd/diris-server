@@ -1,10 +1,17 @@
+# -*- coding: utf-8 -*-
+
+'''settings'''
+
+from __future__ import absolute_import, division, print_function, unicode_literals, with_statement
+
+import os
+
 from datetime import timedelta
 
 from djangae.settings_base import * #Set up some AppEngine specific stuff
 from django.core.urlresolvers import reverse_lazy
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-import os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 from .boot import get_app_config

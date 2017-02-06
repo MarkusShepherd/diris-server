@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import absolute_import, division, print_function
+'''models'''
+
+from __future__ import absolute_import, division, print_function, unicode_literals, with_statement
 
 import logging
 import random
@@ -8,14 +10,9 @@ import random
 from collections import defaultdict
 
 from django.db import models
-# from django.contrib.auth.models import User
-from diris.settings import AUTH_USER_MODEL
-from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
 from django.utils import timezone
-from django.utils.translation import ugettext_lazy as _
 from djangae import fields, storage
-from djangae.fields import CharField
-# from djangae.db.consistency import ensure_instance_consistent
+from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
 
 from .utils import ensure_consistency
 
@@ -174,7 +171,7 @@ class Match(models.Model):
     def __str__(self):
         return '#%d: %s' % (self.id, ', '.join([str(p) for p in self.players.all()]))
 
-    class Meta:
+    class Meta(object):
         ordering = ('last_modified',)
         verbose_name_plural = 'matches'
 
@@ -280,14 +277,8 @@ class Round(models.Model):
     def __str__(self):
         return 'Match #%d Round #%d' % (self.match.id, self.number)
 
-    class Meta:
+    class Meta(object):
         ordering = ('number',)
-
-# class User(GaeDatastoreUser):
-#     username = CharField(
-#         _('User ID'), unique=True, blank=True, null=True, default=None,
-#         # max_length=21, validators=[validate_google_user_id]
-#     )
 
 class Player(models.Model):
     user = models.OneToOneField(GaeDatastoreUser, on_delete=models.CASCADE)
@@ -302,7 +293,7 @@ class Player(models.Model):
     def __str__(self):
         return self.user.username
 
-    class Meta:
+    class Meta(object):
         ordering = ('user',)
 
 class Image(models.Model):
@@ -315,7 +306,7 @@ class Image(models.Model):
     def __str__(self):
         return str(self.file)
 
-    class Meta:
+    class Meta(object):
         ordering = ('created',)
 
 class PlayerMatchDetails(models.Model):
