@@ -17,7 +17,7 @@ from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
 from .utils import ensure_consistency
 
 LOGGER = logging.getLogger(__name__)
-STORAGE = storage.CloudStorage(bucket='images', google_acl='public-read')
+STORAGE = storage.CloudStorage(bucket='diris-images', google_acl='public-read')
 
 class MatchManager(models.Manager):
     def create_match(self, player_details=None, players=None, total_rounds=0, timeout=0):
@@ -216,7 +216,7 @@ class Round(models.Model):
         elif all(details.image for details in round_details):
             self.status = Round.SUBMIT_VOTES
 
-        elif storyteller_details.image and storyteller_details.story:
+        elif storyteller_details.image and self.story:
             self.status = Round.SUBMIT_OTHERS
 
         elif self.number == 1:

@@ -7,6 +7,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 from django.apps import AppConfig
 
 class MatchesConfig(AppConfig):
-	'''matches app'''
+    '''matches app'''
 
     name = 'matches'
