@@ -1,0 +1,39 @@
+<section xmlns="http://www.w3.org/1999/xhtml">
+	<section ng-show="players &amp;&amp; match.currentRound" class="list-group">
+		<div class="list-group-item active">
+			<h4>Standings</h4>
+		</div>
+		<a ng-repeat="item in match.standingsArray | orderBy:'score':true"
+			ng-href="#/profile/{{ item.playerId }}"
+			class="list-group-item">
+			<span class="badge">{{ item.score }}</span>
+			<img ng-show="players['' + item.playerId].avatarURL" ng-src="{{ players['' + item.playerId].avatarURL }}" class="img-circle player-icon-standings" />
+			<span ng-hide="players['' + item.playerId].avatarURL" class="btn btn-primary btn-circle player-icon-standings">
+				{{ players['' + item.playerId].name.substr(0,1) }}
+			</span>
+			{{ players['' + item.playerId].name }}
+		</a>
+	</section>
+	<section class="list-group">
+		<a ng-repeat="round in match.rounds" 
+			ng-href="#/{{ round.status == 'FINISHED' ? 'review' : round.status == 'SUBMIT_VOTES' ? 'vote' : 'image' }}/{{ mId }}/{{ $index }}" 
+			class="list-group-item 
+				{{ round.hasAction ? 'list-group-item-info' : '' }} 
+				{{ round.status == 'WAITING' || (round.status == 'SUBMIT_STORY' &amp;&amp; !round.isStoryTeller) ? 'disabled' : '' }}">
+			<h4 class="list-group-item-heading">Round {{ $index + 1 }}</h4>
+			<p class="list-group-item-text">
+				<span ng-show="round.status == 'FINISHED'" class="badge">{{ round.scores['' + currentPlayer.key.id] }}</span>
+				{{ players['' + round.storyTellerKey.id].name }}<span ng-show="round.story">: "{{ round.story }}"</span>
+			</p>
+			<div ng-show="round.status == 'FINISHED'" class="image-overview-container">
+				<img ng-src="{{ images[round.images['' + round.storyTellerKey.id]].url }}" class="img-responsive img-rounded image-overview" />
+			</div>
+			<p ng-show="round.readyForStoryImage" class="list-group-item-text">Tell your story!</p>
+			<p ng-show="round.readyForOtherImage" class="list-group-item-text">Submit your image!</p>
+			<span ng-show="round.readyForVote" ng-repeat="(pId, iId) in round.images">
+				<img ng-src="{{ images['' + iId].url }}" class="img-circle" style="width: 100px; height: 100px;" />
+			</span>
+			<p ng-show="round.readyForVote" class="list-group-item-text">Vote!</p>
+		</a>
+	</section>
+</section>

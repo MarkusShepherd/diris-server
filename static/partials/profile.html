@@ -1,0 +1,10 @@
+<section xmlns="http://www.w3.org/1999/xhtml">
+	<h2><span class="glyphicon glyphicon-user"></span> {{ player.name }}</h2>
+
+	<div ng-show="player.avatarURL" class="image-review-container">
+		<img ng-src="{{ player.avatarURL }}" class="img-responsive img-circle" />
+	</div>
+
+	<h3>Statistics</h3>
+	<p>{{ player.name }} participates in <b>{{ player.matchKeys.length }} game{{ player.matchKeys.length == 1 ? '' : 's' }}</b>.</p>
+</section>

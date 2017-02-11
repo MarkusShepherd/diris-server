@@ -1,0 +1,25 @@
+<section xmlns="http://www.w3.org/1999/xhtml">
+	<div ng-hide="match.hasAccepted" class="alert alert-success fade in">
+		You've been invited by <b>{{ players['' + match.invitingPlayer.id].name }}</b> to participate in their match. Please hit the button below to accept the invitation.
+	</div>
+	<div ng-show="match.hasAccepted" class="alert alert-success fade in">
+		You have accepted the invitation by <b>{{ players['' + match.invitingPlayer.id].name }}</b> to participate in their match. Please wait for the other players to join the match too.
+	</div>
+	<section class="list-group">
+		<a ng-repeat="(pId, acc) in match.accepted"
+			ng-href="#/profile/{{ pId }}"
+			class="list-group-item {{ acc ? 'list-group-item-success' : 'list-group-item-info' }}">
+			<img ng-show="players['' + pId].avatarURL" ng-src="{{ players['' + pId].avatarURL }}" class="img-circle player-icon-accept" />
+			<span ng-hide="players['' + pId].avatarURL" class="btn btn-primary btn-circle player-icon-accept">
+				{{ players['' + pId].name.substr(0,1) }}
+			</span>
+			{{ players['' + pId].name }}
+			<span ng-show="acc" class="glyphicon glyphicon-ok-sign icon-accepted"></span>
+			<span ng-hide="acc" class="glyphicon glyphicon-question-sign icon-accepted"></span>
+		</a>
+	</section>
+	<button ng-hide="match.hasAccepted" ng-click="accept()" class="btn btn-primary btn-lg btn-block">
+		<span class="glyphicon glyphicon-ok"></span>
+		Accept
+	</button>
+</section>

@@ -1,0 +1,57 @@
+<section xmlns="http://www.w3.org/1999/xhtml">
+	<section class="panel panel-primary">
+		<div class="panel-body">
+			<blockquote class="quote-story">
+				<p>{{ round.story }}</p>
+			</blockquote>
+		</div>
+		<div class="panel-footer text-right">by <em>{{ players['' + round.storyTellerKey.id].name }}</em></div>
+	</section>
+	<div ng-show="round.isStoryTeller" class="alert alert-success fade in">
+		These are the other players' submissions, wait for them to vote now...
+	</div>
+	<div ng-show="round.readyForVote" class="alert alert-info fade in">
+		Select the right image! Remember, you cannot vote for your own image.
+	</div>
+	<div ng-show="round.hasVoted" class="alert alert-success fade in">
+		You have already voted in this round, now wait for the other players...
+	</div>
+	<div ng-hide="round.hasVoted" class="row">
+		<div ng-repeat="(key, image) in images" 
+			class="col-lg-4 col-md-6 col-sm-12 container-{{ image.key.id == selectedImage.key.id ? 'selected' : 'normal' }}">
+			<a ng-click="selectImage(image)"
+				class="select-image {{ round.imageToPlayer[image.key.id] == currentPlayer.key.id ? 'disabled' : '' }} image-vote-container">
+				<span ng-show="image.key.id == selectedImage.key.id" class="badge image-vote-badge">
+					<span class="glyphicon glyphicon-star"></span>
+				</span>
+				<span ng-show="round.imageToPlayer[image.key.id] == currentPlayer.key.id" class="badge image-vote-badge">
+					<span class="glyphicon glyphicon-user"></span>
+				</span>
+				<img ng-src="{{ image.url }}" 
+					class="img-responsive img-rounded image-{{ image.key.id == selectedImage.key.id ? 'selected' : round.imageToPlayer[image.key.id] == currentPlayer.key.id ? 'user' : 'normal' }}" />
+			</a>
+		</div>
+	</div>
+	<div ng-show="round.hasVoted" class="row">
+		<div ng-repeat="(key, image) in images"
+			class="col-lg-4 col-md-6 col-sm-12 container-{{ image.key.id == selectedImage.key.id ? 'selected' : 'normal' }}">
+			<div class="select-image image-vote-container">
+				<span ng-show="image.key.id == round.votes[currentPlayer.key.id]" class="badge image-vote-badge">
+					<span class="glyphicon glyphicon-star"></span>
+				</span>
+				<span ng-show="round.imageToPlayer[image.key.id] == currentPlayer.key.id" class="badge image-vote-badge">
+					<span class="glyphicon glyphicon-user"></span>
+				</span>
+				<img ng-src="{{ image.url }}" 
+					class="img-responsive img-rounded image-{{ image.key.id == selectedImage.key.id ? 'selected' : 'normal' }}" />
+			</div>
+		</div>
+	</div>
+	<button ng-show="round.readyForVote" 
+		ng-click="submitVote()" 
+		ng-disabled="!round.readyForVote || !selectedImage"
+		class="btn btn-primary btn-lg btn-block btn-submit-vote">
+		<span class="glyphicon glyphicon-thumbs-up"></span>
+		Vote
+	</button>
+</section>

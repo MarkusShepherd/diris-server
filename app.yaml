@@ -1,5 +1,5 @@
 application: diris-app
-version: 0-0-1
+version: 0-0-2
 runtime: python27
 api_version: 1
 threadsafe: true
@@ -30,16 +30,20 @@ handlers:
   secure: always
 
 skip_files:
-    - manage.py
-    - README.md
-    - install_deps
-    - requirements.*
-    - bin/.*
-    - include/.*
-    - lib/.*
-    - man/.*
-    - sitepackages/dev*
-    - \.storage.*
-    - \.git.*
-    - (.*)\.pyc
-    - dixit/.*
+  - ^(.*/)?#.*#$
+  - ^(.*/)?.*~$
+  - ^(.*/)?.*\.py[co]$
+  - ^(.*/)?.*/RCS/.*$
+  - ^(.*/)?\..*$
+  - ^(.*/)?manage\.py$
+  - ^(.*/)?README.md
+  - ^(.*/)?install_deps$
+  - ^(.*/)?pip-selfcheck.json$
+  - ^(.*/)?requirements.*$
+  - ^(.*/)?bin/.*$
+  - ^(.*/)?include/.*$
+  - ^/?lib/.*$
+  - ^(.*/)?man/.*$
+  - ^(.*/)?sitepackages/dev.*$
+  - ^(.*/)?\.storage.*$
+  - ^(.*/)?\.git.*$
