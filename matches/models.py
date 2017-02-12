@@ -247,17 +247,17 @@ class Round(models.Model):
         scores = defaultdict(int)
 
         for details in round_details.exclude(is_storyteller=True):
-            if (details.vote.pk != storyteller.pk
-                    and scores[details.vote.pk] < Round.MAX_DECEIVED_VOTE_SCORE):
-                scores[details.vote.pk] += Round.DECEIVED_VOTE_SCORE
+            if (details.vote_player.pk != storyteller.pk
+                    and scores[details.vote_player.pk] < Round.MAX_DECEIVED_VOTE_SCORE):
+                scores[details.vote_player.pk] += Round.DECEIVED_VOTE_SCORE
 
-        if all(details.vote.pk == storyteller.pk
+        if all(details.vote_player.pk == storyteller.pk
                for details in round_details.exclude(is_storyteller=True)):
             scores[storyteller.pk] += Round.ALL_CORRECT_STORYTELLER_SCORE
             for details in round_details.exclude(is_storyteller=True):
                 scores[details.player.pk] += Round.ALL_CORRECT_SCORE
 
-        elif all(details.vote.pk != storyteller.pk
+        elif all(details.vote_player.pk != storyteller.pk
                  for details in round_details.exclude(is_storyteller=True)):
             scores[storyteller.pk] += Round.ALL_WRONG_STORYTELLER_SCORE
             for details in round_details.exclude(is_storyteller=True):
@@ -265,7 +265,7 @@ class Round(models.Model):
 
         else:
             scores[storyteller.pk] += Round.NOT_ALL_CORRECT_OR_WRONG_STORYTELLER_SCORE
-            for details in round_details.filter(vote=storyteller):
+            for details in round_details.filter(vote_player=storyteller):
                 scores[details.player.pk] += Round.NOT_ALL_CORRECT_OR_WRONG_SCORE
 
         for details in round_details:
@@ -339,11 +339,14 @@ class PlayerRoundDetails(models.Model):
                               blank=True, null=True,
                               on_delete=models.PROTECT)
     score = models.PositiveSmallIntegerField(default=0)
-    # TODO vote needs to be for an image
-    vote = models.ForeignKey(Player,
+    vote = models.ForeignKey(Image,
                              related_name='voted_by',
                              blank=True, null=True,
                              on_delete=models.PROTECT)
+    vote_player = models.ForeignKey(Player,
+                                    related_name='voted_by',
+                                    blank=True, null=True,
+                                    on_delete=models.PROTECT)
 
     def __str__(self):
         return '%s in %s' % (self.player.user.username, str(self.match_round))
@@ -382,28 +385,28 @@ class PlayerRoundDetails(models.Model):
 
         self.match_round.match.check_status()
 
-    def submit_vote(self, player_pk):
+    def submit_vote(self, image_pk):
         if self.is_storyteller:
             raise ValueError('storyteller cannot vote')
 
         if self.vote:
             raise ValueError('vote already exists')
 
-        if not player_pk:
-            # TODO other validations
-            raise ValueError('player is required')
-
-        player = Player.objects.get(pk=player_pk)
-
-        if player.pk == self.player.pk:
-            raise ValueError('players cannote vote for themselves')
-
-        # TODO check that player actually takes part in the match
-
         if self.match_round.status != Round.SUBMIT_VOTES:
             raise ValueError('not ready for submission')
 
-        self.vote = player
+        if not image_pk:
+            raise ValueError('image is required')
+
+        details = self.match_round.player_round_details.get(image=image_pk)
+        image = details.image
+        player = details.player
+
+        if player.pk == self.player.pk:
+            raise ValueError('players cannot vote for themselves')
+
+        self.vote = image
+        self.vote_player = player
         self.save()
 
         self.match_round.match.check_status(self.pk)

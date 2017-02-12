@@ -91,14 +91,14 @@ class MatchImageView(views.APIView):
 class MatchVoteView(views.APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
-    def post(self, request, match_pk, round_number, vote):
+    def post(self, request, match_pk, round_number, image_pk):
         player = request.user.player
 
         match = Match.objects.get(pk=match_pk)
         round_ = match.rounds.get(number=round_number)
         details = round_.player_round_details.get(player=player)
 
-        details.submit_vote(vote)
+        details.submit_vote(image_pk)
 
         serializer = RoundSerializer(round_, context={'request': request})
         return Response(serializer.data)

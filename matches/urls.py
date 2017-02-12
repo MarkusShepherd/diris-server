@@ -20,6 +20,6 @@ urlpatterns = [
     url(r'^upload/(?P<filename>[^/]+)/?$', views.ImageUploadView.as_view()),
     url(r'^matches/(?P<match_pk>[^/]+)/(?P<round_number>[^/]+)/image/(?P<filename>[^/]+)/?$',
         views.MatchImageView.as_view()),
-    url(r'^matches/(?P<match_pk>[^/]+)/(?P<round_number>[^/]+)/vote/(?P<vote>[^/]+)/?$',
+    url(r'^matches/(?P<match_pk>[^/]+)/(?P<round_number>[^/]+)/vote/(?P<image_pk>[^/]+)/?$',
         views.MatchVoteView.as_view()),
 ]
