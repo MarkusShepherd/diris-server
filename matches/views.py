@@ -15,7 +15,7 @@ from rest_framework.response import Response
 from rest_framework.parsers import FileUploadParser
 
 
-from .models import Match, Player, Image
+from .models import Match, Player, Image, Round
 from .serializers import MatchSerializer, PlayerSerializer, ImageSerializer, RoundSerializer
 from .utils import random_string
 
@@ -30,19 +30,53 @@ class MatchViewSet(viewsets.ModelViewSet):
     # def get_queryset(self):
     #     return Match.objects.all()
 
+    def create(self, request, *args, **kwargs):
+        player = request.user.player
+        serializer = PlayerSerializer(player, context={'request': request})
+        request.data['inviting_player'] = serializer.data['url']
+        return super(MatchViewSet, self).create(request, *args, **kwargs)
+
+    def retrieve(self, request, *args, **kwargs):
+        try:
+            player = request.user.player
+        except AttributeError:
+            player = None
+
+        match = self.get_object()
+        serializer = self.get_serializer(match)
+        data = serializer.data
+
+        for round_data in data['rounds']:
+            round_ = match.rounds.get(pk=round_data['pk'])
+            images = []
+
+            for details_data in round_data['player_round_details']:
+                if details_data.get('image'):
+                    images.append(details_data['image'])
+
+                details = round_.player_round_details.get(pk=details_data['pk'])
+                if not details.display_vote_to(player):
+                    details_data['image'] = None
+                    details_data['vote'] = None
+                    details_data['vote_player'] = None
+
+            round_data['images'] = images if round_.display_images_to(player) else None
+
+        return Response(data)
+
     @detail_route(methods=['post'])
     def accept(self, request, pk, *args, **kwargs):
         match = self.get_object()
         # match = self.get_queryset().get(pk=pk)
         match = match.respond(request.user.player.pk, accept=True)
-        serializer = MatchSerializer(match, context={'request': request})
+        serializer = self.get_serializer(match, context={'request': request})
         return Response(serializer.data)
 
     @detail_route(methods=['post'])
     def decline(self, request, pk, *args, **kwargs):
         match = self.get_object()
         # match = self.get_queryset().get(pk=pk)
-        serializer = MatchSerializer(match, context={'request': request})
+        serializer = self.get_serializer(match, context={'request': request})
         return Response(serializer.data)
 
     @detail_route()
@@ -86,6 +120,7 @@ class MatchImageView(views.APIView):
         details.submit_image(image, story=request.query_params.get('story'))
 
         serializer = RoundSerializer(round_, context={'request': request})
+        # TODO this leaks player details and images - filter out
         return Response(serializer.data)
 
 class MatchVoteView(views.APIView):

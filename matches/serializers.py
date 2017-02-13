@@ -21,6 +21,7 @@ class ImageSerializer(serializers.HyperlinkedModelSerializer):
             'pk',
             'file',
             'owner',
+            'copyright',
             'created',
             'last_modified',
         )
@@ -55,6 +56,7 @@ class PlayerRoundDetailsSerializer(serializers.HyperlinkedModelSerializer):
             'image',
             'score',
             'vote',
+            'vote_player',
         )
 
 class RoundSerializer(serializers.HyperlinkedModelSerializer):
@@ -67,6 +69,7 @@ class RoundSerializer(serializers.HyperlinkedModelSerializer):
             'match',
             'number',
             'is_current_round',
+            'storyteller',
             'player_round_details',
             'status',
             'story',
@@ -93,6 +96,7 @@ class MatchSerializer(serializers.HyperlinkedModelSerializer):
             'url',
             'pk',
             'players',
+            'inviting_player',
             'player_match_details',
             'total_rounds',
             'rounds',
@@ -108,8 +112,9 @@ class MatchSerializer(serializers.HyperlinkedModelSerializer):
 
     def create(self, validated_data):
         data = {
-            'player_details': validated_data.get('player_match_details'),
+            # 'player_details': validated_data.get('player_match_details'),
             'players': validated_data.get('players'),
+            'inviting_player': validated_data.get('inviting_player'),
             'total_rounds': validated_data.get('total_rounds'),
             'timeout': validated_data.get('timeout'),
         }

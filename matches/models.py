@@ -14,36 +14,37 @@ from django.utils import timezone
 from djangae import fields, storage
 from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
 
-from .utils import ensure_consistency
+from .utils import clear_list, ensure_consistency
 
 LOGGER = logging.getLogger(__name__)
 STORAGE = storage.CloudStorage(bucket='diris-images', google_acl='public-read')
 
 class MatchManager(models.Manager):
-    def create_match(self, player_details=None, players=None, total_rounds=0, timeout=0):
-        # TODO use request user to mark inviting player
+    def create_match(self, players, inviting_player=None, total_rounds=0, timeout=0):
+        players = clear_list(players)
 
-        if not player_details:
-            if not players:
-                raise ValueError('Need to give players in the match')
+        if inviting_player and inviting_player not in players:
+            players.insert(0, inviting_player)
 
-            player_details = [{'player': player, 'is_inviting_player': False}
-                              for player in players]
+        inviting_player = inviting_player or players[0]
+
+        if len(players) < Match.MINIMUM_PLAYER:
+            raise ValueError('Not enough players - need to give at least {} players '
+                             'to create a match'.format(Match.MINIMUM_PLAYER))
+
+        player_details = [{'player': player, 'is_inviting_player': player == inviting_player}
+                          for player in players]
+
+        if not inviting_player:
             player_details[0]['is_inviting_player'] = True
 
-        else:
-            player_details = tuple(player_details)
+        total_rounds = total_rounds or len(players)
 
-        # TODO make sure there are no duplicates
-
-        if len(player_details) < Match.MINIMUM_PLAYER:
-            raise ValueError('Not enough players - need to give at least %d players to create a match'
-                             % Match.MINIMUM_PLAYER)
-
-        players = {details['player'] for details in player_details}
-        if not total_rounds:
-            total_rounds = len(player_details)
-        data = {'players': players, 'total_rounds': total_rounds}
+        data = {
+            'players': players,
+            'inviting_player': inviting_player,
+            'total_rounds': total_rounds,
+        }
 
         if timeout:
             data['timeout'] = timeout
@@ -59,7 +60,6 @@ class MatchManager(models.Manager):
             player_detail['date_responded'] = timezone.now() if is_inviting_player else None
             PlayerMatchDetails.objects.create(**player_detail)
 
-        players = [player_detail['player'] for player_detail in player_details]
         random.shuffle(players)
 
         for i in range(total_rounds):
@@ -68,6 +68,7 @@ class MatchManager(models.Manager):
                 'number': i + 1,
                 'is_current_round': i == 0,
                 'status': Round.WAITING,
+                'storyteller': players[i % len(players)],
             }
             match_round = Round.objects.create(**data)
 
@@ -95,13 +96,18 @@ class Match(models.Model):
 
     objects = MatchManager()
 
-    # players = models.ManyToManyField('Player', related_name='matches', through='PlayerMatchDetails')
     players = fields.RelatedSetField('Player', related_name='matches')
+    inviting_player = models.ForeignKey('Player', related_name='invited_to',
+                                        on_delete=models.PROTECT)
     total_rounds = models.PositiveSmallIntegerField()
     status = fields.CharField(max_length=1, choices=MATCH_STATUSES, default=WAITING)
     timeout = models.PositiveIntegerField(default=STANDARD_TIMEOUT)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
+
+    # @property
+    # def players(self):
+    #     return [details.player for details in self.player_match_details.all()]
 
     def respond(self, player_pk, accept=False):
         player_details = self.player_match_details.get(player=player_pk)
@@ -199,12 +205,23 @@ class Round(models.Model):
     NOT_ALL_CORRECT_OR_WRONG_STORYTELLER_SCORE = 3
 
     match = models.ForeignKey(Match, related_name='rounds', on_delete=models.CASCADE)
-    players = fields.RelatedSetField('Player', related_name='rounds')
+    # players = fields.RelatedSetField('Player', related_name='rounds')
+    storyteller = models.ForeignKey('Player', related_name='storyteller_in',
+                                    on_delete=models.PROTECT)
     number = models.PositiveSmallIntegerField()
     is_current_round = models.BooleanField(default=False)
     status = fields.CharField(max_length=1, choices=ROUND_STATUSES, default=WAITING)
     story = fields.CharField(max_length=256, blank=True)
     last_modified = models.DateTimeField(auto_now=True)
+
+    # @property
+    # def storyteller(self):
+    #     return self.player_round_details.get(is_storyteller=True).player
+
+    def display_images_to(self, player=None):
+        return (self.status == Round.SUBMIT_VOTES
+                or self.status == Round.FINISHED
+                or (player and player == self.storyteller))
 
     def check_status(self, last_updated=None):
         round_details = ensure_consistency(self.player_round_details, last_updated).all()
@@ -241,31 +258,31 @@ class Round(models.Model):
             return defaultdict(int)
 
         round_details = ensure_consistency(self.player_round_details, last_updated).all()
-        storyteller_details = round_details.get(is_storyteller=True)
-        storyteller = storyteller_details.player
+        # storyteller_details = round_details.get(is_storyteller=True)
+        # storyteller = storyteller_details.player
 
         scores = defaultdict(int)
 
         for details in round_details.exclude(is_storyteller=True):
-            if (details.vote_player.pk != storyteller.pk
+            if (details.vote_player != self.storyteller
                     and scores[details.vote_player.pk] < Round.MAX_DECEIVED_VOTE_SCORE):
                 scores[details.vote_player.pk] += Round.DECEIVED_VOTE_SCORE
 
-        if all(details.vote_player.pk == storyteller.pk
+        if all(details.vote_player == self.storyteller
                for details in round_details.exclude(is_storyteller=True)):
-            scores[storyteller.pk] += Round.ALL_CORRECT_STORYTELLER_SCORE
+            scores[self.storyteller.pk] += Round.ALL_CORRECT_STORYTELLER_SCORE
             for details in round_details.exclude(is_storyteller=True):
                 scores[details.player.pk] += Round.ALL_CORRECT_SCORE
 
-        elif all(details.vote_player.pk != storyteller.pk
+        elif all(details.vote_player != self.storyteller
                  for details in round_details.exclude(is_storyteller=True)):
-            scores[storyteller.pk] += Round.ALL_WRONG_STORYTELLER_SCORE
+            scores[self.storyteller.pk] += Round.ALL_WRONG_STORYTELLER_SCORE
             for details in round_details.exclude(is_storyteller=True):
                 scores[details.player.pk] += Round.ALL_WRONG_SCORE
 
         else:
-            scores[storyteller.pk] += Round.NOT_ALL_CORRECT_OR_WRONG_STORYTELLER_SCORE
-            for details in round_details.filter(vote_player=storyteller):
+            scores[self.storyteller.pk] += Round.NOT_ALL_CORRECT_OR_WRONG_STORYTELLER_SCORE
+            for details in round_details.filter(vote_player=self.storyteller):
                 scores[details.player.pk] += Round.NOT_ALL_CORRECT_OR_WRONG_SCORE
 
         for details in round_details:
@@ -297,14 +314,33 @@ class Player(models.Model):
         ordering = ('user',)
 
 class Image(models.Model):
+    OWNER = 'o'
+    RESTRICTED = 'r'
+    DIRIS = 'd'
+    PUBLIC = 'p'
+    COPYRIGHTS = (
+        (OWNER, 'owner'),
+        (RESTRICTED, 'restricted'),
+        (DIRIS, 'diris'),
+        (PUBLIC, 'public'),
+    )
+
     file = models.ImageField(upload_to='%Y/%m/%d/%H/%M/', storage=STORAGE)
     owner = models.ForeignKey(Player, related_name='images',
                               blank=True, null=True, on_delete=models.PROTECT)
+    copyright = fields.CharField(max_length=1, choices=COPYRIGHTS, default=OWNER)
+    is_available_publically = fields.ComputedBooleanField(
+        func=lambda image: image.copyright in (Image.DIRIS, Image.PUBLIC),
+        default=False,
+    )
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return str(self.file)
+
+    def is_available_to(self, player=None):
+        return self.is_available_publically or (player and player == self.owner)
 
     class Meta(object):
         ordering = ('created',)
@@ -319,9 +355,14 @@ class PlayerMatchDetails(models.Model):
         (DECLINED, 'declined'),
     )
 
-    player = models.ForeignKey(Player, related_name='player_match_details', on_delete=models.PROTECT)
-    match = models.ForeignKey(Match, related_name='player_match_details', on_delete=models.CASCADE)
+    player = models.ForeignKey(Player, related_name='player_match_details',
+                               on_delete=models.PROTECT)
+    match = models.ForeignKey(Match, related_name='player_match_details',
+                              on_delete=models.CASCADE)
     is_inviting_player = models.BooleanField(default=False)
+    # is_inviting_player = fields.ComputedBooleanField(
+    #     computer=lambda d: d.match.inviting_player == d.player
+    # )
     date_invited = models.DateTimeField(auto_now_add=True)
     invitation_status = fields.CharField(max_length=1, choices=INVITATION_STATUSES, default=INVITED)
     date_responded = models.DateTimeField(blank=True, null=True)
@@ -331,8 +372,10 @@ class PlayerMatchDetails(models.Model):
         return '%s in Match #%d' % (self.player.user.username, self.match.id)
 
 class PlayerRoundDetails(models.Model):
-    player = models.ForeignKey(Player, related_name='player_round_details', on_delete=models.PROTECT)
-    match_round = models.ForeignKey(Round, related_name='player_round_details', on_delete=models.CASCADE)
+    player = models.ForeignKey(Player, related_name='player_round_details',
+                               on_delete=models.PROTECT)
+    match_round = models.ForeignKey(Round, related_name='player_round_details',
+                                    on_delete=models.CASCADE)
     is_storyteller = models.BooleanField(default=False)
     image = models.ForeignKey(Image,
                               related_name='used_in_round_details',
@@ -350,6 +393,18 @@ class PlayerRoundDetails(models.Model):
 
     def __str__(self):
         return '%s in %s' % (self.player.user.username, str(self.match_round))
+
+    def display_vote_to(self, player=None):
+        if (self.match_round.status == Round.FINISHED
+                or (player and player == self.player)):
+            return True
+
+        elif not player:
+            return False
+
+        else:
+            details = self.match_round.player_round_details.filter(player=player).first()
+            return bool(details and (details.is_storyteller or details.vote))
 
     def submit_image(self, image, story=None):
         if self.image:

@@ -7,6 +7,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import random
 import string
 
+from collections import OrderedDict
 from functools import reduce
 
 from django.db.models import Model
@@ -35,3 +36,6 @@ def ensure_consistency(queryset, *updates):
             update_pks.extend(filter(None, update))
 
     return reduce(ensure_instance_consistent, update_pks, queryset)
+
+def clear_list(items):
+    return list(OrderedDict.fromkeys(item for item in items if item))
