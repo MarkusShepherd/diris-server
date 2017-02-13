@@ -16,15 +16,17 @@ from djangae.db.consistency import ensure_instance_consistent
 try:
     str = unicode
 except NameError:
-    pass # Forward compatibility with Py3k
+    pass  # Forward compatibility with Py3k
 
 try:
     long
 except NameError:
     long = int
 
+
 def random_string(length=20, choices=string.digits + string.ascii_letters):
     return ''.join(random.choice(choices) for _ in range(length))
+
 
 def ensure_consistency(queryset, *updates):
     update_pks = []
@@ -36,6 +38,7 @@ def ensure_consistency(queryset, *updates):
             update_pks.extend(filter(None, update))
 
     return reduce(ensure_instance_consistent, update_pks, queryset)
+
 
 def clear_list(items):
     return list(OrderedDict.fromkeys(item for item in items if item))

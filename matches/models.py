@@ -19,6 +19,7 @@ from .utils import clear_list, ensure_consistency
 LOGGER = logging.getLogger(__name__)
 STORAGE = storage.CloudStorage(bucket='diris-images', google_acl='public-read')
 
+
 class MatchManager(models.Manager):
     def create_match(self, players, inviting_player=None, total_rounds=0, timeout=0):
         players = clear_list(players)
@@ -82,6 +83,7 @@ class MatchManager(models.Manager):
 
         return match
 
+
 class Match(models.Model):
     WAITING = 'w'
     IN_PROGESS = 'p'
@@ -91,7 +93,7 @@ class Match(models.Model):
         (IN_PROGESS, 'in progress'),
         (FINISHED, 'finished'),
     )
-    STANDARD_TIMEOUT = 60 * 60 * 24 # 24h
+    STANDARD_TIMEOUT = 60 * 60 * 36  # 36
     MINIMUM_PLAYER = 4
 
     objects = MatchManager()
@@ -120,8 +122,8 @@ class Match(models.Model):
         player_details.save()
 
         if all(details.invitation_status == PlayerMatchDetails.ACCEPTED
-               for details in ensure_consistency(self.player_match_details, (player_details.pk,))
-                             .exclude(player=player_pk)):
+               for details in (ensure_consistency(self.player_match_details, (player_details.pk,))
+                               .exclude(player=player_pk))):
             self.status = Match.IN_PROGESS
             self.save()
 
@@ -159,8 +161,6 @@ class Match(models.Model):
     def score(self, last_updated=None):
         rounds = ensure_consistency(self.rounds, last_updated).order_by('number')
 
-        updated = []
-
         scores = defaultdict(int)
 
         for round_ in rounds:
@@ -180,6 +180,7 @@ class Match(models.Model):
     class Meta(object):
         ordering = ('last_modified',)
         verbose_name_plural = 'matches'
+
 
 class Round(models.Model):
     WAITING = 'w'
@@ -297,6 +298,7 @@ class Round(models.Model):
     class Meta(object):
         ordering = ('number',)
 
+
 class Player(models.Model):
     user = models.OneToOneField(GaeDatastoreUser, on_delete=models.CASCADE)
     # name = fields.CharField(max_length=10)
@@ -312,6 +314,7 @@ class Player(models.Model):
 
     class Meta(object):
         ordering = ('user',)
+
 
 class Image(models.Model):
     OWNER = 'o'
@@ -345,6 +348,7 @@ class Image(models.Model):
     class Meta(object):
         ordering = ('created',)
 
+
 class PlayerMatchDetails(models.Model):
     INVITED = 'i'
     ACCEPTED = 'a'
@@ -370,6 +374,7 @@ class PlayerMatchDetails(models.Model):
 
     def __str__(self):
         return '%s in Match #%d' % (self.player.user.username, self.match.id)
+
 
 class PlayerRoundDetails(models.Model):
     player = models.ForeignKey(Player, related_name='player_round_details',

@@ -10,7 +10,7 @@ from rest_framework.routers import DefaultRouter
 from . import views
 
 # Create a router and register our viewsets with it.
-router = DefaultRouter() # schema_title='Diris Matches API'
+router = DefaultRouter()  # schema_title='Diris Matches API'
 router.register(r'matches', views.MatchViewSet, base_name='match')
 router.register(r'players', views.PlayerViewSet, base_name='player')
 router.register(r'images', views.ImageViewSet, base_name='image')

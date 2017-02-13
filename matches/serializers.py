@@ -13,6 +13,7 @@ from .models import Match, Round, Player, Image, PlayerMatchDetails, PlayerRound
 
 LOGGER = logging.getLogger(__name__)
 
+
 class ImageSerializer(serializers.HyperlinkedModelSerializer):
     class Meta(object):
         model = Image
@@ -31,6 +32,7 @@ class ImageSerializer(serializers.HyperlinkedModelSerializer):
             'last_modified',
         )
 
+
 class PlayerMatchDetailsSerializer(serializers.HyperlinkedModelSerializer):
     class Meta(object):
         model = PlayerMatchDetails
@@ -43,6 +45,7 @@ class PlayerMatchDetailsSerializer(serializers.HyperlinkedModelSerializer):
             'date_responded',
             'score',
         )
+
 
 class PlayerRoundDetailsSerializer(serializers.HyperlinkedModelSerializer):
     image = ImageSerializer(read_only=True)
@@ -58,6 +61,7 @@ class PlayerRoundDetailsSerializer(serializers.HyperlinkedModelSerializer):
             'vote',
             'vote_player',
         )
+
 
 class RoundSerializer(serializers.HyperlinkedModelSerializer):
     player_round_details = PlayerRoundDetailsSerializer(many=True)
@@ -78,6 +82,7 @@ class RoundSerializer(serializers.HyperlinkedModelSerializer):
         read_only_fields = (
             'last_modified',
         )
+
 
 class MatchSerializer(serializers.HyperlinkedModelSerializer):
     players = serializers.HyperlinkedRelatedField(
@@ -124,6 +129,7 @@ class MatchSerializer(serializers.HyperlinkedModelSerializer):
     def update(self, instance, validated_data):
         pass
 
+
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     class Meta(object):
         model = GaeDatastoreUser
@@ -136,6 +142,7 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
             'last_name',
         )
         extra_kwargs = {'password': {'write_only': True}}
+
 
 class PlayerSerializer(serializers.HyperlinkedModelSerializer):
     user = UserSerializer()
