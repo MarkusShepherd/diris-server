@@ -95,6 +95,27 @@ class MatchSerializer(serializers.HyperlinkedModelSerializer):
     rounds = RoundSerializer(many=True, required=False)
     total_rounds = serializers.IntegerField(required=False)
 
+    def filtered_data(self, player=None):
+        data = self.data.copy()
+
+        for round_data in data['rounds']:
+            round_ = self.instance.rounds.get(pk=round_data['pk'])
+            images = []
+
+            for details_data in round_data['player_round_details']:
+                if details_data.get('image'):
+                    images.append(details_data['image'])
+
+                details = round_.player_round_details.get(pk=details_data['pk'])
+                if not details.display_vote_to(player):
+                    details_data['image'] = bool(details_data.get('image'))
+                    details_data['vote'] = bool(details_data.get('vote'))
+                    details_data['vote_player'] = bool(details_data.get('vote_player'))
+
+            round_data['images'] = images if round_.display_images_to(player) else None
+
+        return data
+
     class Meta(object):
         model = Match
         fields = (
@@ -116,15 +137,15 @@ class MatchSerializer(serializers.HyperlinkedModelSerializer):
         )
 
     def create(self, validated_data):
-        data = {
-            # 'player_details': validated_data.get('player_match_details'),
-            'players': validated_data.get('players'),
-            'inviting_player': validated_data.get('inviting_player'),
-            'total_rounds': validated_data.get('total_rounds'),
-            'timeout': validated_data.get('timeout'),
-        }
+        # data = {
+        #     # 'player_details': validated_data.get('player_match_details'),
+        #     'players': validated_data.get('players'),
+        #     'inviting_player': validated_data.get('inviting_player'),
+        #     'total_rounds': validated_data.get('total_rounds'),
+        #     'timeout': validated_data.get('timeout'),
+        # }
 
-        return Match.objects.create_match(**data)
+        return Match.objects.create_match(**validated_data)
 
     def update(self, instance, validated_data):
         pass
