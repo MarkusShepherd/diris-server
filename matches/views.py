@@ -13,6 +13,7 @@ from rest_framework import views, viewsets, permissions
 from rest_framework.decorators import detail_route
 from rest_framework.response import Response
 from rest_framework.parsers import FileUploadParser
+from rest_framework_jwt.settings import api_settings
 
 from .models import Match, Player, Image
 from .serializers import MatchSerializer, PlayerSerializer, ImageSerializer, RoundSerializer
@@ -22,13 +23,9 @@ LOGGER = logging.getLogger(__name__)
 
 
 class MatchViewSet(viewsets.ModelViewSet):
-    # queryset = improve_queryset_consistency(Match.objects.all())
     queryset = Match.objects.all()
     serializer_class = MatchSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
-
-    # def get_queryset(self):
-    #     return Match.objects.all()
 
     def create(self, request, *args, **kwargs):
         player = request.user.player
@@ -122,19 +119,24 @@ class MatchVoteView(views.APIView):
 
 
 class PlayerViewSet(viewsets.ModelViewSet):
-    # queryset = improve_queryset_consistency(Player.objects.all())
     queryset = Player.objects.all()
     serializer_class = PlayerSerializer
 
-    # def get_queryset(self):
-    #     return Player.objects.all()
-
     def create(self, request, *args, **kwargs):
         response = super(PlayerViewSet, self).create(request, *args, **kwargs)
+
         player = response.data
         user = GaeDatastoreUser.objects.get(pk=player['user']['pk'])
         user.backend = 'django.contrib.auth.backends.ModelBackend'
         login(request, user)
+
+        jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
+        jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+
+        payload = jwt_payload_handler(user)
+        token = jwt_encode_handler(payload)
+        response.data['token'] = token
+
         return response
 
     @detail_route()
@@ -149,12 +151,8 @@ class PlayerViewSet(viewsets.ModelViewSet):
 
 
 class ImageViewSet(viewsets.ModelViewSet):
-    # queryset = improve_queryset_consistency(Image.objects.all())
     queryset = Image.objects.all()
     serializer_class = ImageSerializer
-
-    # def get_queryset(self):
-    #     return Image.objects.all()
 
 
 class ImageUploadView(views.APIView):

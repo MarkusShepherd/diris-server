@@ -10,7 +10,7 @@ from django.conf.urls.static import static
 from django.contrib.staticfiles.views import serve
 
 from rest_framework_jwt.views import obtain_jwt_token, refresh_jwt_token
-from rest_framework.authtoken.views import obtain_auth_token
+# from rest_framework.authtoken.views import obtain_auth_token
 
 import session_csrf
 session_csrf.monkeypatch()
