@@ -8,7 +8,7 @@ import os
 
 from datetime import timedelta
 
-from djangae.settings_base import * #Set up some AppEngine specific stuff
+from djangae.settings_base import *  #Set up some AppEngine specific stuff
 from django.core.urlresolvers import reverse_lazy
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -17,6 +17,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 from .boot import get_app_config
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = get_app_config().secret_key
+
+# from matches.utils import jwt_payload
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -168,7 +170,10 @@ CONSISTENCY_CONFIG = {
     'defaults': {'cache_on_modification': True}
 }
 
-JWT_LEEWAY = 120
-JWT_EXPIRATION_DELTA = timedelta(hours=24)
-JWT_ALLOW_REFRESH = True
-JWT_REFRESH_EXPIRATION_DELTA = timedelta(days=30)
+JWT_AUTH = {
+    'JWT_LEEWAY': 120,
+    'JWT_EXPIRATION_DELTA': timedelta(hours=24),
+    'JWT_ALLOW_REFRESH': True,
+    'JWT_REFRESH_EXPIRATION_DELTA': timedelta(days=30),
+    'JWT_PAYLOAD_HANDLER': 'matches.utils.jwt_payload',
+}

@@ -102,6 +102,7 @@ class Match(models.Model):
     inviting_player = models.ForeignKey('Player', related_name='invited_to',
                                         on_delete=models.PROTECT)
     total_rounds = models.PositiveSmallIntegerField()
+    current_round = models.PositiveSmallIntegerField(default=1)
     status = fields.CharField(max_length=1, choices=MATCH_STATUSES, default=WAITING)
     timeout = models.PositiveIntegerField(default=STANDARD_TIMEOUT)
     created = models.DateTimeField(auto_now_add=True)
@@ -147,9 +148,12 @@ class Match(models.Model):
         updated = [self.pk]
 
         for round_ in rounds:
-            round_.check_status(updated)
+            round_ = round_.check_status(updated)
             updated.append(round_)
             updated.extend(round_.player_round_details.all())
+
+            if round_.is_current_round:
+                self.current_round = round_.number
 
         if round_.status == Round.FINISHED:
             self.status = Match.FINISHED

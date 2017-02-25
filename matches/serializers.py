@@ -14,11 +14,11 @@ from .models import Match, Round, Player, Image, PlayerMatchDetails, PlayerRound
 LOGGER = logging.getLogger(__name__)
 
 
-class ImageSerializer(serializers.HyperlinkedModelSerializer):
+class ImageSerializer(serializers.ModelSerializer):
     class Meta(object):
         model = Image
         fields = (
-            'url',
+            # 'url',
             'pk',
             'file',
             'owner',
@@ -33,7 +33,7 @@ class ImageSerializer(serializers.HyperlinkedModelSerializer):
         )
 
 
-class PlayerMatchDetailsSerializer(serializers.HyperlinkedModelSerializer):
+class PlayerMatchDetailsSerializer(serializers.ModelSerializer):
     class Meta(object):
         model = PlayerMatchDetails
         fields = (
@@ -47,8 +47,8 @@ class PlayerMatchDetailsSerializer(serializers.HyperlinkedModelSerializer):
         )
 
 
-class PlayerRoundDetailsSerializer(serializers.HyperlinkedModelSerializer):
-    image = ImageSerializer(read_only=True)
+class PlayerRoundDetailsSerializer(serializers.ModelSerializer):
+    image = ImageSerializer()
 
     class Meta(object):
         model = PlayerRoundDetails
@@ -63,7 +63,7 @@ class PlayerRoundDetailsSerializer(serializers.HyperlinkedModelSerializer):
         )
 
 
-class RoundSerializer(serializers.HyperlinkedModelSerializer):
+class RoundSerializer(serializers.ModelSerializer):
     player_round_details = PlayerRoundDetailsSerializer(many=True)
 
     class Meta(object):
@@ -84,12 +84,13 @@ class RoundSerializer(serializers.HyperlinkedModelSerializer):
         )
 
 
-class MatchSerializer(serializers.HyperlinkedModelSerializer):
-    players = serializers.HyperlinkedRelatedField(
+class MatchSerializer(serializers.ModelSerializer):
+    players = serializers.PrimaryKeyRelatedField(
         many=True,
         required=False,
-        view_name='player-detail',
+        # view_name='player-detail',
         queryset=Player.objects.all(),
+        # read_only=True,
     )
     player_match_details = PlayerMatchDetailsSerializer(many=True, required=False)
     rounds = RoundSerializer(many=True, required=False)
@@ -119,12 +120,13 @@ class MatchSerializer(serializers.HyperlinkedModelSerializer):
     class Meta(object):
         model = Match
         fields = (
-            'url',
+            # 'url',
             'pk',
             'players',
             'inviting_player',
             'player_match_details',
             'total_rounds',
+            'current_round',
             'rounds',
             'status',
             'timeout',
@@ -151,7 +153,7 @@ class MatchSerializer(serializers.HyperlinkedModelSerializer):
         pass
 
 
-class UserSerializer(serializers.HyperlinkedModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     class Meta(object):
         model = GaeDatastoreUser
         fields = (
@@ -165,11 +167,11 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
         extra_kwargs = {'password': {'write_only': True}}
 
 
-class PlayerSerializer(serializers.HyperlinkedModelSerializer):
+class PlayerSerializer(serializers.ModelSerializer):
     user = UserSerializer()
-    matches = serializers.HyperlinkedRelatedField(
+    matches = serializers.PrimaryKeyRelatedField(
         many=True,
-        view_name='match-detail',
+        # view_name='match-detail',
         read_only=True,
     )
     # images = serializers.HyperlinkedRelatedField(
@@ -182,7 +184,7 @@ class PlayerSerializer(serializers.HyperlinkedModelSerializer):
     class Meta(object):
         model = Player
         fields = (
-            'url',
+            # 'url',
             'pk',
             'user',
             # 'external_id',

@@ -25,7 +25,9 @@ LOGGER = logging.getLogger(__name__)
 class MatchViewSet(viewsets.ModelViewSet):
     queryset = Match.objects.all()
     serializer_class = MatchSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    permission_classes = (permissions.IsAuthenticated,)
+
+    # TODO always only list the matches the player takes part in
 
     def create(self, request, *args, **kwargs):
         player = request.user.player
