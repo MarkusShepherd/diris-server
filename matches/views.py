@@ -31,8 +31,7 @@ class MatchViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         player = request.user.player
-        serializer = PlayerSerializer(player, context={'request': request})
-        request.data['inviting_player'] = serializer.data['url']
+        request.data['inviting_player'] = player.pk
         return super(MatchViewSet, self).create(request, *args, **kwargs)
 
     def retrieve(self, request, *args, **kwargs):
