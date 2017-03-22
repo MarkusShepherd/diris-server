@@ -27,6 +27,7 @@ class MatchViewSet(viewsets.ModelViewSet):
     serializer_class = MatchSerializer
     permission_classes = (permissions.IsAuthenticated,)
 
+    # TODO filtered data on list
     # TODO always only list the matches the player takes part in
 
     def create(self, request, *args, **kwargs):
