@@ -96,6 +96,15 @@ class MatchSerializer(serializers.ModelSerializer):
     rounds = RoundSerializer(many=True, required=False)
     total_rounds = serializers.IntegerField(required=False)
 
+    def __init__(self, player=None, *args, **kwargs):
+        super(MatchSerializer, self).__init__(*args, **kwargs)
+        self.player = player
+
+    def to_representation(self, obj):
+        # TODO move filtered_data() functionality here
+        result = super(MatchSerializer, self).to_representation(obj)
+        return result
+
     def filtered_data(self, player=None):
         data = self.data.copy()
 

@@ -9,7 +9,7 @@ import os
 
 from django.contrib.auth import login
 from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
-from rest_framework import views, viewsets, permissions
+from rest_framework import mixins, permissions, views, viewsets
 from rest_framework.decorators import detail_route
 from rest_framework.response import Response
 from rest_framework.parsers import FileUploadParser
@@ -22,7 +22,12 @@ from .utils import random_string
 LOGGER = logging.getLogger(__name__)
 
 
-class MatchViewSet(viewsets.ModelViewSet):
+class MatchViewSet(
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet
+):
     queryset = Match.objects.all()
     serializer_class = MatchSerializer
     permission_classes = (permissions.IsAuthenticated,)
@@ -42,8 +47,20 @@ class MatchViewSet(viewsets.ModelViewSet):
             player = None
 
         match = self.get_object()
-        serializer = self.get_serializer(match)
+        serializer = self.get_serializer(instance=match, player=player)
         return Response(serializer.filtered_data(player))
+
+    def list(self, request, *args, **kwargs):
+        try:
+            player = request.user.player
+        except AttributeError:
+            player = None
+
+        # TODO filter player's matches
+        queryset = self.filter_queryset(self.get_queryset())
+
+        serializer = self.get_serializer(instance=queryset, player=player, many=True)
+        return Response(serializer.data)
 
     @detail_route(methods=['post'])
     def accept(self, request, pk, *args, **kwargs):
