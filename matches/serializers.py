@@ -101,15 +101,10 @@ class MatchSerializer(serializers.ModelSerializer):
         self.player = player
 
     def to_representation(self, obj):
-        # TODO move filtered_data() functionality here
-        result = super(MatchSerializer, self).to_representation(obj)
-        return result
-
-    def filtered_data(self, player=None):
-        data = self.data.copy()
+        data = super(MatchSerializer, self).to_representation(obj)
 
         for round_data in data['rounds']:
-            round_ = self.instance.rounds.get(pk=round_data['pk'])
+            round_ = obj.rounds.get(pk=round_data['pk'])
             images = []
 
             for details_data in round_data['player_round_details']:
@@ -117,12 +112,12 @@ class MatchSerializer(serializers.ModelSerializer):
                     images.append(details_data['image'])
 
                 details = round_.player_round_details.get(pk=details_data['pk'])
-                if not details.display_vote_to(player):
+                if not details.display_vote_to(self.player):
                     details_data['image'] = bool(details_data.get('image'))
                     details_data['vote'] = bool(details_data.get('vote'))
                     details_data['vote_player'] = bool(details_data.get('vote_player'))
 
-            round_data['images'] = images if round_.display_images_to(player) else None
+            round_data['images'] = images if round_.display_images_to(self.player) else None
 
         return data
 

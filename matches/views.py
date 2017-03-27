@@ -23,10 +23,10 @@ LOGGER = logging.getLogger(__name__)
 
 
 class MatchViewSet(
-    mixins.CreateModelMixin,
-    mixins.RetrieveModelMixin,
-    mixins.ListModelMixin,
-    viewsets.GenericViewSet
+        mixins.CreateModelMixin,
+        mixins.RetrieveModelMixin,
+        mixins.ListModelMixin,
+        viewsets.GenericViewSet
 ):
     queryset = Match.objects.all()
     serializer_class = MatchSerializer
@@ -41,23 +41,20 @@ class MatchViewSet(
         return super(MatchViewSet, self).create(request, *args, **kwargs)
 
     def retrieve(self, request, *args, **kwargs):
-        try:
-            player = request.user.player
-        except AttributeError:
-            player = None
-
+        player = request.user.player
         match = self.get_object()
         serializer = self.get_serializer(instance=match, player=player)
-        return Response(serializer.filtered_data(player))
+        return Response(serializer.data)
 
     def list(self, request, *args, **kwargs):
-        try:
-            player = request.user.player
-        except AttributeError:
-            player = None
-
+        player = request.user.player
         # TODO filter player's matches
         queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(instance=page, player=player, many=True)
+            return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(instance=queryset, player=player, many=True)
         return Response(serializer.data)
@@ -67,25 +64,30 @@ class MatchViewSet(
         player = request.user.player
         match = self.get_object()
         match = match.respond(player.pk, accept=True)
-        serializer = self.get_serializer(match, context={'request': request})
-        return Response(serializer.filtered_data(player))
+        serializer = self.get_serializer(
+            instance=match,
+            player=player,
+            context={'request': request}
+        )
+        return Response(serializer.data)
 
     @detail_route(methods=['post'])
     def decline(self, request, pk, *args, **kwargs):
         player = request.user.player
         match = self.get_object()
         match = match.respond(player.pk, accept=False)
-        serializer = self.get_serializer(match, context={'request': request})
-        return Response(serializer.filtered_data(player))
+        serializer = self.get_serializer(
+            instance=match,
+            player=player,
+            context={'request': request}
+        )
+        return Response(serializer.data)
 
     @detail_route()
     def images(self, request, pk=None, *args, **kwargs):
-        try:
-            player = request.user.player
-        except AttributeError:
-            player = None
-
+        player = request.user.player
         match = self.get_object()
+
         rounds = match.rounds
         if request.query_params.get('round'):
             rounds = rounds.filter(number=request.query_params['round'])
@@ -96,7 +98,7 @@ class MatchViewSet(
                   for details in round_.player_round_details.all()
                   if details.image]
 
-        serializer = ImageSerializer(images, many=True, context={'request': request})
+        serializer = ImageSerializer(instance=images, many=True, context={'request': request})
         return Response(serializer.data)
 
 
@@ -117,8 +119,8 @@ class MatchImageView(views.APIView):
 
         details.submit_image(image, story=request.query_params.get('story'))
 
-        serializer = MatchSerializer(match, context={'request': request})
-        return Response(serializer.filtered_data(player))
+        serializer = MatchSerializer(instance=match, player=player, context={'request': request})
+        return Response(serializer.data)
 
 
 class MatchVoteView(views.APIView):
@@ -133,7 +135,7 @@ class MatchVoteView(views.APIView):
 
         details.submit_vote(image_pk)
 
-        serializer = RoundSerializer(round_, context={'request': request})
+        serializer = MatchSerializer(instance=match, player=player, context={'request': request})
         return Response(serializer.data)
 
 
