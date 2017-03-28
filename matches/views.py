@@ -10,7 +10,7 @@ import os
 from django.contrib.auth import login
 from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
 from rest_framework import mixins, permissions, views, viewsets
-from rest_framework.decorators import detail_route
+from rest_framework.decorators import detail_route, list_route
 from rest_framework.response import Response
 from rest_framework.parsers import FileUploadParser
 from rest_framework_jwt.settings import api_settings
@@ -58,6 +58,34 @@ class MatchViewSet(
 
         serializer = self.get_serializer(instance=queryset, player=player, many=True)
         return Response(serializer.data)
+
+    @list_route(methods=['post'], permission_classes=())
+    def statuses(self, request, *args, **kwargs):
+        LOGGER.info(request.data)
+        result = {}
+        for match in self.get_queryset().all():
+            match = match.check_status()
+            match.score()
+            result[match.pk] = match.status
+        return Response(result)
+
+    @detail_route(methods=['post'], permission_classes=())
+    def check(self, request, pk=None, *args, **kwargs):
+        match = self.get_object().check_status()
+        match.score()
+
+        try:
+            player = request.user.player
+
+            if match.players.filter(pk=player.pk).exists():
+                serializer = self.get_serializer(instance=match, player=player)
+                return Response(serializer.data)
+
+            else:
+                return Response('ok')
+
+        except AttributeError as e:
+            return Response('ok')
 
     @detail_route(methods=['post'])
     def accept(self, request, pk, *args, **kwargs):

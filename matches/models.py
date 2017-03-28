@@ -13,8 +13,9 @@ from django.db import models
 from django.utils import timezone
 from djangae import fields, storage
 from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
+from djangae.db.consistency import ensure_instances_consistent
 
-from .utils import clear_list, ensure_consistency
+from .utils import clear_list
 
 LOGGER = logging.getLogger(__name__)
 STORAGE = storage.CloudStorage(bucket='diris-images', google_acl='public-read')
@@ -122,57 +123,42 @@ class Match(models.Model):
         player_details.date_responded = timezone.now()
         player_details.save()
 
-        if all(details.invitation_status == PlayerMatchDetails.ACCEPTED
-               for details in (ensure_consistency(self.player_match_details, (player_details.pk,))
-                               .exclude(player=player_pk))):
-            self.status = Match.IN_PROGESS
-            self.save()
-
-            first_round = self.rounds.get(number=1)
-            first_round.is_current_round = True
-            first_round.status = Round.SUBMIT_STORY
-            first_round.save()
+        self.check_status(player_details.pk)
 
         return self
 
-    def check_status(self, last_updated=None):
-        player_details = ensure_consistency(self.player_match_details, last_updated).all()
+    def check_status(self, *updated):
+        self.status = (Match.WAITING
+                       if any(details.invitation_status != PlayerMatchDetails.ACCEPTED
+                           for details
+                           in ensure_instances_consistent(self.player_match_details.all(), updated))
+                       else Match.IN_PROGESS)
 
-        if any(details.invitation_status != PlayerMatchDetails.ACCEPTED
-               for details in player_details):
-            self.status = Match.WAITING
-            self.save()
+        prev_round = None
+        curr_round = None
 
-        round_ = None
-        rounds = ensure_consistency(self.rounds, last_updated, self.pk).order_by('number')
-        updated = [self.pk]
+        for curr_round in self.rounds.order_by('number'):
+            curr_round = curr_round.check_status(*updated, match=self, prev_round=prev_round)
+            if curr_round.is_current_round:
+                self.current_round = curr_round.number
+            prev_round = curr_round
 
-        for round_ in rounds:
-            round_ = round_.check_status(updated)
-            updated.append(round_)
-            updated.extend(round_.player_round_details.all())
-
-            if round_.is_current_round:
-                self.current_round = round_.number
-
-        if round_.status == Round.FINISHED:
+        if prev_round.status == Round.FINISHED:
             self.status = Match.FINISHED
 
         self.save()
 
         return self
 
-    def score(self, last_updated=None):
-        rounds = ensure_consistency(self.rounds, last_updated).order_by('number')
-
+    def score(self, *updated):
         scores = defaultdict(int)
 
-        for round_ in rounds:
-            round_scores = round_.score(last_updated)
+        for round_ in self.rounds.order_by('number'):
+            round_scores = round_.score(*updated)
             for player, value in round_scores.items():
                 scores[player] += value
 
-        for details in ensure_consistency(self.player_match_details.all(), last_updated):
+        for details in self.player_match_details.all():
             details.score = scores[details.player.pk]
             details.save()
 
@@ -228,9 +214,8 @@ class Round(models.Model):
                 or self.status == Round.FINISHED
                 or (player and player == self.storyteller))
 
-    def check_status(self, last_updated=None):
-        round_details = ensure_consistency(self.player_round_details, last_updated).all()
-        storyteller_details = round_details.get(is_storyteller=True)
+    def check_status(self, *updated, **kwargs):
+        round_details = ensure_instances_consistent(self.player_round_details.all(), updated)
 
         if all(details.vote for details in round_details.exclude(is_storyteller=True)):
             self.status = Round.FINISHED
@@ -238,34 +223,34 @@ class Round(models.Model):
         elif all(details.image for details in round_details):
             self.status = Round.SUBMIT_VOTES
 
-        elif storyteller_details.image and self.story:
+        elif round_details.get(is_storyteller=True).image and self.story:
             self.status = Round.SUBMIT_OTHERS
 
         elif self.number == 1:
-            # match = (ensure_consistency(Match.objects, last_updated, self.match.pk)
-            #          .get(pk=self.match.pk) or self.match)
-            self.status = (Round.SUBMIT_STORY if self.match.status == Match.IN_PROGESS
+            match = kwargs.get('match') or self.match
+            self.status = (Round.SUBMIT_STORY
+                           if match.status == Match.IN_PROGESS
                            else Round.WAITING)
 
         else:
-            prev_round = self.match.rounds.get(number=self.number - 1)
-            self.status = (Round.SUBMIT_STORY if prev_round.status == Round.FINISHED
+            prev_round = kwargs.get('prev_round')
+            if not prev_round:
+                match = kwargs.get('match') or self.match
+                prev_round = match.rounds.get(number=self.number - 1)
+
+            self.status = (Round.SUBMIT_STORY
+                           if prev_round.status == Round.FINISHED
                            else Round.WAITING)
 
         self.is_current_round = self.status != Round.FINISHED and self.status != Round.WAITING
-
         self.save()
-
         return self
 
-    def score(self, last_updated=None):
+    def score(self, *updated):
         if self.status != Round.FINISHED:
             return defaultdict(int)
 
-        round_details = ensure_consistency(self.player_round_details, last_updated).all()
-        # storyteller_details = round_details.get(is_storyteller=True)
-        # storyteller = storyteller_details.player
-
+        round_details = ensure_instances_consistent(self.player_round_details.all(), updated)
         scores = defaultdict(int)
 
         for details in round_details.exclude(is_storyteller=True):
@@ -416,9 +401,6 @@ class PlayerRoundDetails(models.Model):
             return bool(details and (details.is_storyteller or details.vote))
 
     def submit_image(self, image, story=None):
-        if self.image:
-            raise ValueError('image already exists')
-
         if not image:
             # TODO other validations
             raise ValueError('image is required')
@@ -431,6 +413,10 @@ class PlayerRoundDetails(models.Model):
                 # TODO validate story further
                 raise ValueError('story is required')
 
+            if self.image and self.match_round.story:
+                self.match_round.match.check_status()
+                raise ValueError('image and story already exists')
+
             self.match_round.story = story
             self.match_round.status = Round.SUBMIT_OTHERS
 
@@ -438,16 +424,20 @@ class PlayerRoundDetails(models.Model):
             if self.match_round.status != Round.SUBMIT_OTHERS:
                 raise ValueError('not ready for submission')
 
+            if self.image:
+                self.match_round.match.check_status()
+                raise ValueError('image story already exists')
+
             if all(details.image for details
                    in self.match_round.player_round_details.exclude(pk=self.pk)):
                 self.match_round.status = Round.SUBMIT_VOTES
 
         self.image = image
 
-        self.save()
         self.match_round.save()
+        self.save()
 
-        self.match_round.match.check_status()
+        self.match_round.match.check_status(self.pk, self.match_round.pk)
 
     def submit_vote(self, image_pk):
         if self.is_storyteller:

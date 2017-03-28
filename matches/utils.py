@@ -9,10 +9,10 @@ import random
 import string
 
 from collections import OrderedDict
-from functools import reduce
+# from functools import reduce
 
-from django.db.models import Model
-from djangae.db.consistency import ensure_instance_consistent
+# from django.db.models import Model
+# from djangae.db.consistency import ensure_instance_consistent
 from rest_framework_jwt.utils import jwt_payload_handler
 
 try:
@@ -32,16 +32,16 @@ def random_string(length=20, choices=string.digits + string.ascii_letters):
     return ''.join(random.choice(choices) for _ in range(length))
 
 
-def ensure_consistency(queryset, *updates):
-    update_pks = []
+# def ensure_consistency(queryset, *updates):
+#     update_pks = []
 
-    for update in updates:
-        if isinstance(update, (str, int, long, Model)):
-            update_pks.append(update)
-        elif update:
-            update_pks.extend(filter(None, update))
+#     for update in updates:
+#         if isinstance(update, (str, int, long, Model)):
+#             update_pks.append(update)
+#         elif update:
+#             update_pks.extend(filter(None, update))
 
-    return reduce(ensure_instance_consistent, update_pks, queryset)
+#     return reduce(ensure_instance_consistent, update_pks, queryset)
 
 
 def clear_list(items):
