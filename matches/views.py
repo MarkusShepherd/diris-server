@@ -84,7 +84,7 @@ class MatchViewSet(
             else:
                 return Response('ok')
 
-        except AttributeError as e:
+        except AttributeError:
             return Response('ok')
 
     @detail_route(methods=['post'])
@@ -142,7 +142,7 @@ class MatchImageView(views.APIView):
         details = round_.player_round_details.get(player=player)
 
         file = request.data.get('file')
-        file.name = random_string() + os.path.splitext(file.name)[1]
+        file.name = random_string() + (os.path.splitext(file.name)[1] or '.jpeg')
         image = Image.objects.create(file=file, owner=player)
 
         details.submit_image(image, story=request.query_params.get('story'))
