@@ -1,19 +1,18 @@
 <section xmlns="http://www.w3.org/1999/xhtml">
 	<div ng-hide="match.hasAccepted" class="alert alert-success fade in">
-		You've been invited by <b>{{ players['' + match.invitingPlayer.id].name }}</b> to participate in their match. Please hit the button below to accept the invitation.
+		You've been invited by <b>{{ players[match.inviting_player].user.username }}</b> to participate in their match. Please hit the button below to accept the invitation.
 	</div>
 	<div ng-show="match.hasAccepted" class="alert alert-success fade in">
-		You have accepted the invitation by <b>{{ players['' + match.invitingPlayer.id].name }}</b> to participate in their match. Please wait for the other players to join the match too.
+		You have accepted the invitation by <b>{{ players[match.inviting_player].user.username }}</b> to participate in their match. Please wait for the other players to join the match too.
 	</div>
 	<section class="list-group">
-		<a ng-repeat="(pId, acc) in match.accepted"
-			ng-href="#/profile/{{ pId }}"
+		<a ng-repeat="(pPk, acc) in match.accepted"
+			ng-href="#/profile/{{ pPk }}"
 			class="list-group-item {{ acc ? 'list-group-item-success' : 'list-group-item-info' }}">
-			<img ng-show="players['' + pId].avatarURL" ng-src="{{ players['' + pId].avatarURL }}" class="img-circle player-icon-accept" />
-			<span ng-hide="players['' + pId].avatarURL" class="btn btn-primary btn-circle player-icon-accept">
-				{{ players['' + pId].name.substr(0,1) }}
-			</span>
-			{{ players['' + pId].name }}
+			<player-icon player="players[pPk]"
+				class-icon="player-icon-accept"
+				class-btn="btn-primary"></player-icon>
+			{{ players[pPk].user.username }}
 			<span ng-show="acc" class="glyphicon glyphicon-ok-sign icon-accepted"></span>
 			<span ng-hide="acc" class="glyphicon glyphicon-question-sign icon-accepted"></span>
 		</a>

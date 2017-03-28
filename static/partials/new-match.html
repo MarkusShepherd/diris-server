@@ -2,20 +2,20 @@
 	<h2>New Match</h2>
 
 	<div class="list-group">
-		<a ng-repeat="player in playersArray | orderBy:'name'" 
-			ng-hide="player.selected || player.key.id == currentPlayer.key.id" 
+		<a ng-repeat="player in playersArray | orderBy:'user.username'"
+			ng-hide="player.selected || player.pk == currentPlayer.pk"
 			ng-click="addPlayer(player)"
 			class="list-group-item">
-			{{ player.name }}
+			{{ player.user.username }}
 		</a>
 	</div>
 
 	<h3>Selected</h3>
 	<div class="list-group">
-		<a ng-repeat="(id, player) in selected" 
+		<a ng-repeat="(id, player) in selected"
 			ng-click="removePlayer(player)"
 			class="list-group-item">
-			{{ player.name }}
+			{{ player.user.username }}
 		</a>
 	</div>
 

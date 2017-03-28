@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en" xml:lang="en" ng-app="dixitApp"
+<html lang="en" xml:lang="en" ng-app="dirisApp"
 	xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title>Dixit</title>
+<title>Diris</title>
 <meta charset="utf-8" />
 <meta name="format-detection" content="telephone=no" />
 <meta name="msapplication-tap-highlight" content="no" />
@@ -33,6 +33,7 @@
 
 <script type="text/javascript" src="lib/jquery.js"></script>
 <script type="text/javascript" src="lib/bootstrap.js"></script>
+<script type="text/javascript" src="lib/canvas-to-blob.js"></script>
 <script type="text/javascript" src="lib/cropper.js"></script>
 <script type="text/javascript" src="lib/moment.js"></script>
 
@@ -44,6 +45,7 @@
 <script type="text/javascript" src="js/data-service.js"></script>
 <script type="text/javascript" src="js/navigation.js"></script>
 <script type="text/javascript" src="js/login.js"></script>
+<script type="text/javascript" src="js/registration.js"></script>
 <script type="text/javascript" src="js/overview.js"></script>
 <script type="text/javascript" src="js/new-match.js"></script>
 <script type="text/javascript" src="js/accept.js"></script>
@@ -76,7 +78,7 @@
 			a.src = g;
 			m.parentNode.insertBefore(a, m)
 		})(window, document, 'script',
-				'http://www.google-analytics.com/analytics.js', 'ga');
+				'https://www.google-analytics.com/analytics.js', 'ga');
 
 		ga('create', 'UA-56725382-3', 'auto');
 		ga('send', 'pageview');

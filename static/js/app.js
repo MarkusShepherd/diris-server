@@ -1,155 +1,178 @@
-var testUrl = 'http://localhost:8181';
-var liveUrl = 'http://dixit-app.appspot.com';
-var devUrl  = 'https://0-1-0-dot-dixit-app.appspot.com/';
+'use strict';
 
-var dixitApp = angular.module('dixitApp', ['angular-jwt', 'auth0', 'blockUI', 'ngAnimate', 'ngRoute', 'ngStorage', 'toastr']);
+var testUrl = 'http://localhost:8000';
+var liveUrl = 'https://diris-app.appspot.com';
 
-dixitApp.constant('BACKEND_URL', liveUrl);
+var dirisApp = angular.module('dirisApp', [
+    'angular-jwt',
+    'blockUI',
+    'ngAnimate',
+    'ngRoute',
+    'ngStorage',
+    'toastr'
+]);
 
-dixitApp.config(function(authProvider, jwtInterceptorProvider, $httpProvider, $routeProvider,
-	$localStorageProvider, $logProvider, blockUIConfig, toastrConfig) {
-	authProvider.init({
-		domain: 'dixit.auth0.com',
-		clientID: 'SyQYBfqUOcxOgrXHjTUMKJGfJFPwLuBZ',
-		loginUrl: '/login'
-	});
+dirisApp.constant('BACKEND_URL', liveUrl);
 
-	jwtInterceptorProvider.tokenGetter = ['$localStorage', function($localStorage) {
-		return $localStorage.token;
-	}];
+dirisApp.config(function (
+    $httpProvider,
+    $routeProvider,
+    $localStorageProvider,
+    $logProvider,
+    blockUIConfig,
+    jwtOptionsProvider,
+    toastrConfig
+) {
+    jwtOptionsProvider.config({
+        authPrefix: 'JWT ',
+        unauthenticatedRedirectPath: '/login',
+        whiteListedDomains: ['diris-app.appspot.com', 'localhost'],
+        tokenGetter: ['dataService', function (dataService) {
+            return dataService.getTokenSync();
+        }]
+    });
 
-	$httpProvider.interceptors.push('jwtInterceptor');
+    $httpProvider.interceptors.push('jwtInterceptor');
 
-	$routeProvider.when('/login', {
-		templateUrl : 'partials/login.html',
-		controller : 'LoginController'
-	}).when('/overview', {
-		templateUrl : 'partials/overview.html',
-		controller : 'OverviewController',
-		requiresLogin: true
-	}).when('/overview/:action', {
-		templateUrl : 'partials/overview.html',
-		controller : 'OverviewController',
-		requiresLogin: true
-	}).when('/newmatch', {
-		templateUrl : 'partials/new-match.html',
-		controller : 'NewMatchController',
-		requiresLogin: true
-	}).when('/accept/:mId', {
-		templateUrl : 'partials/accept.html',
-		controller : 'AcceptController',
-		requiresLogin: true
-	}).when('/match/:mId', {
-		templateUrl : 'partials/match.html',
-		controller : 'MatchController',
-		requiresLogin: true
-	}).when('/match/:mId/:action', {
-		templateUrl : 'partials/match.html',
-		controller : 'MatchController',
-		requiresLogin: true
-	}).when('/image/:mId/:rNo', {
-		templateUrl : 'partials/submit-image.html',
-		controller : 'SubmitImageController',
-		requiresLogin: true
-	}).when('/vote/:mId/:rNo', {
-		templateUrl : 'partials/vote-image.html',
-		controller : 'VoteImageController',
-		requiresLogin: true
-	}).when('/review/:mId/:rNo', {
-		templateUrl : 'partials/review-round.html',
-		controller : 'ReviewRoundController',
-		requiresLogin: true
-	}).when('/profile', {
-		templateUrl : 'partials/profile.html',
-		controller : 'ProfileController',
-		requiresLogin: true
-	}).when('/profile/:pId', {
-		templateUrl : 'partials/profile.html',
-		controller : 'ProfileController',
-		requiresLogin: true
-	}).when('/profile/:pId/:action', {
-		templateUrl : 'partials/profile.html',
-		controller : 'ProfileController',
-		requiresLogin: true
-	}).otherwise({
-		redirectTo : '/login'
-	});
+    $routeProvider.when('/login', {
+        templateUrl: 'partials/login.html',
+        controller: 'LoginController'
+    }).when('/register', {
+        templateUrl: 'partials/registration.html',
+        controller: 'RegistrationController'
+    }).when('/overview', {
+        templateUrl: 'partials/overview.html',
+        controller: 'OverviewController',
+        requiresLogin: true
+    }).when('/overview/:action', {
+        templateUrl: 'partials/overview.html',
+        controller: 'OverviewController',
+        requiresLogin: true
+    }).when('/newmatch', {
+        templateUrl: 'partials/new-match.html',
+        controller: 'NewMatchController',
+        requiresLogin: true
+    }).when('/accept/:mPk', {
+        templateUrl: 'partials/accept.html',
+        controller: 'AcceptController',
+        requiresLogin: true
+    }).when('/match/:mPk', {
+        templateUrl: 'partials/match.html',
+        controller: 'MatchController',
+        requiresLogin: true
+    }).when('/match/:mPk/:action', {
+        templateUrl: 'partials/match.html',
+        controller: 'MatchController',
+        requiresLogin: true
+    }).when('/image/:mPk/:rNo', {
+        templateUrl: 'partials/submit-image.html',
+        controller: 'SubmitImageController',
+        requiresLogin: true
+    }).when('/vote/:mPk/:rNo', {
+        templateUrl: 'partials/vote-image.html',
+        controller: 'VoteImageController',
+        requiresLogin: true
+    }).when('/review/:mPk/:rNo', {
+        templateUrl: 'partials/review-round.html',
+        controller: 'ReviewRoundController',
+        requiresLogin: true
+    }).when('/profile', {
+        templateUrl: 'partials/profile.html',
+        controller: 'ProfileController',
+        requiresLogin: true
+    }).when('/profile/:pPk', {
+        templateUrl: 'partials/profile.html',
+        controller: 'ProfileController',
+        requiresLogin: true
+    }).when('/profile/:pPk/:action', {
+        templateUrl: 'partials/profile.html',
+        controller: 'ProfileController',
+        requiresLogin: true
+    }).otherwise({
+        redirectTo: '/login'
+    });
 
-	$localStorageProvider.setKeyPrefix('dixitApp_');
+    $localStorageProvider.setKeyPrefix('dirisApp_');
 
-	$logProvider.debugEnabled(false);
+    $logProvider.debugEnabled(false);
 
-	blockUIConfig.autoBlock = false;
+    blockUIConfig.autoBlock = false;
 
-	angular.extend(toastrConfig, {
-		autoDismiss: false,
-		newestOnTop: false,
-		positionClass: 'toast-bottom-right',
-		preventDuplicates: false,
-		preventOpenDuplicates: true,
-		extendedTimeOut: 1000,
-		timeOut: 10000
-		// TODO force refresh on click
-	});
+    angular.extend(toastrConfig, {
+        autoDismiss: false,
+        newestOnTop: false,
+        positionClass: 'toast-bottom-right',
+        preventDuplicates: false,
+        preventOpenDuplicates: true,
+        extendedTimeOut: 1000,
+        timeOut: 10000
+        // TODO force refresh on click
+    });
 });
 
-dixitApp.run(function($localStorage, $log, $rootScope, auth, dataService, toastr) {
-	auth.hookEvents();
+dirisApp.directive('playerIcon', function () {
+    return {
+        restrict: 'E',
+        templateUrl: 'partials/widgets/player-icon.html',
+        scope: {
+            player: '=',
+            classIcon: '@',
+            classImg: '@',
+            classBtn: '@'
+        }
+    };
+});
 
-	$rootScope.$on('$locationChangeStart', function() {
-		if (!auth.isAuthenticated) {
-			var token = $localStorage.token;
-			if (token)
-				auth.authenticate($localStorage.profile, token);
-		}
-	});
+dirisApp.run(function ($log, authManager, toastr, dataService) {
+    authManager.checkAuthOnRefresh();
 
-	if (isBrowser())
-		$log.debug('No notifications on browser');
-	else {
-		var push = PushNotification.init({ 
-			android: {
-				senderID: 879361060795
-			},
-			ios: {
-				alert: true,
-				badge: true,
-				sound: true
-			},
-			windows: {}
-		});
+    if (isBrowser()) {
+        $log.debug('No notifications on browser');
+    } else {
+        var push = PushNotification.init({
+            android: {
+                senderID: 879361060795
+            },
+            ios: {
+                alert: true,
+                badge: true,
+                sound: true
+            },
+            windows: {}
+        });
 
-		push.on('registration', function(data) {
-			$log.debug("Registered push");
-			$log.debug(data);
-			$log.debug(data.registrationId);
-			
-			var player = dataService.getLoggedInPlayer();
-			if (player && player.key && player.key.id)
-				dataService.updatePlayer(player.key.id, {
-    				gcmRegistrationID: data.registrationId
-    			});
-			else
-				dataService.setGcmRegistrationId(data.registrationId);
-		});
+        push.on('registration', function (data) {
+            $log.debug("Registered push");
+            $log.debug(data);
+            $log.debug(data.registrationId);
 
-		push.on('notification', function(data) {
-			$log.debug("Received notification");
-			$log.debug(data);
-			$log.debug(data.message);
-			$log.debug(data.title);
-			$log.debug(data.count);
-			$log.debug(data.sound);
-			$log.debug(data.image);
-			$log.debug(data.additionalData);
-			toastr.info(data.message, data.title);
-		});
+            var player = dataService.getLoggedInPlayer();
+            if (player && player.pk) {
+                dataService.updatePlayer(player.pk, {
+                    gcmRegistrationID: data.registrationId
+                });
+            } else {
+                dataService.setGcmRegistrationId(data.registrationId);
+            }
+        });
 
-		push.on('error', function(e) {
-			$log.debug("Error in notifications");
-			$log.debug(e);
-			$log.debug(e.message);
-			toastr.error(e.message);
-		});
-	}
+        push.on('notification', function (data) {
+            $log.debug("Received notification");
+            $log.debug(data);
+            $log.debug(data.message);
+            $log.debug(data.title);
+            $log.debug(data.count);
+            $log.debug(data.sound);
+            $log.debug(data.image);
+            $log.debug(data.additionalData);
+            toastr.info(data.message, data.title);
+        });
+
+        push.on('error', function (e) {
+            $log.debug("Error in notifications");
+            $log.debug(e);
+            $log.debug(e.message);
+            toastr.error(e.message);
+        });
+    }
 });

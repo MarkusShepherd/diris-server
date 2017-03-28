@@ -5,7 +5,7 @@
 				<p>{{ round.story }}</p>
 			</blockquote>
 		</div>
-		<div class="panel-footer text-right">by <em>{{ players['' + round.storyTellerKey.id].name }}</em></div>
+		<div class="panel-footer text-right">by <em>{{ players['' + round.storyteller].user.username }}</em></div>
 	</section>
 	<div ng-show="round.isStoryTeller" class="alert alert-success fade in">
 		These are the other players' submissions, wait for them to vote now...
@@ -17,38 +17,38 @@
 		You have already voted in this round, now wait for the other players...
 	</div>
 	<div ng-hide="round.hasVoted" class="row">
-		<div ng-repeat="(key, image) in images" 
-			class="col-lg-4 col-md-6 col-sm-12 container-{{ image.key.id == selectedImage.key.id ? 'selected' : 'normal' }}">
+		<div ng-repeat="image in round.images"
+			class="col-lg-4 col-md-6 col-sm-12 container-{{ image.pk == selectedImage.pk ? 'selected' : 'normal' }}">
 			<a ng-click="selectImage(image)"
-				class="select-image {{ round.imageToPlayer[image.key.id] == currentPlayer.key.id ? 'disabled' : '' }} image-vote-container">
-				<span ng-show="image.key.id == selectedImage.key.id" class="badge image-vote-badge">
+				class="select-image {{ image.pk == round.details.image.pk ? 'disabled' : '' }} image-vote-container">
+				<span ng-show="image.pk == selectedImage.pk" class="badge image-vote-badge">
 					<span class="glyphicon glyphicon-star"></span>
 				</span>
-				<span ng-show="round.imageToPlayer[image.key.id] == currentPlayer.key.id" class="badge image-vote-badge">
+				<span ng-show="image.pk == round.details.image.pk" class="badge image-vote-badge">
 					<span class="glyphicon glyphicon-user"></span>
 				</span>
-				<img ng-src="{{ image.url }}" 
-					class="img-responsive img-rounded image-{{ image.key.id == selectedImage.key.id ? 'selected' : round.imageToPlayer[image.key.id] == currentPlayer.key.id ? 'user' : 'normal' }}" />
+				<img ng-src="{{ image.file }}"
+					class="img-responsive img-rounded image-{{ image.pk == selectedImage.pk ? 'selected' : image.pk == round.details.image.pk ? 'user' : 'normal' }}" />
 			</a>
 		</div>
 	</div>
 	<div ng-show="round.hasVoted" class="row">
-		<div ng-repeat="(key, image) in images"
-			class="col-lg-4 col-md-6 col-sm-12 container-{{ image.key.id == selectedImage.key.id ? 'selected' : 'normal' }}">
+		<div ng-repeat="image in round.images"
+			class="col-lg-4 col-md-6 col-sm-12 container-normal">
 			<div class="select-image image-vote-container">
-				<span ng-show="image.key.id == round.votes[currentPlayer.key.id]" class="badge image-vote-badge">
+				<span ng-show="image.pk == round.details.vote" class="badge image-vote-badge">
 					<span class="glyphicon glyphicon-star"></span>
 				</span>
-				<span ng-show="round.imageToPlayer[image.key.id] == currentPlayer.key.id" class="badge image-vote-badge">
+				<span ng-show="image.pk == round.details.image.pk" class="badge image-vote-badge">
 					<span class="glyphicon glyphicon-user"></span>
 				</span>
-				<img ng-src="{{ image.url }}" 
-					class="img-responsive img-rounded image-{{ image.key.id == selectedImage.key.id ? 'selected' : 'normal' }}" />
+				<img ng-src="{{ image.file }}"
+					class="img-responsive img-rounded image-normal" />
 			</div>
 		</div>
 	</div>
-	<button ng-show="round.readyForVote" 
-		ng-click="submitVote()" 
+	<button ng-show="round.readyForVote"
+		ng-click="submitVote()"
 		ng-disabled="!round.readyForVote || !selectedImage"
 		class="btn btn-primary btn-lg btn-block btn-submit-vote">
 		<span class="glyphicon glyphicon-thumbs-up"></span>

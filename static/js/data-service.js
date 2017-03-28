@@ -1,290 +1,334 @@
-dixitApp.factory('dataService', 
-function($localStorage, $log, $http, BACKEND_URL) {
-     
-    var factory = {}, 
-    	matches = {},
-    	players = {},
-    	images = {},
-    	loggedInPlayer = null,
-    	gcmRegistrationID = null;
+'use strict';
 
-    factory.setGcmRegistrationId = function(gri) {
-    	gcmRegistrationID = gri;
-    };
+dirisApp.factory('dataService', function dataService(
+    $localStorage,
+    $log,
+    $http,
+    $q,
+    authManager,
+    jwtHelper,
+    BACKEND_URL
+) {
+    var factory = {},
+        matches = {},
+        players = {},
+        images = {},
+        token = null,
+        loggedInPlayer = null;
+        // gcmRegistrationID = null;
 
-    factory.updatePlayer = function(pId, player) {
-		$http.post(BACKEND_URL + '/player/update/' + pId, player)
-		.then(function(response) {
-			$log.debug("Successfully updated player " + pId);
-			$log.debug(response);
-		})
-		.catch(function(response) {
-			$log.debug("Failed to updated player " + pId);
-			$log.debug(response);
-		});
-    };
+    factory.setToken = function setToken(newToken) {
+        if (newToken && !jwtHelper.isTokenExpired(newToken)) {
+            token = newToken;
+            loggedInPlayer = jwtHelper.decodeToken(newToken);
+            authManager.authenticate();
+        } else {
+            token = null;
+            loggedInPlayer = null;
+            authManager.unauthenticate();
+        }
 
-    factory.getLoggedInPlayer = function() {
-    	if (!loggedInPlayer) {
-    		var player = $localStorage.loggedInPlayer;
-    		if (player)
-    			loggedInPlayer = player;
-    		else
-    			return null;
-    	}
-
-		return loggedInPlayer;
+        $localStorage.token = token;
+        $localStorage.loggedInPlayer = loggedInPlayer;
     };
 
-    factory.setLoggedInPlayer = function(player) {
-    	if (player) {
-    		loggedInPlayer = player;
-    		$localStorage.loggedInPlayer = player;
+    factory.getToken = function getToken(username, password) {
+        token = token || $localStorage.token;
 
-    		if (gcmRegistrationID) {
-    			$log.debug("Updating GCM ID " + gcmRegistrationID + " for player " + player.name + "(" + player.key.id + ")");
-    			factory.updatePlayer(player.key.id, {
-    				gcmRegistrationID: gcmRegistrationID
-    			});
-    			gcmRegistrationID = null;
-    		}
-    	} else {
-    		loggedInPlayer = null;
-    		delete $localStorage.loggedInPlayer;
-    	}
-    };
- 
-    factory.getMatches = function(pId, forceRefresh, fallback) {
-    	return new Promise(function(resolve, reject) {
-			if (!forceRefresh)
-				// TODO make sure only matches of pId are returned
-				resolve(matches);
-			else {
-				// TODO why not use localStorage?
-				$http.get(BACKEND_URL + '/player/id/' + pId + '/matches')
-				.then(function(response) {
-					matches = {};
-					$.each(response.data, function(k, match) {
-						$localStorage['match_' + match.key.id] = match;
-						matches[match.key.id] = match;
-					});
-					resolve(response.data);
-				}).catch(function(response) {
-					if (forceRefresh && fallback) {
-						// TODO add message
-						$.each($localStorage, function(key, match) {
-							if (key.substr(0, 6) === 'match_')
-								matches[key.substr(6)] = match;
-						});
-						resolve(matches);
-					} else
-						reject(response);
-				});
-			}
-    	});
-    };
- 
-    factory.getMatch = function(mId, forceRefresh) {
-    	return new Promise(function(resolve, reject) {
-			if (!forceRefresh && mId in matches)
-				resolve(matches[mId]);
-			else if (!forceRefresh && ('match_' + mId) in $localStorage) {
-				matches[mId] = $localStorage['match_' + mId];
-				resolve(matches[mId]);
-			} else {
-				$http.get(BACKEND_URL + '/match/' + mId)
-				.then(function(response) {
-					$localStorage['match_' + mId] = response.data;
-					matches[mId] = response.data;
-					resolve(response.data);
-				}).catch(function(response) {
-					reject(response);
-				});
-			}
-    	});
-    };
- 
-    factory.getPlayers = function(forceRefresh, fallback) {
-    	return new Promise(function(resolve, reject) {
-			if (!forceRefresh)
-				resolve(players);
-			else {
-				// TODO why not use localStorage?
-				$http.get(BACKEND_URL + '/player')
-				.then(function(response) {
-					players = {};
-					$.each(response.data, function(k, player) {
-						$localStorage['player_' + player.key.id] = player;
-						players[player.key.id] = player;
-					});
-					resolve(players);
-				}).catch(function(response) {
-					if (forceRefresh && fallback) {
-						// TODO add message
-						$.each($localStorage, function(key, player) {
-							if (key.substr(0, 7) === 'player_')
-								players[key.substr(7)] = player;
-						});
-						resolve(players);
-					} else
-						reject(response);
-				});
-			}
-    	});
-    };
- 
-    factory.getPlayer = function(pId, forceRefresh) {
-    	return new Promise(function(resolve, reject) {
-			if (!forceRefresh && pId in players)
-				resolve(players[pId]);
-			else if (!forceRefresh && ('player_' + pId) in $localStorage) {
-				players[pId] = $localStorage['player_' + pId];
-				resolve(players[pId]);
-			} else {
-				$http.get(BACKEND_URL + '/player/id/' + pId)
-				.then(function(response) {
-					$localStorage['player_' + pId] = response.data;
-					players[pId] = response.data;
-					resolve(response.data);
-				}).catch(function(response) {
-					reject(response);
-				});
-			}
-    	});
-    };
- 
-    factory.getPlayerByExternalId = function(pId, forceRefresh) {
-    	return new Promise(function(resolve, reject) {
-			$http.get(BACKEND_URL + '/player/id/' + pId + '/external')
-			.then(function(response) {
-				var player = response.data;
-				if (player) {
-					$localStorage['player_' + player.key.id] = player;
-					players[player.key.id] = player;
-					resolve(player);
-				} else {
-					response.message = "There was an error - player could not be found.";
-					reject(response);
-				}
-			}).catch(function(response) {
-				response.message = "There was an error when fetching the data.";
-				reject(response);
-			});
-    	});
-    };
- 
-    factory.getPlayerByName = function(name) {
-    	return new Promise(function(resolve, reject) {
-			$http.get(BACKEND_URL + '/player/name/' + name)
-			.then(function(response) {
-				var player = response.data[0];
-				if (player) {
-					$localStorage['player_' + player.key.id] = player;
-					players[player.key.id] = player;
-					resolve(player);
-				} else {
-					response.message = "There was an error - player \"" + name + "\" not found.";
-					reject(response);
-				}
-			}).catch(function(response) {
-				response.message = "There was an error when fetching the data.";
-				reject(response);
-			});
-    	});
-    };
- 
-    factory.getPlayerByEmail = function(email) {
-    	return new Promise(function(resolve, reject) {
-    		// TODO save in localStorage, retrieve by email
-			$http.get(BACKEND_URL + '/player/email?email=' + email)
-			.then(function(response) {
-				var player = response.data;
-				if (player) {
-					$localStorage['player_' + player.key.id] = player;
-					players[player.key.id] = player;
-					resolve(player);
-				} else {
-					response.message = "There was an error - player \"" + email + "\" not found.";
-					reject(response);
-				}
-			}).catch(function(response) {
-				response.message = "There was an error when fetching the data.";
-				reject(response);
-			});
-    	});
-    };
- 
-    factory.getImage = function(iId, forceRefresh) {
-    	return new Promise(function(resolve, reject) {
-			if (!forceRefresh && iId in images)
-				resolve(images[iId]);
-			else if (!forceRefresh && ('image_' + iId) in $localStorage) {
-				images[iId] = $localStorage['image_' + iId];
-				resolve(images[iId]);
-			} else {
-				$http.get(BACKEND_URL + '/image/' + iId)
-				.then(function(response) {
-					$localStorage['image_' + iId] = response.data;
-					images[iId] = response.data;
-					resolve(response.data);
-				}).catch(function(response) {
-					reject(response);
-				});
-			}
-    	});
-    };
- 
-    factory.getImages = function(mId, rNo, forceRefresh, fallback) {
-    	return new Promise(function(resolve, reject) {
-			if (!forceRefresh)
-				factory.getMatch(mId)
-				.then(function(match) {
-					var rounds = rNo in match.rounds ? [match.rounds[rNo]] : match.rounds;
-					var promises = [];
-					$.each(rounds, function(i, round) {
-						$.each(round.images, function(k, iId) {
-							promises.push(factory.getImage(iId, false));
-						});
-					});
+        if (token && !jwtHelper.isTokenExpired(token)) {
+            factory.setToken(token);
+            return $q.resolve(token);
+        }
 
-					Promise.all(promises)
-					.then(function(response) {
-						var result = {};
-						$.each(response, function(k, image) {
-							result[image.key.id] = image;
-						});
-						resolve(result);
-					}).catch(function(reason) {
-						reject(reason);
-					});
-				}).catch(function() {
-					reject("Match could not be found");
-				});
-			else {
-				var url = BACKEND_URL + '/match/' + mId + '/images';
-				if (rNo !== undefined && rNo !== null)
-					url += '/' + rNo;
-				$http.get(url)
-				.then(function(response) {
-					$.each(response.data, function(k, image) {
-						$localStorage['image_' + image.key.id] = image;
-						images[image.key.id] = image;
-					});
-					resolve(images);
-				}).catch(function(response) {
-					if (forceRefresh && fallback) {
-						// TODO add message
-						$.each($localStorage, function(key, image) {
-							if (key.substr(0, 6) === 'image_')
-								images[key.substr(6)] = image;
-						});
-						resolve(images);
-					} else
-						reject(response);
-				});
-			}
-    	});
+        return $http.post(BACKEND_URL + '/jwt',
+            {username: username, password: password},
+            {skipAuthorization: true})
+            .then(function (response) {
+                factory.setToken(response.data.token);
+                return token;
+            }).catch(function (response) {
+                factory.setToken(null);
+                throw new Error(response);
+            });
     };
- 
+
+    factory.getTokenSync = function getTokenSync() {
+        token = token || $localStorage.token;
+        return (token && !jwtHelper.isTokenExpired(token)) ? token : undefined;
+    };
+
+    factory.registerPlayer = function registerPlayer(newPlayer) {
+        return $http.post(BACKEND_URL + '/players/',
+            {user: newPlayer}, {skipAuthorization: true})
+            .then(function (response) {
+                var player = response.data;
+
+                if (!player) {
+                    throw new Error(response);
+                }
+
+                factory.setToken(player.token);
+
+                return player;
+            }).catch(function (response) {
+                $log.debug('error');
+                $log.debug(response);
+
+                factory.setToken(null);
+
+                throw new Error(response);
+            });
+    };
+
+    factory.getLoggedInPlayer = function getLoggedInPlayer() {
+        token = token || $localStorage.token;
+
+        if (!token || !authManager.isAuthenticated()) {
+            factory.setToken(null);
+            return;
+        }
+
+        loggedInPlayer = loggedInPlayer || $localStorage.loggedInPlayer;
+        return loggedInPlayer;
+    };
+
+    // TODO apply processMatch() when loading
+
+    function setMatch(match) {
+        $localStorage['match_' + match.pk] = match;
+        matches[match.pk] = match;
+    }
+
+    factory.createMatch = function createMatch(playerPks, totalRounds, timeout) {
+        var player = factory.getLoggedInPlayer();
+
+        return $http.post(BACKEND_URL + '/matches/', {
+            players: playerPks,
+            inviting_player: player.pk,
+            total_rounds: totalRounds || 0,
+            timeout: timeout || 0
+        })
+            .then(function (response) {
+                var match = response.data;
+
+                if (!match) {
+                    throw new Error(response);
+                }
+
+                setMatch(match);
+
+                return match;
+            });
+    };
+
+    factory.getMatches = function getMatches(forceRefresh, fallback) {
+        if (!forceRefresh) {
+            return $q.resolve(matches);
+        }
+
+        return $http.get(BACKEND_URL + '/matches/')
+            .then(function (response) {
+                $log.debug('Matches from server:', response.data.results);
+                matches = {};
+                $.each(response.data.results, function (k, match) {
+                    setMatch(match);
+                });
+                return matches;
+            }).catch(function (response) {
+                if (forceRefresh && fallback) {
+                    // TODO add message
+                    $.each($localStorage, function (key, match) {
+                        if (key.substr(0, 6) === 'match_') {
+                            matches[key.substr(6)] = match;
+                        }
+                    });
+                    return matches;
+                }
+
+                throw new Error(response);
+            });
+    };
+
+    factory.getMatch = function getMatch(mPk, forceRefresh) {
+        if (!forceRefresh && matches[mPk]) {
+            return $q.resolve(matches[mPk]);
+        }
+
+        if (!forceRefresh && $localStorage['match_' + mPk]) {
+            matches[mPk] = $localStorage['match_' + mPk];
+            return $q.resolve(matches[mPk]);
+        }
+
+        return $http.get(BACKEND_URL + '/matches/' + mPk + '/')
+            .then(function (response) {
+                $log.debug('Match from server:', response.data);
+                setMatch(response.data);
+                return matches[mPk];
+            });
+    };
+
+    factory.respondToInvitation = function respondToInvitation(mPk, accept) {
+        var action = accept ? '/accept/' : '/decline/';
+        return $http.post(BACKEND_URL + '/matches/' + mPk + action, '')
+            .then(function (response) {
+                var match = response.data;
+
+                if (!match) {
+                    throw new Error(response);
+                }
+
+                setMatch(match);
+
+                return match;
+            });
+    };
+
+    function setPlayer(player) {
+        $localStorage['player_' + player.pk] = player;
+        players[player.pk] = player;
+    }
+
+    factory.getPlayers = function getPlayers(forceRefresh, fallback) {
+        if (!forceRefresh) {
+            return $q.resolve(players);
+        }
+
+        return $http.get(BACKEND_URL + '/players/')
+            .then(function (response) {
+                players = {};
+                $.each(response.data.results, function (k, player) {
+                    setPlayer(player);
+                });
+                return players;
+            }).catch(function (response) {
+                if (forceRefresh && fallback) {
+                    // TODO add message
+                    $.each($localStorage, function (key, player) {
+                        if (key.substr(0, 7) === 'player_') {
+                            players[key.substr(7)] = player;
+                        }
+                    });
+                    return players;
+                }
+
+                throw new Error(response);
+            });
+    };
+
+    factory.getPlayer = function getPlayer(pPk, forceRefresh) {
+        if (!forceRefresh && players[pPk]) {
+            return $q.resolve(players[pPk]);
+        }
+
+        if (!forceRefresh && $localStorage['player_' + pPk]) {
+            players[pPk] = $localStorage['player_' + pPk];
+            return $q.resolve(players[pPk]);
+        }
+
+        return $http.get(BACKEND_URL + '/players/' + pPk + '/')
+            .then(function (response) {
+                setPlayer(response.data);
+                return players[pPk];
+            });
+    };
+
+    function setImage(image) {
+        $localStorage['image_' + image.pk] = image;
+        images[image.pk] = image;
+    }
+
+    factory.getImages = function getImages(forceRefresh, fallback) {
+        if (!forceRefresh) {
+            return $q.resolve(images);
+        }
+
+        return $http.get(BACKEND_URL + '/images/')
+            .then(function (response) {
+                images = {};
+                $.each(response.data.results, function (k, image) {
+                    setImage(image);
+                });
+                return images;
+            }).catch(function (response) {
+                if (forceRefresh && fallback) {
+                    // TODO add message
+                    $.each($localStorage, function (key, image) {
+                        if (key.substr(0, 6) === 'image_') {
+                            images[key.substr(6)] = image;
+                        }
+                    });
+                    return images;
+                }
+
+                throw new Error(response);
+            });
+    };
+
+    factory.getImage = function getImage(iPk, forceRefresh) {
+        if (!forceRefresh && images[iPk]) {
+            return $q.resolve(images[iPk]);
+        }
+
+        if (!forceRefresh && $localStorage['image_' + iPk]) {
+            images[iPk] = $localStorage['image_' + iPk];
+            return $q.resolve(images[iPk]);
+        }
+
+        return $http.get(BACKEND_URL + '/images/' + iPk + '/')
+            .then(function (response) {
+                setImage(response.data);
+                return images[iPk];
+            });
+    };
+
+    factory.submitImage = function submitImage(mPk, rNo, image, story) {
+        return $http.post(BACKEND_URL + '/matches/' + mPk + '/' + rNo + '/image/filename.jpeg',
+            image, {params: {story: story}})
+            .then(function (response) {
+                var match = response.data;
+
+                if (!match) {
+                    throw new Error(response);
+                }
+
+                setMatch(match);
+
+                return match;
+            });
+    };
+
+    factory.submitVote = function submitVote(mPk, rNo, iPk) {
+        return $http.post(BACKEND_URL + '/matches/' + mPk + '/' + rNo + '/vote/' + iPk, '')
+            .then(function (response) {
+                var match = response.data;
+
+                if (!match) {
+                    throw new Error(response);
+                }
+
+                setMatch(match);
+
+                return match;
+            });
+    };
+
+    // TODO
+    // factory.setGcmRegistrationId = function(gri) {
+    //  gcmRegistrationID = gri;
+    // };
+
+    // TODO
+    // factory.updatePlayer = function(pId, player) {
+    //  $http.post(BACKEND_URL + '/player/update/' + pId, player)
+    //  .then(function(response) {
+    //      $log.debug("Successfully updated player " + pId);
+    //      $log.debug(response);
+    //  })
+    //  .catch(function(response) {
+    //      $log.debug("Failed to updated player " + pId);
+    //      $log.debug(response);
+    //  });
+    // };
+
     return factory;
 });

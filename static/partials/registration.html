@@ -1,26 +1,32 @@
 <section xmlns="http://www.w3.org/1999/xhtml">
-	<h2>Login</h2>
+	<h2>Register</h2>
+
+	<p class="alert alert-info fade in">
+		Already registered? <a href="#/login" class="btn btn-default">Login!</a>
+	</p>
 
 	<p ng-show="message" class="alert alert-warning fade in">
 		<a class="close" data-dismiss="alert" aria-label="close">&times;</a>
 		{{ message }}
 	</p>
 
-	<form id="login" name="myform" novalidate="novalidate" ng-submit="login()" role="form" class="form">
+	<form id="register" name="myform" novalidate="novalidate" ng-submit="register()" role="form" class="form">
 		<div class="form-group">
-			<label class="sr-only" for="name">User name:</label>
-			<input type="text" id="name" name="name" placeholder="Name" ng-model="player.name" ng-required="true"  class="form-control" />
+			<label class="sr-only" for="username">User name:</label>
+			<input type="text" id="username" name="username" placeholder="Name" ng-model="player.username" ng-required="true" class="form-control" />
 		</div>
-		<p ng-show="myform.name.$invalid &amp;&amp; myform.name.$touched" class="alert alert-warning fade in">
+		<p ng-show="myform.username.$invalid &amp;&amp; myform.username.$touched" class="alert alert-warning fade in">
 			Name is required
 		</p>
-		<!-- <div class="form-group">
-			<label class="sr-only" for="name">Email:</label>
-			<input type="email" id="email" name="email" placeholder="Email" ng-model="player.email" ng-required="true"  class="form-control" />
+
+		<div class="form-group">
+			<label class="sr-only" for="email">Email:</label>
+			<input type="email" id="email" name="email" placeholder="Email" ng-model="player.email" ng-required="true" class="form-control" />
 		</div>
 		<p ng-show="myform.email.$invalid &amp;&amp; myform.email.$touched" class="alert alert-warning fade in">
-			Email is required
-		</p> -->
+			Must be a valid email
+		</p>
+
 		<div class="form-group">
 			<label class="sr-only" for="password">Password:</label>
 			<input type="password" id="password" name="password" placeholder="Password" ng-model="player.password" ng-required="true" class="form-control" />
@@ -30,12 +36,8 @@
 		</p>
 
 		<button type="submit" ng-disabled="myform.$invalid" class="btn btn-primary btn-lg btn-block">
-			<span class="glyphicon glyphicon-log-in"></span>
-			Login
+			<span class="glyphicon glyphicon-ok"></span>
+			Register
 		</button>
 	</form>
-
-	<p class="alert alert-info fade in">
-		No account? <a href="#/register" class="btn btn-default">Register!</a>
-	</p>
 </section>

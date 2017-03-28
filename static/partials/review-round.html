@@ -5,48 +5,40 @@
 				<p>{{ round.story }}</p>
 			</blockquote>
 		</div>
-		<div class="panel-footer text-right">by <em>{{ players['' + round.storyTellerKey.id].name }}</em></div>
+		<div class="panel-footer text-right">by <em>{{ players[round.storyteller].user.username }}</em></div>
 	</section>
 	<section>
 		<h3>Correct image</h3>
 		<div class="image-review-container">
 			<div class="submitted-by-container">
-				<img ng-show="players['' + round.storyTellerKey.id].avatarURL" ng-src="{{ players['' + round.storyTellerKey.id].avatarURL }}" class="img-circle player-icon" />
-				<span ng-hide="players['' + round.storyTellerKey.id].avatarURL" class="btn btn-primary btn-circle btn-lg player-icon">
-					{{ players['' + round.storyTellerKey.id].name.substr(0,1) }}
-				</span>
+				<player-icon player="players[round.storyteller]"
+					class-btn="btn-primary btn-lg"></player-icon>
 			</div>
-			<img ng-src="{{ images[round.images['' + round.storyTellerKey.id]].url }}" class="img-responsive img-rounded image-review image-selected" />
-			<div ng-show="filterValues(round.votes, round.images['' + round.storyTellerKey.id]).length > 0"
+			<img ng-src="{{ round.detailsPlayers[round.storyteller].image.file }}" class="img-responsive img-rounded image-review image-selected" />
+			<div ng-show="round.votes[round.storyteller]"
 				class="guessed-by-container">
-				<span ng-repeat="pId in filterValues(round.votes, round.images['' + round.storyTellerKey.id])">
-					<img ng-show="players['' + pId].avatarURL" ng-src="{{ players['' + pId].avatarURL }}" class="img-circle player-icon image-player-correct" />
-					<span ng-hide="players['' + pId].avatarURL" class="btn btn-success btn-circle btn-lg player-icon">
-						{{ players['' + pId].name.substr(0,1) }}
-					</span>
-				</span>
+				<player-icon ng-repeat="pPk in round.votes[round.storyteller]"
+					player="players[pPk]"
+					class-img="image-player-correct"
+					class-btn="btn-success btn-lg"></player-icon>
 			</div>
 		</div>
 	</section>
 	<section>
 		<h3>Other images</h3>
-		<div ng-repeat="player in filterOutKey(players, round.storyTellerKey.id)" class="col-lg-4 col-md-6 col-sm-12">
+		<div ng-repeat="details in filterOutKey(round.detailsPlayers, round.storyteller)" class="col-lg-4 col-md-6 col-sm-12">
 			<div class="image-review-container">
 				<div class="submitted-by-container">
-					<img ng-show="player.avatarURL" ng-src="{{ player.avatarURL }}" class="img-circle player-icon" />
-					<span ng-hide="player.avatarURL" class="btn btn-primary btn-circle btn-lg player-icon">
-						{{ player.name.substr(0,1) }}
-					</span>
+					<player-icon player="players[details.player]"
+						class-btn="btn-primary btn-lg"></player-icon>
 				</div>
-				<img ng-src="{{ images[round.images['' + player.key.id]].url }}" class="img-responsive img-rounded image-review" />
-				<div ng-show="filterValues(round.votes, round.images['' + player.key.id]).length > 0"
+				<img ng-src="{{ details.image.file }}" class="img-responsive img-rounded image-review" />
+				<div ng-show="round.votes[details.player.toString()]"
 					class="guessed-by-container">
-					<span ng-repeat="pId in filterValues(round.votes, round.images['' + player.key.id])">
-						<img ng-show="players['' + pId].avatarURL" ng-src="{{ players['' + pId].avatarURL }}" class="img-circle player-icon image-player-incorrect" />
-						<span ng-hide="players['' + pId].avatarURL" class="btn btn-danger btn-circle btn-lg player-icon">
-							{{ players['' + pId].name.substr(0,1) }}
-						</span>
-					</span>
+					<player-icon ng-repeat="pPk in round.votes[details.player]"
+						player="players[pPk]"
+						class-img="image-player-incorrect"
+						class-btn="btn-danger btn-lg"></player-icon>
 				</div>
 			</div>
 		</div>
@@ -56,9 +48,13 @@
 			<h4>Scores</h4>
 		</div>
 		<a ng-repeat="item in round.scoresArray | orderBy:'score':true"
-			ng-href="#/profile/{{ item.playerId }}"
+			ng-href="#/profile/{{ item.playerPk }}"
 			class="list-group-item">
-			<span class="badge">{{ item.score }} points</span> {{ players['' + item.playerId].name }}
+			<span class="badge">{{ item.score }} points</span>
+			<player-icon player="players[item.playerPk]"
+				class-icon="player-icon-standings"
+				class-btn="btn-primary"></player-icon>
+			{{ players[item.playerPk].user.username }}
 		</a>
 	</section>
 </section>

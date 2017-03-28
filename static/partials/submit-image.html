@@ -5,7 +5,7 @@
 				<p>{{ round.story }}</p>
 			</blockquote>
 		</div>
-		<div class="panel-footer text-right">by <em>{{ players['' + round.storyTellerKey.id].name }}</em></div>
+		<div class="panel-footer text-right">by <em>{{ players['' + round.storyteller].user.username }}</em></div>
 	</section>
 
 	<section>
@@ -28,7 +28,7 @@
 			<img src="default-placeholder.png" id="image" alt="Image" class="img-responsive image-upload" />
 		</div>
 		<div ng-show="round.hasSubmittedImage" class="image-upload-wrapper">
-			<img ng-src="{{ images[round.images[currentPlayer.key.id]].url }}" id="image-uploaded" alt="Image" class="img-responsive image-upload" />
+			<img ng-src="{{ round.details.image.file }}" id="image-uploaded" alt="Image" class="img-responsive image-upload" />
 		</div>
 
 		<div ng-hide="round.hasSubmittedImage" class="image-edit-wrapper">
@@ -56,12 +56,12 @@
 	        </div>
 		</div>
 
-		<textarea ng-show="round.readyForStoryImage" 
-			ng-model="round.story" 
+		<textarea ng-show="round.readyForStoryImage"
+			ng-model="round.story"
 			placeholder="Story"
 			class="form-control text-story"></textarea>
-		<button ng-click="submitImage()" 
-			ng-show="round.readyForStoryImage || round.readyForOtherImage" 
+		<button ng-click="submitImage()"
+			ng-show="round.readyForStoryImage || round.readyForOtherImage"
 			ng-disabled="!selectedImage || !imageData || !round.story" class="btn btn-primary btn-lg btn-block">
 			<span class="glyphicon glyphicon-ok"></span>
 			Submit

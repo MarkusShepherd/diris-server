@@ -1,48 +1,52 @@
-dixitApp.controller('ProfileController', 
-function($location, $log, $rootScope, $routeParams, $scope, blockUI, dataService) {
+'use strict';
 
-	var player = dataService.getLoggedInPlayer();
+dirisApp.controller('ProfileController', function ProfileController(
+    $location,
+    $log,
+    $rootScope,
+    $routeParams,
+    $scope,
+    blockUI,
+    dataService
+) {
+    var player = dataService.getLoggedInPlayer(),
+        pPk = $routeParams.pPk,
+        action = $routeParams.action;
 
-	if (!player) {
-		$location.path('/login');
-		return;
-	}
+    if (!player) {
+        $location.path('/login');
+        return;
+    }
 
-	$scope.currentPlayer = player;
-	$rootScope.menuItems = [{
-		link: '#/overview',
-		label: 'Overview',
-		glyphicon: 'home'
-	}];
+    $scope.currentPlayer = player;
+    $rootScope.menuItems = [{
+        link: '#/overview',
+        label: 'Overview',
+        glyphicon: 'home'
+    }];
 
-	if (!blockUI.state().blocking)
-		blockUI.start();
+    if (!blockUI.state().blocking) {
+        blockUI.start();
+    }
 
-	var pId = $routeParams.pId;
-	var action = $routeParams.action;
+    if (!pPk) {
+        pPk = player.pk;
+    }
 
-	if (!pId)
-		pId = player.key.id;
+    if (!action) {
+        action = pPk == player.pk ? 'edit' : 'view';
+    }
 
-	if (!action)
-		if (pId == player.key.id)
-			action = 'edit';
-		else
-			action = 'view';
+    $rootScope.refreshPath = null;
+    $rootScope.refreshReload = false;
 
-	$rootScope.refreshPath = null;
-	$rootScope.refreshReload = false;
-
-	dataService.getPlayer(pId)
-	.then(function(player) {
-		$scope.$apply(function() {
-			$scope.player = player;
-			blockUI.stop();
-		});
-		$log.debug('Player: ', $scope.player);
-	}).catch(function(response) {
-		$log.debug('error');
-		$log.debug(response);
-	});
+    dataService.getPlayer(pPk)
+        .then(function (player) {
+            $scope.player = player;
+            $log.debug('Player: ', $scope.player);
+        }).catch(function (response) {
+            $log.debug('error');
+            $log.debug(response);
+        }).then(blockUI.stop);
 
 }); // ProfileController

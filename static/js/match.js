@@ -1,75 +1,77 @@
-dixitApp.controller('MatchController',
-function($location, $log, $rootScope, $routeParams, $scope, blockUI, toastr, dataService) {
+'use strict';
 
-	var player = dataService.getLoggedInPlayer();
+dirisApp.controller('MatchController', function MatchController(
+    $location,
+    $log,
+    $q,
+    $rootScope,
+    $routeParams,
+    $scope,
+    blockUI,
+    toastr,
+    dataService
+) {
+    var player = dataService.getLoggedInPlayer(),
+        mPk = $routeParams.mPk,
+        action = $routeParams.action,
+        matchPromise,
+        imagePromise;
 
-	if (!player) {
-		$location.path('/login');
-		return;
-	}
+    if (!player) {
+        $location.path('/login');
+        return;
+    }
 
-	if (!blockUI.state().blocking)
-		blockUI.start();
+    if (!blockUI.state().blocking) {
+        blockUI.start();
+    }
 
-	$scope.currentPlayer = player;
-	$rootScope.menuItems = [{
-		link: '#/overview',
-		label: 'Overview',
-		glyphicon: 'home'
-	}];
+    $scope.currentPlayer = player;
+    $rootScope.menuItems = [{
+        link: '#/overview',
+        label: 'Overview',
+        glyphicon: 'home'
+    }];
 
-	var mId = $routeParams.mId;
-	var action = $routeParams.action;
+    $rootScope.refreshPath = '/match/' + mPk + '/refresh';
+    $rootScope.refreshReload = action === 'refresh';
 
-	$rootScope.refreshPath = '/match/' + mId + '/refresh';
-	$rootScope.refreshReload = action === 'refresh';
+    $scope.mPk = mPk;
 
-	$scope.mId = mId;
+    matchPromise = dataService.getMatch(mPk, action === 'refresh')
+        .then(function (match) {
+            $log.debug('Match:', match);
+            $scope.match = processMatch(match, player);
+            $scope.round = $scope.match.currentRoundObj;
+            $log.debug('Match processed:', $scope.match);
+            $log.debug('Round:', $scope.round);
+            return $scope.match;
+        }).then(function (match) {
+            return $q.all($.map(match.players, dataService.getPlayer));
+        }).then(function (players) {
+            $scope.players = {};
+            $.each(players, function (i, player) {
+                $scope.players[player.pk.toString()] = player;
+            });
+        }).catch(function (response) {
+            $log.debug('error');
+            $log.debug(response);
+            toastr.error("There was an error fetching the data - please try again later...");
+        });
 
-	dataService.getMatch(mId, action === 'refresh')
-	.then(function(match) {
-		$scope.$apply(function() {
-			$scope.match = processMatch(match, player);
-		});
-		return $scope.match;
-	}).then(function(match) {
-		var promises = $.map(match.playerKeys, function(key) {
-			return dataService.getPlayer(key.id);
-		});
-		$scope.players = {};
-		Promise.all(promises)
-		.then(function(players) {
-			$scope.$apply(function() {
-				$.each(players, function(i, player) {
-					$scope.players[player.key.id] = player;
-				});
-				blockUI.stop();
-			});
-		});
-	}).catch(function(response) {
-		$log.debug('error');
-		$log.debug(response);
-		$scope.$apply(function() {
-			toastr.error("There was an error fetching the data - please try again later...");
-			blockUI.stop();
-		});
-	});
+    imagePromise = dataService.getImages(action === 'refresh', true)
+        .then(function (images) {
+            $scope.images = {};
+            $.each(images, function (k, img) {
+                $scope.images[img.pk.toString()] = img;
+            });
+            $log.debug('Images:', $scope.images);
+        }).catch(function (response) {
+            $log.debug('error');
+            $log.debug(response);
+            toastr.error("There was an error fetching the data - please try again later...");
+        });
 
-	dataService.getImages(mId, undefined, true, true)
-	.then(function(images) {
-		$scope.$apply(function() {
-			$scope.images = {};
-			$.each(images, function(k, img) {
-				$scope.images['' + img.key.id] = img;
-			});
-		});
-		$log.debug('Images: ', $scope.images);
-	}).catch(function(response) {
-		$log.debug('error');
-		$log.debug(response);
-		$scope.$apply(function() {
-			toastr.error("There was an error fetching the data - please try again later...");
-		});
-	});
+    $q.all([matchPromise, imagePromise]).then(blockUI.stop);
 
 }); // MatchController
