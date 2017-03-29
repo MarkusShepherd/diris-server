@@ -10,7 +10,7 @@
 
 	<section>
 		<div ng-show="round.readyForStoryImage || round.readyForOtherImage" class="btn-group btn-group-justified btn-group-lg">
-			<div class="btn-group btn-group-lg">
+			<div ng-if="hasCamera" class="btn-group btn-group-lg">
 				<button ng-click="getImageFromCamera()" class="btn btn-primary">
 					<span class="glyphicon glyphicon-camera"></span>
 					Take photo

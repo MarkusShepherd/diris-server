@@ -107,6 +107,8 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
 
     $q.all([matchPromise, imagePromise]).then(blockUI.stop);
 
+    $scope.hasCamera = !isBrowser();
+
     $scope.getImageFromCamera = function getImageFromCamera() {
         getImage(Camera.PictureSourceType.CAMERA);
     };

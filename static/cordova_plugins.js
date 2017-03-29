@@ -73,11 +73,11 @@ module.exports = [
 module.exports.metadata = 
 // TOP OF METADATA
 {
-    "cordova-plugin-camera": "2.1.0",
-    "cordova-plugin-device": "1.1.1",
-    "cordova-plugin-whitelist": "1.2.1",
+    "cordova-plugin-camera": "2.1.1",
+    "cordova-plugin-device": "1.1.4",
+    "cordova-plugin-whitelist": "1.2.2",
     "cordova-plugin-inappbrowser": "1.2.1",
-    "phonegap-plugin-push": "1.6.0"
+    "phonegap-plugin-push": "1.6.4"
 }
 // BOTTOM OF METADATA
 });
