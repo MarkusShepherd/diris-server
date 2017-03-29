@@ -28,12 +28,12 @@ class MatchViewSet(
         mixins.ListModelMixin,
         viewsets.GenericViewSet
 ):
-    queryset = Match.objects.all()
     serializer_class = MatchSerializer
     permission_classes = (permissions.IsAuthenticated,)
 
-    # TODO filtered data on list
-    # TODO always only list the matches the player takes part in
+    def get_queryset(self):
+        player = self.request.user.player
+        return Match.objects.filter(players__contains=player.pk).all()
 
     def create(self, request, *args, **kwargs):
         player = request.user.player
@@ -48,7 +48,6 @@ class MatchViewSet(
 
     def list(self, request, *args, **kwargs):
         player = request.user.player
-        # TODO filter player's matches
         queryset = self.filter_queryset(self.get_queryset())
 
         page = self.paginate_queryset(queryset)
@@ -137,7 +136,7 @@ class MatchImageView(views.APIView):
     def post(self, request, match_pk, round_number, filename):
         player = request.user.player
 
-        match = Match.objects.get(pk=match_pk)
+        match = Match.objects.filter(players__contains=player.pk).all().get(pk=match_pk)
         round_ = match.rounds.get(number=round_number)
         details = round_.player_round_details.get(player=player)
 
@@ -157,7 +156,7 @@ class MatchVoteView(views.APIView):
     def post(self, request, match_pk, round_number, image_pk):
         player = request.user.player
 
-        match = Match.objects.get(pk=match_pk)
+        match = Match.objects.filter(players__contains=player.pk).all().get(pk=match_pk)
         round_ = match.rounds.get(number=round_number)
         details = round_.player_round_details.get(player=player)
 
