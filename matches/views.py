@@ -33,7 +33,8 @@ class MatchViewSet(
 
     def get_queryset(self):
         player = self.request.user.player
-        return Match.objects.filter(players__contains=player.pk).all()
+        return (Match.objects.filter(players__contains=player.pk).all()
+                .prefetch_related('player_match_details', 'rounds'))
 
     def create(self, request, *args, **kwargs):
         player = request.user.player

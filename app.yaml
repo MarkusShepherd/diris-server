@@ -4,8 +4,10 @@ runtime: python27
 api_version: 1
 threadsafe: true
 
-handlers:
+builtins:
+- appstats: on
 
+handlers:
 - url: /_ah/(mapreduce|queue|warmup|start|stop).*
   script: diris.wsgi.application
   login: admin

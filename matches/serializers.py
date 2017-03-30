@@ -103,8 +103,9 @@ class MatchSerializer(serializers.ModelSerializer):
     def to_representation(self, obj):
         data = super(MatchSerializer, self).to_representation(obj)
 
+        rounds = obj.rounds.all().prefetch_related('player_round_details')
         for round_data in data['rounds']:
-            round_ = obj.rounds.get(pk=round_data['pk'])
+            round_ = rounds.get(pk=round_data['pk'])
             images = []
 
             for details_data in round_data['player_round_details']:
