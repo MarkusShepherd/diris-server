@@ -84,7 +84,7 @@ class RoundSerializer(serializers.ModelSerializer):
         )
 
 
-def display_vote(round_, round_details, player):
+def display_vote(round_, round_details, player=None):
     if (round_.get('status') == Round.FINISHED
             or (player and player.pk == round_details.get('player'))):
         return True
@@ -93,9 +93,15 @@ def display_vote(round_, round_details, player):
         return False
 
     else:
-        # details = self.match_round.player_round_details.filter(player=player).first()
-        details = [d for d in round_.get('player_round_details') or () if d.get('player') == player.pk]
+        details = [d for d in round_.get('player_round_details') or ()
+                   if d.get('player') == player.pk]
         return bool(details and (details[0]['is_storyteller'] or details[0]['vote']))
+
+
+def display_images(round_data, player=None):
+    return (round_data.get('status') == Round.SUBMIT_VOTES
+            or round_data.get('status') == Round.FINISHED
+            or (player and player.pk == round_data['storyteller']))
 
 
 class MatchSerializer(serializers.ModelSerializer):
@@ -117,23 +123,19 @@ class MatchSerializer(serializers.ModelSerializer):
     def to_representation(self, obj):
         data = super(MatchSerializer, self).to_representation(obj)
 
-        # rounds = obj.rounds.all().prefetch_related('player_round_details')
         for round_data in data['rounds']:
-            # round_ = rounds.get(pk=round_data['pk'])
             images = []
 
             for details_data in round_data['player_round_details']:
                 if details_data.get('image'):
                     images.append(details_data['image'])
 
-                # details = round_.player_round_details.get(pk=details_data['pk'])
                 if not display_vote(round_data, details_data, self.player):
                     details_data['image'] = bool(details_data.get('image'))
                     details_data['vote'] = bool(details_data.get('vote'))
                     details_data['vote_player'] = bool(details_data.get('vote_player'))
 
-            # round_data['images'] = images if round_.display_images_to(self.player) else None
-            round_data['images'] = images
+            round_data['images'] = images if display_images(round_data, self.player) else None
 
         return data
 
