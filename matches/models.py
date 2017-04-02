@@ -118,8 +118,8 @@ class Match(models.Model):
         if player_details.invitation_status != PlayerMatchDetails.INVITED:
             raise ValueError('Player already responded to this invitation')
 
-        player_details.invitation_status = \
-            PlayerMatchDetails.ACCEPTED if accept else PlayerMatchDetails.DECLINED
+        player_details.invitation_status = (PlayerMatchDetails.ACCEPTED if accept
+                                            else PlayerMatchDetails.DECLINED)
         player_details.date_responded = timezone.now()
         player_details.save()
 

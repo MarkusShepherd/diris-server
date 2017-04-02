@@ -9,10 +9,14 @@
 # Modified to use cProfile: Markus Shepherd
 
 import cProfile
+import logging
 import pstats
 import StringIO
 
+
 class ProfileMiddleware(object):
+    logger = logging.getLogger(__name__ + '.ProfileMiddleware')
+
     def process_request(self, request):
         if 'prof' in request.GET:
             self.prof = cProfile.Profile()
@@ -21,11 +25,17 @@ class ProfileMiddleware(object):
     def process_response(self, request, response):
         if 'prof' in request.GET:
             self.prof.disable()
-            print request
-            s = StringIO.StringIO()
-            sortby = 'cumulative'
-            ps = pstats.Stats(self.prof, stream=s).sort_stats(sortby)
-            ps.print_stats(.1, 100)
-            print s.getvalue()
+
+            self.logger.debug(request)
+
+            stream = StringIO.StringIO()
+            stats = pstats.Stats(self.prof, stream=stream).sort_stats('cumulative')
+            stats.print_stats(.1, 20)
+            self.logger.debug(stream.getvalue())
+
+            stream = StringIO.StringIO()
+            stats = pstats.Stats(self.prof, stream=stream).sort_stats('tottime')
+            stats.print_stats(.1, 20)
+            self.logger.debug(stream.getvalue())
 
         return response

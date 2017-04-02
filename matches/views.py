@@ -16,7 +16,7 @@ from rest_framework.parsers import FileUploadParser
 from rest_framework_jwt.settings import api_settings
 
 from .models import Match, Player, Image
-from .serializers import MatchSerializer, PlayerSerializer, ImageSerializer, RoundSerializer
+from .serializers import MatchSerializer, PlayerSerializer, ImageSerializer
 from .utils import random_string
 
 LOGGER = logging.getLogger(__name__)
@@ -33,8 +33,8 @@ class MatchViewSet(
 
     def get_queryset(self):
         player = self.request.user.player
-        return (Match.objects.filter(players__contains=player.pk).all()
-                .prefetch_related('player_match_details', 'rounds'))
+        return (Match.objects.filter(players__contains=player.pk)
+                .prefetch_related('player_match_details', 'rounds').all())
 
     def create(self, request, *args, **kwargs):
         player = request.user.player
