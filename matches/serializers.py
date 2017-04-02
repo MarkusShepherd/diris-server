@@ -105,7 +105,7 @@ class MatchSerializer(serializers.ModelSerializer):
     players = serializers.PrimaryKeyRelatedField(
         many=True,
         required=False,
-        queryset=Player.objects,
+        queryset=Player.objects.all(),
     )
     player_match_details = PlayerMatchDetailsSerializer(many=True, required=False)
     rounds = RoundSerializer(many=True, required=False)

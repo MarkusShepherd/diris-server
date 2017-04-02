@@ -30,11 +30,12 @@ class MatchViewSet(
 ):
     serializer_class = MatchSerializer
     permission_classes = (permissions.IsAuthenticated,)
+    ordering = ('-last_modified',)
 
     def get_queryset(self):
         player = self.request.user.player
-        return (Match.objects.filter(players__contains=player.pk)
-                .prefetch_related('player_match_details', 'rounds').all())
+        return (Match.objects.filter(players__contains=player.pk).all()
+                .prefetch_related('player_match_details', 'rounds'))
 
     def create(self, request, *args, **kwargs):
         player = request.user.player

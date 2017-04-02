@@ -13,6 +13,7 @@ from django.db import models
 from django.utils import timezone
 from djangae import fields, storage
 from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
+# from djangae.contrib.pagination import paginated_model
 from djangae.db.consistency import ensure_instances_consistent
 
 from .utils import clear_list
@@ -85,6 +86,7 @@ class MatchManager(models.Manager):
         return match
 
 
+# @paginated_model(orderings=('last_modified', 'created', 'status', ('status', 'last_modified')))
 class Match(models.Model):
     WAITING = 'w'
     IN_PROGESS = 'p'
@@ -168,7 +170,7 @@ class Match(models.Model):
         return '#%d: %s' % (self.id, ', '.join([str(p) for p in self.players.all()]))
 
     class Meta(object):
-        ordering = ('last_modified',)
+        ordering = ('-last_modified',)
         verbose_name_plural = 'matches'
 
 
