@@ -28,7 +28,7 @@
 			<img src="default-placeholder.png" id="image" alt="Image" class="img-responsive image-upload" />
 		</div>
 		<div ng-show="round.hasSubmittedImage" class="image-upload-wrapper">
-			<img ng-src="{{ round.details.image.file }}" id="image-uploaded" alt="Image" class="img-responsive image-upload" />
+			<img ng-src="{{ image.file }}" id="image-uploaded" alt="Image" class="img-responsive image-upload" />
 		</div>
 
 		<div ng-hide="round.hasSubmittedImage" class="image-edit-wrapper">

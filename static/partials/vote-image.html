@@ -18,17 +18,17 @@
 	</div>
 	<div ng-hide="round.hasVoted" class="row">
 		<div ng-repeat="image in round.images"
-			class="col-lg-4 col-md-6 col-sm-12 container-{{ image.pk == selectedImage.pk ? 'selected' : 'normal' }}">
-			<a ng-click="selectImage(image)"
-				class="select-image {{ image.pk == round.details.image.pk ? 'disabled' : '' }} image-vote-container">
-				<span ng-show="image.pk == selectedImage.pk" class="badge image-vote-badge">
+			class="col-lg-4 col-md-6 col-sm-12 container-{{ image == selectedImage.pk ? 'selected' : 'normal' }}">
+			<a ng-click="selectImage(images[image])"
+				class="select-image {{ image == round.details.image ? 'disabled' : '' }} image-vote-container">
+				<span ng-show="image == selectedImage.pk" class="badge image-vote-badge">
 					<span class="glyphicon glyphicon-star"></span>
 				</span>
-				<span ng-show="image.pk == round.details.image.pk" class="badge image-vote-badge">
+				<span ng-show="image == round.details.image" class="badge image-vote-badge">
 					<span class="glyphicon glyphicon-user"></span>
 				</span>
-				<img ng-src="{{ image.file }}"
-					class="img-responsive img-rounded image-{{ image.pk == selectedImage.pk ? 'selected' : image.pk == round.details.image.pk ? 'user' : 'normal' }}" />
+				<img ng-src="{{ images[image].file }}"
+					class="img-responsive img-rounded image-{{ image == selectedImage.pk ? 'selected' : image == round.details.image ? 'user' : 'normal' }}" />
 			</a>
 		</div>
 	</div>
@@ -36,13 +36,13 @@
 		<div ng-repeat="image in round.images"
 			class="col-lg-4 col-md-6 col-sm-12 container-normal">
 			<div class="select-image image-vote-container">
-				<span ng-show="image.pk == round.details.vote" class="badge image-vote-badge">
+				<span ng-show="image == round.details.vote" class="badge image-vote-badge">
 					<span class="glyphicon glyphicon-star"></span>
 				</span>
-				<span ng-show="image.pk == round.details.image.pk" class="badge image-vote-badge">
+				<span ng-show="image == round.details.image" class="badge image-vote-badge">
 					<span class="glyphicon glyphicon-user"></span>
 				</span>
-				<img ng-src="{{ image.file }}"
+				<img ng-src="{{ images[image].file }}"
 					class="img-responsive img-rounded image-normal" />
 			</div>
 		</div>

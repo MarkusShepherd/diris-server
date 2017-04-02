@@ -45,6 +45,7 @@ skip_files:
   - ^(.*/)?bin/.*$
   - ^(.*/)?include/.*$
   - ^/?lib/.*$
+  - ^(.*/)?share/.*$
   - ^(.*/)?man/.*$
   - ^(.*/)?sitepackages/dev.*$
   - ^(.*/)?\.storage.*$

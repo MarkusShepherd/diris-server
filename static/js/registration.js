@@ -7,7 +7,7 @@ dirisApp.controller('RegistrationController', function RegistrationController(
     blockUI,
     dataService
 ) {
-    dataService.setToken(null);
+    dataService.logout();
 
     blockUI.stop();
 

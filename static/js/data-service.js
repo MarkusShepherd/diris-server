@@ -17,6 +17,14 @@ dirisApp.factory('dataService', function dataService(
         loggedInPlayer = null;
         // gcmRegistrationID = null;
 
+    factory.logout = function logout() {
+        factory.setToken(null);
+        matches = {};
+        players = {};
+        images = {};
+        $localStorage.$reset();
+    };
+
     factory.setToken = function setToken(newToken) {
         if (newToken && !jwtHelper.isTokenExpired(newToken)) {
             token = newToken;
@@ -47,7 +55,7 @@ dirisApp.factory('dataService', function dataService(
                 factory.setToken(response.data.token);
                 return token;
             }).catch(function (response) {
-                factory.setToken(null);
+                factory.logout();
                 throw new Error(response);
             });
     };
@@ -74,7 +82,7 @@ dirisApp.factory('dataService', function dataService(
                 $log.debug('error');
                 $log.debug(response);
 
-                factory.setToken(null);
+                factory.logout();
 
                 throw new Error(response);
             });
@@ -237,7 +245,37 @@ dirisApp.factory('dataService', function dataService(
         images[image.pk] = image;
     }
 
-    factory.getImages = function getImages(forceRefresh, fallback) {
+    factory.getImages = function getImages(mPk, forceRefresh, fallback) {
+        if (mPk) {
+            if (forceRefresh) {
+                return $http.get(BACKEND_URL + '/matches/' + mPk + '/images/')
+                    .then(function (response) {
+                        $.each(response.data, function (k, image) {
+                            setImage(image);
+                        });
+                        return response.data;
+                    }).catch(function (response) {
+                        $log.debug('There has been an error', response);
+                        if (fallback) {
+                            return factory.getImages(mPk, false, false);
+                        }
+
+                        throw new Error(response);
+                    });
+            }
+
+            return factory.getMatch(mPk)
+                .then(function (match) {
+                    var promises = _.flatMap(match.rounds || [], function (round) {
+                        return _.map(round.images || [], factory.getImage);
+                    });
+                    return $q.all(promises);
+                }).catch(function (response) {
+                    $log.debug('There has been an error', response);
+                    return $q.resolve(images);
+                });
+        }
+
         if (!forceRefresh) {
             return $q.resolve(images);
         }

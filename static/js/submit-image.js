@@ -69,8 +69,7 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
         .then(function (match) {
             $scope.match = processMatch(match, player);
             $scope.round = $scope.match.currentRoundObj;
-            return $scope.match;
-        }).then(function (match) {
+
             if ($scope.round.status === 'v') {
                 $location.path('/vote/' + mPk + '/' + rNo).replace();
                 return;
@@ -81,31 +80,23 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
                 return;
             }
 
-            return $q.all($.map(match.players, dataService.getPlayer));
+            return $q.all($.map($scope.match.players, dataService.getPlayer));
         }).then(function (players) {
             $scope.players = {};
             $.each(players || [], function (i, player) {
                 $scope.players[player.pk] = player;
             });
+
+            if ($scope.round.details.image) {
+                return dataService.getImage($scope.round.details.image);
+            }
+        }).then(function (image) {
+            $scope.image = image;
         }).catch(function (response) {
             $log.debug('error');
             $log.debug(response);
             toastr.error("There was an error fetching the data - please try again later...");
-        });
-
-    imagePromise = dataService.getImages()
-        .then(function (images) {
-            $scope.images = {};
-            $.each(images, function (k, img) {
-                $scope.images[img.pk.toString()] = img;
-            });
-        }).catch(function (response) {
-            $log.debug('error');
-            $log.debug(response);
-            toastr.error("There was an error fetching the data - please try again later...");
-        });
-
-    $q.all([matchPromise, imagePromise]).then(blockUI.stop);
+        }).then(blockUI.stop);
 
     $scope.hasCamera = !isBrowser();
 

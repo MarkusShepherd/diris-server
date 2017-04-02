@@ -59,7 +59,7 @@ dirisApp.controller('MatchController', function MatchController(
             toastr.error("There was an error fetching the data - please try again later...");
         });
 
-    imagePromise = dataService.getImages(action === 'refresh', true)
+    imagePromise = dataService.getImages(mPk, action === 'refresh', true)
         .then(function (images) {
             $scope.images = {};
             $.each(images, function (k, img) {

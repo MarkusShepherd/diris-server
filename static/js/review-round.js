@@ -74,7 +74,7 @@ dirisApp.controller('ReviewRoundController', function ReviewRoundController(
             toastr.error("There was an error fetching the data - please try again later...");
         });
 
-    imagePromise = dataService.getImages(true, true)
+    imagePromise = dataService.getImages(mPk, true, true)
         .then(function (images) {
             $scope.images = {};
             $.each(images, function (k, img) {

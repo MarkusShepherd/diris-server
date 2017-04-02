@@ -70,7 +70,7 @@ dirisApp.controller('VoteImageController', function VoteImageController(
             toastr.error("There was an error fetching the data - please try again later...");
         });
 
-    imagePromise = dataService.getImages()
+    imagePromise = dataService.getImages(mPk)
         .then(function (images) {
             $scope.images = {};
             $.each(images, function (k, img) {
@@ -85,7 +85,7 @@ dirisApp.controller('VoteImageController', function VoteImageController(
     $q.all([matchPromise, imagePromise]).then(blockUI.stop);
 
     $scope.selectImage = function selectImage(image) {
-        if (image.pk != $scope.round.details.image.pk) {
+        if (image.pk != $scope.round.details.image) {
             $scope.selectedImage = image;
         }
     };

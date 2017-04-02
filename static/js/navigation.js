@@ -12,7 +12,7 @@ dirisApp.controller('NavigationController', function NavigationController(
     });
 
     $scope.logout = function logout() {
-        dataService.setToken(null);
+        dataService.logout();
         $location.path('/login');
     };
 
