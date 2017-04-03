@@ -1,61 +1,53 @@
 <!DOCTYPE html>
-<html lang="en" xml:lang="en" ng-app="dirisApp"
-	xmlns="http://www.w3.org/1999/xhtml">
+<html lang="en" xml:lang="en" ng-app="dirisApp" xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title>Diris</title>
-<meta charset="utf-8" />
-<meta name="format-detection" content="telephone=no" />
-<meta name="msapplication-tap-highlight" content="no" />
-<meta name="viewport"
-	content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
-<meta http-equiv="Content-Security-Policy" content="default-src *; style-src * 'self' 'unsafe-inline'; script-src * 'self' 'unsafe-inline' 'unsafe-eval'; media-src *; img-src * 'self' data:; font-src * data:;" />
+	<title>Diris</title>
 
-<link rel="manifest" href="manifest.json">
-<link rel="stylesheet" type="text/css" href="css/bootstrap.css" />
-<link rel="stylesheet" type="text/css" href="css/angular-block-ui.css" />
-<link rel="stylesheet" type="text/css" href="css/angular-toastr.css" />
-<link rel="stylesheet" type="text/css" href="css/cropper.css" />
-<link rel="stylesheet" type="text/css" href="css/index.css" />
+	<meta charset="utf-8" />
+	<meta name="format-detection" content="telephone=no" />
+	<meta name="msapplication-tap-highlight" content="no" />
+	<meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
+	<meta http-equiv="Content-Security-Policy" content="default-src *; style-src * 'self' 'unsafe-inline'; script-src * 'self' 'unsafe-inline' 'unsafe-eval'; media-src *; img-src * 'self' data:; font-src * data:;" />
 
-<script type="text/javascript" src="cordova.js"></script>
+	<link rel="manifest" href="manifest.json" />
+	<link rel="stylesheet" type="text/css" href="css/bootstrap.css" />
+	<link rel="stylesheet" type="text/css" href="css/angular-block-ui.css" />
+	<link rel="stylesheet" type="text/css" href="css/angular-toastr.css" />
+	<link rel="stylesheet" type="text/css" href="css/cropper.css" />
+	<link rel="stylesheet" type="text/css" href="css/index.css" />
 
-<script type="text/javascript" src="lib/es6-promise.js"></script>
+	<script type="text/javascript" src="cordova.js"></script>
 
-<script type="text/javascript" src="lib/angular.js"></script>
-<script type="text/javascript" src="lib/angular-route.js"></script>
-<script type="text/javascript" src="lib/angular-animate.js"></script>
-<script type="text/javascript" src="lib/angular-cookies.js"></script>
-<script type="text/javascript" src="lib/angular-jwt.js"></script>
-<script type="text/javascript" src="lib/angular-animate.js"></script>
-<script type="text/javascript" src="lib/angular-block-ui.js"></script>
-<script type="text/javascript" src="lib/angular-toastr.tpls.js"></script>
-<script type="text/javascript" src="lib/ngStorage.js"></script>
+	<script type="text/javascript" src="lib/angular.js"></script>
+	<script type="text/javascript" src="lib/angular-cookies.js"></script>
+	<script type="text/javascript" src="lib/angular-route.js"></script>
+	<script type="text/javascript" src="lib/angular-animate.js"></script>
+	<script type="text/javascript" src="lib/angular-jwt.js"></script>
+	<script type="text/javascript" src="lib/angular-block-ui.js"></script>
+	<script type="text/javascript" src="lib/angular-toastr.tpls.js"></script>
+	<script type="text/javascript" src="lib/ngStorage.js"></script>
 
-<script type="text/javascript" src="lib/jquery.js"></script>
-<script type="text/javascript" src="lib/bootstrap.js"></script>
-<script type="text/javascript" src="lib/canvas-to-blob.js"></script>
-<script type="text/javascript" src="lib/cropper.js"></script>
-<script type="text/javascript" src="lib/moment.js"></script>
-<script type="text/javascript" src="lib/lodash.js"></script>
+	<script type="text/javascript" src="lib/jquery.js"></script>
+	<script type="text/javascript" src="lib/bootstrap.js"></script>
+	<script type="text/javascript" src="lib/canvas-to-blob.js"></script>
+	<script type="text/javascript" src="lib/cropper.js"></script>
+	<script type="text/javascript" src="lib/moment.js"></script>
+	<script type="text/javascript" src="lib/lodash.js"></script>
 
-<script type="text/javascript" src="lib/auth0-lock.js"></script>
-<script type="text/javascript" src="lib/auth0-angular.js"></script>
-
-<script type="text/javascript" src="js/util.js"></script>
-<script type="text/javascript" src="js/app.js"></script>
-<script type="text/javascript" src="js/data-service.js"></script>
-<script type="text/javascript" src="js/navigation.js"></script>
-<script type="text/javascript" src="js/login.js"></script>
-<script type="text/javascript" src="js/registration.js"></script>
-<script type="text/javascript" src="js/overview.js"></script>
-<script type="text/javascript" src="js/new-match.js"></script>
-<script type="text/javascript" src="js/accept.js"></script>
-<script type="text/javascript" src="js/match.js"></script>
-<script type="text/javascript" src="js/submit-image.js"></script>
-<script type="text/javascript" src="js/vote-image.js"></script>
-<script type="text/javascript" src="js/review-round.js"></script>
-<script type="text/javascript" src="js/profile.js"></script>
-
+	<script type="text/javascript" src="js/util.js"></script>
+	<script type="text/javascript" src="js/app.js"></script>
+	<script type="text/javascript" src="js/data-service.js"></script>
+	<script type="text/javascript" src="js/navigation.js"></script>
+	<script type="text/javascript" src="js/login.js"></script>
+	<script type="text/javascript" src="js/registration.js"></script>
+	<script type="text/javascript" src="js/overview.js"></script>
+	<script type="text/javascript" src="js/new-match.js"></script>
+	<script type="text/javascript" src="js/accept.js"></script>
+	<script type="text/javascript" src="js/match.js"></script>
+	<script type="text/javascript" src="js/submit-image.js"></script>
+	<script type="text/javascript" src="js/vote-image.js"></script>
+	<script type="text/javascript" src="js/review-round.js"></script>
+	<script type="text/javascript" src="js/profile.js"></script>
 </head>
 <body>
 	<nav ng-controller="NavigationController" ng-include="'partials/navigation.html'" class="navbar navbar-inverse"></nav>
@@ -78,8 +70,7 @@
 			a.async = 1;
 			a.src = g;
 			m.parentNode.insertBefore(a, m)
-		})(window, document, 'script',
-				'https://www.google-analytics.com/analytics.js', 'ga');
+		})(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
 
 		ga('create', 'UA-56725382-3', 'auto');
 		ga('send', 'pageview');
