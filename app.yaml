@@ -21,6 +21,16 @@ handlers:
   static_dir: static/
   secure: always
 
+- url: /(.*\.(html|js|css|png|json|map)|.*glyphicons-halflings-regular.*)$
+  static_files: static/\1
+  upload: static/(.*\.(html|js|css|png|json|map)|.*glyphicons-halflings-regular.*)$
+  secure: always
+
+- url: /$
+  static_files: static/index.html
+  upload: static/index.html$
+  secure: always
+
 # Set Django admin to be login:admin as well as Django's is_staff restriction
 - url: /admin.*
   script: diris.wsgi.application
