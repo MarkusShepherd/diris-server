@@ -13,17 +13,17 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-env/
-build/
+/env/
+/build/
 develop-eggs/
-dist/
-eggs/
-lib/
-lib64/
-parts/
-sitepackages/
-sdist/
-var/
+/dist/
+/eggs/
+/lib/
+/lib64/
+/parts/
+/sitepackages/
+/sdist/
+/var/
 *.egg-info/
 .installed.cfg
 *.egg
@@ -50,8 +50,8 @@ coverage.xml
 # Sphinx documentation
 docs/_build/
 
-bin/
-include/
-man/
+/bin/
+/include/
+/man/
 pip-selfcheck.json
 

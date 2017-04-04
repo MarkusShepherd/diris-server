@@ -1,4 +1,25 @@
 {
-  "name": "Push Demo",
-  "gcm_sender_id": "85075801930"
+    "name": "Diris",
+    "short_name": "Diris",
+    "description": "Play Diris on your phone",
+    "start_url": "/static/index.html",
+    "lang": "en",
+    "dir": "ltr",
+    "display": "standalone",
+    "orientation": "portrait",
+    "theme_color": "silver",
+    "gcm_sender_id": "85075801930",
+    "icons": [{
+        "src": "img/logo.png",
+        "sizes": "96x96",
+        "type": "image/png"
+    }, {
+        "src": "img/logo.png",
+        "sizes": "144x144",
+        "type": "image/png"
+    }, {
+        "src": "img/logo.png",
+        "sizes": "192x192",
+        "type": "image/png"
+    }]
 }
