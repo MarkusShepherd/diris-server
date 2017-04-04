@@ -32,7 +32,7 @@ dirisApp.controller('NewMatchController', function NewMatchController(
     dataService.getPlayers()
         .then(function (players) {
             $scope.players = players;
-            $scope.playersArray = $.map(players, function (p) { return p; });
+            $scope.playersArray = _.map(players);
         }).catch(function (response) {
             $log.debug('error');
             $log.debug(response);

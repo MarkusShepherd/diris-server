@@ -45,9 +45,9 @@ dirisApp.controller('MatchController', function MatchController(
             $scope.round = $scope.match.currentRoundObj;
             $log.debug('Match processed:', $scope.match);
             $log.debug('Round:', $scope.round);
-            return $scope.match;
-        }).then(function (match) {
-            return $q.all($.map(match.players, dataService.getPlayer));
+            return $q.all(_.map($scope.match.players, function (pk) {
+                return dataService.getPlayer(pk, false);
+            }));
         }).then(function (players) {
             $scope.players = {};
             $.each(players, function (i, player) {

@@ -34,7 +34,7 @@ dirisApp.controller('OverviewController', function OverviewController(
     matchPromise = dataService.getMatches(action === 'refresh', true)
         .then(function (matches) {
             var status = {};
-            $scope.matches = $.map(matches, function (match) {
+            $scope.matches = _.map(matches, function (match) {
                 status[match.status] = true;
                 return processMatch(match, player);
             });
