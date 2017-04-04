@@ -21,9 +21,9 @@ handlers:
   static_dir: static/
   secure: always
 
-- url: /(.*\.(html|js|css|png|json|map)|.*glyphicons-halflings-regular.*)$
+- url: /(.*\.(html|js|css|png|json|map|ico)|.*glyphicons-halflings-regular.*)$
   static_files: static/\1
-  upload: static/(.*\.(html|js|css|png|json|map)|.*glyphicons-halflings-regular.*)$
+  upload: static/(.*\.(html|js|css|png|json|map|ico)|.*glyphicons-halflings-regular.*)$
   secure: always
 
 - url: /$
