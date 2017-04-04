@@ -16,7 +16,7 @@ function processRound(round, player) {
 
     round.detailsPlayers = {};
     round.votes = {};
-    $.each(round.player_round_details, function (i, details) {
+    _.forEach(round.player_round_details, function (details) {
         round.detailsPlayers[details.player.toString()] = details;
         if (details.vote_player) {
             round.votes[details.vote_player] = round.votes[details.vote_player] || [];
@@ -51,7 +51,7 @@ function processRound(round, player) {
     round.hasAction = round.readyForStoryImage || round.readyForOtherImage || round.readyForVote;
 
     round.scores = {};
-    round.scoresArray = $.map(round.player_round_details, function (details) {
+    round.scoresArray = _.map(round.player_round_details, function (details) {
         round.scores[details.player.toString()] = details.score;
         return {
             playerPk: details.player,
@@ -63,7 +63,7 @@ function processRound(round, player) {
 }
 
 function processMatch(match, player) {
-    match.rounds = $.map(match.rounds, function (round) {
+    match.rounds = _.map(match.rounds, function (round) {
         return processRound(round, player);
     });
     match.currentRoundObj = match.rounds[(match.current_round || 1) - 1];
@@ -71,7 +71,7 @@ function processMatch(match, player) {
     // match.details = $.filter(match.player_match_details || [],
     //                       function (details) { return !!(details && details.player === player.pk); })[0];
     match.accepted = {};
-    $.each(match.player_match_details, function (i, details) {
+    _.forEach(match.player_match_details, function (details) {
         match.accepted[details.player.toString()] = details.invitation_status === 'a';
         if (details.player == player.pk) {
             match.details = details;
@@ -81,7 +81,7 @@ function processMatch(match, player) {
     var score = match.details ? match.details.score : 0,
         pos = 1;
 
-    $.each(match.player_match_details, function (i, details) {
+    _.forEach(match.player_match_details, function (details) {
         if (details.score > score) {
             pos++;
         }
@@ -91,7 +91,7 @@ function processMatch(match, player) {
     match.playerPositionOrd = getOrdinal(pos);
 
     match.scores = {};
-    match.standingsArray = $.map(match.player_match_details, function (details) {
+    match.standingsArray = _.map(match.player_match_details, function (details) {
         match.scores[details.player.toString()] = details.score;
         return {
             playerPk: details.player,

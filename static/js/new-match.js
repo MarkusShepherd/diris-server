@@ -61,7 +61,7 @@ dirisApp.controller('NewMatchController', function NewMatchController(
 
         blockUI.start();
 
-        $.each($scope.selected, function (pk) {
+        _.forEach($scope.selected, function (p, pk) {
             if (pk == player.pk) {
                 includeCurrent = true;
                 playerPks.unshift(pk);
@@ -74,7 +74,7 @@ dirisApp.controller('NewMatchController', function NewMatchController(
             playerPks.unshift(player.pk);
         }
 
-        if (playerPks.length < 4) {
+        if (_.size(playerPks) < 4) {
             blockUI.stop();
             toastr.error("Please select at least 3 players to invite to the match!");
             return;
@@ -87,8 +87,8 @@ dirisApp.controller('NewMatchController', function NewMatchController(
             }).catch(function (response) {
                 $log.debug('error');
                 $log.debug(response);
-                toastr.error("There was an error when creating the match...");
                 blockUI.stop();
+                toastr.error("There was an error when creating the match...");
             });
     }; // createMatch
 

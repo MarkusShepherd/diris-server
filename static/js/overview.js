@@ -34,12 +34,12 @@ dirisApp.controller('OverviewController', function OverviewController(
     matchPromise = dataService.getMatches(action === 'refresh', true)
         .then(function (matches) {
             var status = {};
-            $scope.matches = _.map(matches, function (match) {
+            _.forEach(matches, function (match) {
                 status[match.status] = true;
-                return processMatch(match, player);
             });
+            $scope.matches = _.map(matches);
             $scope.status = status;
-            $log.debug('Matches:', $scope.matches);
+            $log.debug('Matches:', matches);
         }).catch(function (response) {
             $log.debug('error');
             $log.debug(response);

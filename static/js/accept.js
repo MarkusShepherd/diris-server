@@ -36,13 +36,13 @@ dirisApp.controller('AcceptController', function AcceptController(
 
     dataService.getMatch(mPk)
         .then(function (match) {
-            $scope.match = processMatch(match, player);
-            return $q.all(_.map($scope.match.players, function (pk) {
+            $scope.match = match;
+            return $q.all(_.map(match.players, function (pk) {
                 return dataService.getPlayer(pk, false);
             }));
         }).then(function (players) {
             $scope.players = {};
-            $.each(players, function (i, player) {
+            _.forEach(players, function (player) {
                 $scope.players[player.pk] = player;
             });
         }).catch(function (response) {

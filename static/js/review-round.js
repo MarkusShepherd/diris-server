@@ -44,8 +44,8 @@ dirisApp.controller('ReviewRoundController', function ReviewRoundController(
 
     matchPromise = dataService.getMatch(mPk)
         .then(function (match) {
-            $scope.match = processMatch(match, player);
-            $scope.round = $scope.match.rounds[rNo - 1];
+            $scope.match = match;
+            $scope.round = match.currentRoundObj;
             $log.debug('current round', $scope.round);
 
             if ($scope.round.status === 's' || $scope.round.status === 'o') {
@@ -58,12 +58,12 @@ dirisApp.controller('ReviewRoundController', function ReviewRoundController(
                 return;
             }
 
-            return $q.all(_.map($scope.match.players, function (pk) {
+            return $q.all(_.map(match.players, function (pk) {
                 return dataService.getPlayer(pk, false);
             }));
         }).then(function (players) {
             $scope.players = {};
-            $.each(players || [], function (i, player) {
+            _.forEach(players || [], function (player) {
                 $scope.players[player.pk.toString()] = player;
             });
             $log.debug('players in match:', $scope.players);
@@ -76,7 +76,7 @@ dirisApp.controller('ReviewRoundController', function ReviewRoundController(
     imagePromise = dataService.getImages(mPk, true, true)
         .then(function (images) {
             $scope.images = {};
-            $.each(images, function (k, img) {
+            _.forEach(images, function (img) {
                 $scope.images[img.pk.toString()] = img;
             });
         }).catch(function (response) {
@@ -89,7 +89,7 @@ dirisApp.controller('ReviewRoundController', function ReviewRoundController(
 
     $scope.filterValues = function filterValues(items, value) {
         var result = [];
-        $.each(items, function (v, k) {
+        _.forEach(items, function (v, k) {
             if (v == value) {
                 result.push(k);
             }
@@ -99,7 +99,7 @@ dirisApp.controller('ReviewRoundController', function ReviewRoundController(
 
     $scope.filterOutKey = function filterOutKey(items, key) {
         var result = [];
-        $.each(items, function (k, v) {
+        _.forEach(items, function (v, k) {
             if (k != key) {
                 result.push(v);
             }
