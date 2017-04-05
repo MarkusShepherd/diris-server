@@ -6,8 +6,10 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import logging
 import os
+import random
 
 from django.contrib.auth import login
+from django.db.models import Q
 from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
 from rest_framework import mixins, permissions, views, viewsets
 from rest_framework.decorators import detail_route, list_route
@@ -203,6 +205,29 @@ class PlayerViewSet(viewsets.ModelViewSet):
 class ImageViewSet(viewsets.ModelViewSet):
     queryset = Image.objects.all()
     serializer_class = ImageSerializer
+
+    default_random_size = 5
+
+    @list_route()
+    def random(self, request, *args, **kwargs):
+        try:
+            player = request.user.player
+        except AttributeError:
+            player = None
+
+        query = Q(is_available_publically=True)
+        if player:
+            query |= Q(owner=player)
+        images = self.get_queryset().filter(query).all()
+
+        try:
+            size = int(request.query_params.get('size'))
+        except (TypeError, ValueError):
+            size = self.default_random_size
+        size = min(size, len(images))
+
+        serializer = self.get_serializer(instance=random.sample(images, size), many=True)
+        return Response(serializer.data)
 
 
 class ImageUploadView(views.APIView):
