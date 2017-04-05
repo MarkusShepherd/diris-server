@@ -45,7 +45,7 @@ dirisApp.controller('ReviewRoundController', function ReviewRoundController(
     matchPromise = dataService.getMatch(mPk)
         .then(function (match) {
             $scope.match = match;
-            $scope.round = match.currentRoundObj;
+            $scope.round = match.rounds[rNo - 1];
             $log.debug('current round', $scope.round);
 
             if ($scope.round.status === 's' || $scope.round.status === 'o') {

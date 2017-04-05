@@ -68,7 +68,7 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
     matchPromise = dataService.getMatch(mPk)
         .then(function (match) {
             $scope.match = match;
-            $scope.round = match.currentRoundObj;
+            $scope.round = match.rounds[rNo - 1];
 
             if ($scope.round.status === 'v') {
                 $location.path('/vote/' + mPk + '/' + rNo).replace();

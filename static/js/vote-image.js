@@ -45,7 +45,7 @@ dirisApp.controller('VoteImageController', function VoteImageController(
     matchPromise = dataService.getMatch(mPk)
         .then(function (match) {
             $scope.match = match;
-            $scope.round = match.currentRoundObj;
+            $scope.round = match.rounds[rNo - 1];
 
             if ($scope.round.status === 's' || $scope.round.status === 'o') {
                 $location.path('/image/' + mPk + '/' + rNo).replace();
