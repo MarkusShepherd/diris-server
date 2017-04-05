@@ -36,8 +36,7 @@ class MatchViewSet(
 
     def get_queryset(self):
         player = self.request.user.player
-        return (Match.objects.filter(players__contains=player.pk).all()
-                .prefetch_related('player_match_details', 'rounds'))
+        return player.matches.all().prefetch_related('player_match_details', 'rounds')
 
     def create(self, request, *args, **kwargs):
         player = request.user.player
@@ -52,21 +51,25 @@ class MatchViewSet(
 
     def list(self, request, *args, **kwargs):
         player = request.user.player
-        queryset = self.filter_queryset(self.get_queryset())
 
-        page = self.paginate_queryset(queryset)
+        matches = self.filter_queryset(self.get_queryset())
+        if request.query_params.get('status'):
+            matches = matches.filter(status=request.query_params['status'])
+        matches = matches.order_by('-last_modified')
+
+        page = self.paginate_queryset(matches)
         if page is not None:
             serializer = self.get_serializer(instance=page, player=player, many=True)
             return self.get_paginated_response(serializer.data)
 
-        serializer = self.get_serializer(instance=queryset, player=player, many=True)
+        serializer = self.get_serializer(instance=matches, player=player, many=True)
         return Response(serializer.data)
 
     @list_route(methods=['post'], permission_classes=())
     def statuses(self, request, *args, **kwargs):
         LOGGER.info(request.data)
         result = {}
-        for match in self.get_queryset().all():
+        for match in self.get_queryset():
             match = match.check_status()
             match.score()
             result[match.pk] = match.status
@@ -95,11 +98,7 @@ class MatchViewSet(
         player = request.user.player
         match = self.get_object()
         match = match.respond(player.pk, accept=True)
-        serializer = self.get_serializer(
-            instance=match,
-            player=player,
-            context={'request': request}
-        )
+        serializer = self.get_serializer(instance=match, player=player)
         return Response(serializer.data)
 
     @detail_route(methods=['post'])
@@ -107,12 +106,15 @@ class MatchViewSet(
         player = request.user.player
         match = self.get_object()
         match = match.respond(player.pk, accept=False)
-        serializer = self.get_serializer(
-            instance=match,
-            player=player,
-            context={'request': request}
-        )
+        serializer = self.get_serializer(instance=match, player=player)
         return Response(serializer.data)
+
+    @detail_route()
+    def players(self, request, pk=None, *args, **kwargs):
+        match = self.get_object()
+        serializer = PlayerSerializer(instance=match.players, many=True)
+        return Response(serializer.data)
+
 
     @detail_route()
     def images(self, request, pk=None, *args, **kwargs):
@@ -124,12 +126,12 @@ class MatchViewSet(
             rounds = rounds.filter(number=request.query_params['round'])
 
         images = [details.image
-                  for round_ in rounds.all()
+                  for round_ in rounds.all().prefetch_related('player_round_details')
                   if round_.display_images_to(player)
-                  for details in round_.player_round_details.all()
+                  for details in round_.player_round_details.all().prefetch_related('image')
                   if details.image]
 
-        serializer = ImageSerializer(instance=images, many=True, context={'request': request})
+        serializer = ImageSerializer(instance=images, many=True)
         return Response(serializer.data)
 
 
@@ -150,7 +152,7 @@ class MatchImageView(views.APIView):
 
         details.submit_image(image, story=request.query_params.get('story'))
 
-        serializer = MatchSerializer(instance=match, player=player, context={'request': request})
+        serializer = MatchSerializer(instance=match, player=player)
         return Response(serializer.data)
 
 
@@ -166,7 +168,7 @@ class MatchVoteView(views.APIView):
 
         details.submit_vote(image_pk)
 
-        serializer = MatchSerializer(instance=match, player=player, context={'request': request})
+        serializer = MatchSerializer(instance=match, player=player)
         return Response(serializer.data)
 
 
@@ -191,16 +193,6 @@ class PlayerViewSet(viewsets.ModelViewSet):
 
         return response
 
-    @detail_route()
-    def matches(self, request, pk=None, *args, **kwargs):
-        player = self.get_object()
-        matches = player.matches.all()
-        if request.query_params.get('status'):
-            matches = matches.filter(status=request.query_params['status'])
-        matches = matches.order_by('-last_modified')
-        serializer = MatchSerializer(matches, many=True, context={'request': request})
-        return Response(serializer.data)
-
 
 class ImageViewSet(viewsets.ModelViewSet):
     queryset = Image.objects.all()
@@ -218,7 +210,7 @@ class ImageViewSet(viewsets.ModelViewSet):
         query = Q(is_available_publically=True)
         if player:
             query |= Q(owner=player)
-        images = self.get_queryset().filter(query).all()
+        images = self.get_queryset().filter(query)
 
         try:
             size = int(request.query_params.get('size'))
@@ -240,5 +232,5 @@ class ImageUploadView(views.APIView):
                  if hasattr(request, 'user') and hasattr(request.user, 'player')
                  else None)
         image = Image.objects.create(file=file, owner=owner)
-        serializer = ImageSerializer(image, context={'request': request})
+        serializer = ImageSerializer(instance=image)
         return Response(serializer.data)
