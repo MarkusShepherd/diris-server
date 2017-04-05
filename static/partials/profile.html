@@ -1,7 +1,7 @@
 <section xmlns="http://www.w3.org/1999/xhtml">
 	<h2><span class="glyphicon glyphicon-user"></span> {{ player.user.username }}</h2>
 
-	<div ng-show="player.avatarURL" class="image-review-container">
+	<div ng-if="player.avatarURL" class="image-review-container">
 		<img ng-src="{{ player.avatarURL }}" class="img-responsive img-circle" />
 	</div>
 

@@ -7,16 +7,16 @@
 		</div>
 		<div class="panel-footer text-right">by <em>{{ players['' + round.storyteller].user.username }}</em></div>
 	</section>
-	<div ng-show="round.isStoryTeller" class="alert alert-success fade in">
+	<div ng-if="round.isStoryTeller" class="alert alert-success fade in">
 		These are the other players' submissions, wait for them to vote now...
 	</div>
-	<div ng-show="round.readyForVote" class="alert alert-info fade in">
+	<div ng-if="round.readyForVote" class="alert alert-info fade in">
 		Select the right image! Remember, you cannot vote for your own image.
 	</div>
-	<div ng-show="round.hasVoted" class="alert alert-success fade in">
+	<div ng-if="round.hasVoted" class="alert alert-success fade in">
 		You have already voted in this round, now wait for the other players...
 	</div>
-	<div ng-hide="round.hasVoted" class="row">
+	<div ng-if="!round.hasVoted" class="row">
 		<div ng-repeat="image in round.images"
 			class="col-lg-4 col-md-6 col-sm-12 container-{{ image == selectedImage.pk ? 'selected' : 'normal' }}">
 			<a ng-click="selectImage(images[image])"
@@ -32,7 +32,7 @@
 			</a>
 		</div>
 	</div>
-	<div ng-show="round.hasVoted" class="row">
+	<div ng-if="round.hasVoted" class="row">
 		<div ng-repeat="image in round.images"
 			class="col-lg-4 col-md-6 col-sm-12 container-normal">
 			<div class="select-image image-vote-container">
@@ -47,7 +47,7 @@
 			</div>
 		</div>
 	</div>
-	<button ng-show="round.readyForVote"
+	<button ng-if="round.readyForVote"
 		ng-click="submitVote()"
 		ng-disabled="!round.readyForVote || !selectedImage"
 		class="btn btn-primary btn-lg btn-block btn-submit-vote">

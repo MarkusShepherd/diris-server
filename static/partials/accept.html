@@ -1,8 +1,8 @@
 <section xmlns="http://www.w3.org/1999/xhtml">
-	<div ng-hide="match.hasAccepted" class="alert alert-success fade in">
+	<div ng-if="!match.hasAccepted" class="alert alert-success fade in">
 		You've been invited by <b>{{ players[match.inviting_player].user.username }}</b> to participate in their match. Please hit the button below to accept the invitation.
 	</div>
-	<div ng-show="match.hasAccepted" class="alert alert-success fade in">
+	<div ng-if="match.hasAccepted" class="alert alert-success fade in">
 		You have accepted the invitation by <b>{{ players[match.inviting_player].user.username }}</b> to participate in their match. Please wait for the other players to join the match too.
 	</div>
 	<section class="list-group">
@@ -13,11 +13,11 @@
 				class-icon="player-icon-accept"
 				class-btn="btn-primary"></player-icon>
 			{{ players[pPk].user.username }}
-			<span ng-show="acc" class="glyphicon glyphicon-ok-sign icon-accepted"></span>
-			<span ng-hide="acc" class="glyphicon glyphicon-question-sign icon-accepted"></span>
+			<span ng-if="acc" class="glyphicon glyphicon-ok-sign icon-accepted"></span>
+			<span ng-if="!acc" class="glyphicon glyphicon-question-sign icon-accepted"></span>
 		</a>
 	</section>
-	<button ng-hide="match.hasAccepted" ng-click="accept()" class="btn btn-primary btn-lg btn-block">
+	<button ng-if="!match.hasAccepted" ng-click="accept()" class="btn btn-primary btn-lg btn-block">
 		<span class="glyphicon glyphicon-ok"></span>
 		Accept
 	</button>

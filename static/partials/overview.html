@@ -4,7 +4,7 @@
 	</button>
 
 	<div class="row">
-		<div ng-show="status.w" class="col-sm-12 col-md-6 col-lg-4">
+		<div ng-if="status.w" class="col-sm-12 col-md-6 col-lg-4">
 			<div class="list-group">
 				<div class="list-group-item active">
 					<h4>Invitations</h4>
@@ -17,7 +17,7 @@
 			</div>
 		</div>
 
-		<div ng-show="status.p" class="col-sm-12 col-md-6 col-lg-4">
+		<div ng-if="status.p" class="col-sm-12 col-md-6 col-lg-4">
 			<div class="list-group">
 				<div class="list-group-item active">
 					<h4>Active Matches</h4>
@@ -25,19 +25,19 @@
 				<a ng-repeat="match in matches | orderBy:'last_modified':true | filter:{status:'p'}:true"
 					ng-href="#/match/{{ match.pk }}"
 					class="list-group-item {{ match.currentRoundObj.hasAction ? 'list-group-item-info' : '' }}">
-					<span ng-show="match.current_round" class="badge">{{ match.playerPositionOrd }}</span>
+					<span ng-if="match.current_round &gt; 1" class="badge">{{ match.playerPositionOrd }}</span>
 					<h4 class="list-group-item-heading">Round {{ match.current_round }} of {{ match.total_rounds }}</h4>
-					<p ng-show="match.currentRoundObj.status === 's'" class="list-group-item-text">
+					<p ng-if="match.currentRoundObj.status === 's'" class="list-group-item-text">
 						{{ match.currentRoundObj.isStoryTeller
 							? 'Tell your story!'
 							: 'Wait for the story...' }}
 					</p>
-					<p ng-show="match.currentRoundObj.status === 'o'" class="list-group-item-text">
+					<p ng-if="match.currentRoundObj.status === 'o'" class="list-group-item-text">
 						{{ !match.currentRoundObj.hasSubmittedImage
 							? 'Submit your image!'
 							: "Wait for the other players' images..." }}
 					</p>
-					<p ng-show="match.currentRoundObj.status === 'v'" class="list-group-item-text">
+					<p ng-if="match.currentRoundObj.status === 'v'" class="list-group-item-text">
 						{{ !match.currentRoundObj.isStoryTeller &amp;&amp; !match.currentRoundObj.hasVoted
 							? 'Submit your vote!'
 							: "Wait for the other players' votes..." }}
@@ -46,7 +46,7 @@
 			</div>
 		</div>
 
-		<div ng-show="status.f" class="col-sm-12 col-md-6 col-lg-4">
+		<div ng-if="status.f" class="col-sm-12 col-md-6 col-lg-4">
 			<div class="list-group">
 				<div class="list-group-item active">
 					<h4>Previous Matches</h4>

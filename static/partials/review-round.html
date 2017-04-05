@@ -15,7 +15,7 @@
 					class-btn="btn-primary btn-lg"></player-icon>
 			</div>
 			<img ng-src="{{ images[round.detailsPlayers[round.storyteller].image].file }}" class="img-responsive img-rounded image-review image-selected" />
-			<div ng-show="round.votes[round.storyteller]"
+			<div ng-if="round.votes[round.storyteller]"
 				class="guessed-by-container">
 				<player-icon ng-repeat="pPk in round.votes[round.storyteller]"
 					player="players[pPk]"
@@ -33,7 +33,7 @@
 						class-btn="btn-primary btn-lg"></player-icon>
 				</div>
 				<img ng-src="{{ images[details.image].file }}" class="img-responsive img-rounded image-review" />
-				<div ng-show="round.votes[details.player.toString()]"
+				<div ng-if="round.votes[details.player]"
 					class="guessed-by-container">
 					<player-icon ng-repeat="pPk in round.votes[details.player]"
 						player="players[pPk]"

@@ -1,5 +1,5 @@
 <section xmlns="http://www.w3.org/1999/xhtml">
-	<section ng-show="!round.readyForStoryImage &amp;&amp; round.story" class="panel panel-primary">
+	<section ng-if="!round.readyForStoryImage &amp;&amp; round.story" class="panel panel-primary">
 		<div class="panel-body">
 			<blockquote class="quote-story">
 				<p>{{ round.story }}</p>
