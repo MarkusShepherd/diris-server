@@ -214,6 +214,7 @@ class ImageViewSet(viewsets.ModelViewSet):
 
         try:
             size = int(request.query_params.get('size'))
+            size = size if size > 0 else self.default_random_size
         except (TypeError, ValueError):
             size = self.default_random_size
         size = min(size, len(images))
@@ -226,11 +227,18 @@ class ImageUploadView(views.APIView):
     parser_classes = (FileUploadParser,)
 
     def put(self, request, filename):
+        try:
+            owner = request.user.player
+        except AttributeError:
+            owner = None
+
         file = request.data.get('file')
         file.name = random_string() + os.path.splitext(file.name)[1]
-        owner = (request.user.player
-                 if hasattr(request, 'user') and hasattr(request.user, 'player')
-                 else None)
-        image = Image.objects.create(file=file, owner=owner)
+
+        copyright = request.query_params.get('copyright')
+        if copyright not in {c[0] for c in Image.COPYRIGHTS}:
+            copyright = Image.OWNER if owner else Image.DIRIS
+
+        image = Image.objects.create(file=file, owner=owner, copyright=copyright)
         serializer = ImageSerializer(instance=image)
         return Response(serializer.data)
