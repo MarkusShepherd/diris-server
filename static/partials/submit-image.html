@@ -24,6 +24,32 @@
 			</div>
 		</div>
 
+		<div ng-show="(round.readyForStoryImage || round.readyForOtherImage) &amp;&amp; randomImages" class="wrap">
+			<div class="scrollbar">
+				<div class="handle">
+					<div class="mousearea"></div>
+				</div>
+			</div>
+
+			<div class="frame" id="centered">
+				<div class="slidee clearfix">
+					<img ng-repeat="image in randomImages"
+						ng-src="{{ image.file }}"
+						ng-click="setGalleryImage(image)"
+						alt="Image"
+						class="img-responsive"
+						style="height: 150px; width: auto;" />
+				</div>
+			</div>
+
+			<div class="controls center">
+				<div class="btn-group btn-group-sm">
+					<button class="btn btn-primary prev"><span class="glyphicon glyphicon-chevron-left"></span> prev</button>
+					<button class="btn btn-primary next">next <span class="glyphicon glyphicon-chevron-right"></span></button>
+				</div>
+			</div>
+		</div>
+
 		<div ng-hide="round.hasSubmittedImage" class="image-upload-wrapper">
 			<img src="default-placeholder.png" id="image" alt="Image" class="img-responsive image-upload" />
 		</div>

@@ -7,6 +7,7 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
     $rootScope,
     $routeParams,
     $scope,
+    $timeout,
     blockUI,
     toastr,
     dataService
@@ -24,12 +25,12 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
         });
     }
 
-    function setImage(imageData) {
+    function setImage(imageData, isUrl) {
         $scope.$apply(function () {
             $scope.imageData = imageData;
             $scope.selectedImage = true;
             $("#image")
-                .cropper('replace', "data:image/jpeg;base64," + imageData)
+                .cropper('replace', isUrl ? imageData : "data:image/jpeg;base64," + imageData)
                 .cropper('enable');
         });
     }
@@ -94,7 +95,55 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
                 return dataService.getImage($scope.round.details.image);
             }
         }).then(function (image) {
-            $scope.image = image;
+            blockUI.stop();
+
+            if (image) {
+                $scope.image = image;
+                return [];
+            } else {
+                return dataService.getRandomImages(10);
+            }
+        }).then(function (images) {
+            $scope.randomImages = images;
+        }).then(function () {
+            if (!$scope.randomImages) {
+                return;
+            }
+
+            var $frame = $('#centered'),
+                $wrap  = $frame.parent();
+
+            $frame.sly({
+                horizontal: 1,
+                itemNav: 'centered',
+                smart: 1,
+                activateOn: 'click',
+                mouseDragging: 1,
+                touchDragging: 1,
+                releaseSwing: 1,
+                startAt: 0,
+                scrollBar: $wrap.find('.scrollbar'),
+                scrollBy: 1,
+                speed: 300,
+                elasticBounds: 1,
+                // easing: 'easeOutExpo',
+                dragHandle: 1,
+                dynamicHandle: 1,
+                clickBar: 1,
+                prev: $wrap.find('.prev'),
+                next: $wrap.find('.next')
+            });
+
+            $frame.sly('reload');
+
+            // TODO hacky - there must be a better way!
+            $timeout(function () {
+                $frame.sly('reload');
+            }, 1000);
+
+            $(window).resize(function () {
+                $frame.sly('reload');
+            });
         }).catch(function (response) {
             $log.debug('error');
             $log.debug(response);
@@ -102,6 +151,15 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
         }).then(blockUI.stop);
 
     $scope.hasCamera = !isBrowser();
+
+    $scope.setGalleryImage = function setGalleryImage(image) {
+        // setImage(image.file, true);
+        $scope.imageData = image.file;
+        $scope.selectedImage = true;
+        $("#image")
+            .cropper('replace', image.file)
+            .cropper('enable');
+    }
 
     $scope.getImageFromCamera = function getImageFromCamera() {
         getImage(Camera.PictureSourceType.CAMERA);

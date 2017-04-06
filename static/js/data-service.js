@@ -280,9 +280,7 @@ dirisApp.factory('dataService', function dataService(
         return $http.get(BACKEND_URL + '/images/')
             .then(function (response) {
                 images = {};
-                _.forEach(response.data.results, function (image) {
-                    setImage(image);
-                });
+                _.forEach(response.data.results, setImage);
                 return images;
             }).catch(function (response) {
                 if (forceRefresh && fallback) {
@@ -298,6 +296,15 @@ dirisApp.factory('dataService', function dataService(
                 throw new Error(response);
             });
     };
+
+    factory.getRandomImages = function getRandomImages(size) {
+        size = _.toInteger(size);
+        return $http.get(BACKEND_URL + '/images/random/', {params: {size: size}})
+            .then(function (response) {
+                _.forEach(response.data, setImage);
+                return response.data;
+            });
+    }
 
     factory.getImage = function getImage(iPk, forceRefresh) {
         if (!forceRefresh && images[iPk]) {
