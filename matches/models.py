@@ -319,7 +319,14 @@ class Image(models.Model):
         (PUBLIC, 'public'),
     )
 
-    file = models.ImageField(upload_to='%Y/%m/%d/%H/%M/', storage=STORAGE)
+    file = models.ImageField(
+        upload_to='%Y/%m/%d/%H/%M/',
+        storage=STORAGE,
+        # width_field='width',
+        # height_field='height',
+    )
+    width = models.PositiveSmallIntegerField(blank=True, null=True)
+    height = models.PositiveSmallIntegerField(blank=True, null=True)
     owner = models.ForeignKey(Player, related_name='images',
                               blank=True, null=True, on_delete=models.PROTECT)
     copyright = fields.CharField(max_length=1, choices=COPYRIGHTS, default=OWNER)

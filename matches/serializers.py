@@ -20,6 +20,8 @@ class ImageSerializer(serializers.ModelSerializer):
         fields = (
             'pk',
             'file',
+            'width',
+            'height',
             'owner',
             'copyright',
             'created',
@@ -27,6 +29,8 @@ class ImageSerializer(serializers.ModelSerializer):
         )
         read_only_fields = (
             'file',
+            'width',
+            'height',
             'created',
             'last_modified',
         )

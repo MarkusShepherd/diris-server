@@ -73,18 +73,18 @@ indexes:
 - kind: matches_match
   properties:
   - name: players_ids
-  - name: status
+  - name: last_modified
+
+- kind: matches_match
+  properties:
+  - name: players_ids
   - name: last_modified
     direction: desc
 
 - kind: matches_match
   properties:
   - name: players_ids
-  - name: last_modified
-
-- kind: matches_match
-  properties:
-  - name: players_ids
+  - name: status
   - name: last_modified
     direction: desc
 
