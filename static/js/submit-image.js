@@ -12,34 +12,34 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
     toastr,
     dataService
 ) {
-    function getImage(srcType) {
-        navigator.camera.getPicture(setImage, function (message) {
-            $scope.$apply(function () {
-                toastr.error(message);
-            });
-        }, {
-            quality : 100,
-            destinationType : Camera.DestinationType.DATA_URL,
-            sourceType : srcType,
-            encodingType: 0
-        });
+    function setImage(url) {
+        $scope.imageData = url;
+        $scope.selectedImage = true;
+        $("#image")
+            .cropper('replace', url)
+            .cropper('enable');
     }
 
-    function setImage(imageData, isUrl) {
-        $scope.$apply(function () {
-            $scope.imageData = imageData;
-            $scope.selectedImage = true;
-            $("#image")
-                .cropper('replace', isUrl ? imageData : "data:image/jpeg;base64," + imageData)
-                .cropper('enable');
+    function getImage(srcType) {
+        return $q(function (resolve, reject) {
+            navigator.camera.getPicture(resolve, reject, {
+                quality: 100,
+                destinationType: Camera.DestinationType.DATA_URL,
+                sourceType: srcType,
+                encodingType: 0
+            });
+        }).then(function (imageData) {
+            setImage('data:image/jpeg;base64,' + imageData);
+        }).catch(function (response) {
+            $log.debug(response);
+            toastr.error(response);
         });
     }
 
     var player = dataService.getLoggedInPlayer(),
         mPk = $routeParams.mPk,
         rNo = $routeParams.rNo,
-        matchPromise,
-        imagePromise;
+        sliderBlock = blockUI.instances.get('useSlider');
 
     if (!player) {
         $location.path('/login');
@@ -66,7 +66,7 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
     $rootScope.refreshPath = null;
     $rootScope.refreshReload = false;
 
-    matchPromise = dataService.getMatch(mPk)
+    dataService.getMatch(mPk)
         .then(function (match) {
             $scope.match = match;
             $scope.round = match.rounds[rNo - 1];
@@ -97,16 +97,24 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
         }).then(function (image) {
             blockUI.stop();
 
-            if (image) {
+            $scope.useSlider = !image;
+
+            if ($scope.useSlider) {
+                if (!sliderBlock.state().blocking) {
+                    sliderBlock.start();
+                }
+                return dataService.getRandomImages(10);
+            } else {
                 $scope.image = image;
                 return [];
-            } else {
-                return dataService.getRandomImages(10);
             }
         }).then(function (images) {
             $scope.randomImages = images;
         }).then(function () {
+            sliderBlock.stop();
+
             if (!$scope.randomImages) {
+                $scope.useSlider = false;
                 return;
             }
 
@@ -150,16 +158,9 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
             toastr.error("There was an error fetching the data - please try again later...");
         }).then(blockUI.stop);
 
-    $scope.hasCamera = !isBrowser();
+    $scope.hasCamera = !!(!isBrowser() && navigator.camera && navigator.camera.getPicture);
 
-    $scope.setGalleryImage = function setGalleryImage(image) {
-        // setImage(image.file, true);
-        $scope.imageData = image.file;
-        $scope.selectedImage = true;
-        $("#image")
-            .cropper('replace', image.file)
-            .cropper('enable');
-    }
+    $scope.setImage = setImage;
 
     $scope.getImageFromCamera = function getImageFromCamera() {
         getImage(Camera.PictureSourceType.CAMERA);
@@ -174,7 +175,10 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
     };
 
     $scope.submitImage = function submitImage() {
-        blockUI.start();
+        if (!blockUI.state().blocking) {
+            blockUI.start();
+        }
+
         $q(function (resolve) {
             $("#image").cropper('getCroppedCanvas', {
                 width: 1080,
@@ -226,8 +230,7 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
             var reader = new FileReader();
 
             reader.onload = function (e) {
-                var d = e.target.result;
-                setImage(d.substr(d.indexOf(",") + 1));
+                setImage(e.target.result);
             };
 
             reader.readAsDataURL(this.files[0]);

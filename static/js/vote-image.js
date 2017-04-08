@@ -92,7 +92,9 @@ dirisApp.controller('VoteImageController', function VoteImageController(
     };
 
     $scope.submitVote = function submitVote() {
-        blockUI.start();
+        if (!blockUI.state().blocking) {
+            blockUI.start();
+        }
 
         dataService.submitVote(mPk, rNo, $scope.selectedImage.pk)
             .then(function (match) {

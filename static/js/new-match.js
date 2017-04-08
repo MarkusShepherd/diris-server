@@ -59,7 +59,9 @@ dirisApp.controller('NewMatchController', function NewMatchController(
         var playerPks = [],
             includeCurrent = false;
 
-        blockUI.start();
+        if (!blockUI.state().blocking) {
+            blockUI.start();
+        }
 
         _.forEach($scope.selected, function (p, pk) {
             if (pk == player.pk) {

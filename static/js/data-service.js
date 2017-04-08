@@ -304,7 +304,7 @@ dirisApp.factory('dataService', function dataService(
                 _.forEach(response.data, setImage);
                 return response.data;
             });
-    }
+    };
 
     factory.getImage = function getImage(iPk, forceRefresh) {
         if (!forceRefresh && images[iPk]) {

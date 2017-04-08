@@ -52,7 +52,10 @@ dirisApp.controller('AcceptController', function AcceptController(
         }).then(blockUI.stop);
 
     $scope.accept = function accept() {
-        blockUI.start();
+        if (!blockUI.state().blocking) {
+            blockUI.start();
+        }
+
         dataService.respondToInvitation(mPk, true)
             .then(function () {
                 $location.path('/overview');

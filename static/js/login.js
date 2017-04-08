@@ -22,7 +22,9 @@ dirisApp.controller('LoginController', function LoginController(
     $rootScope.refreshReload = false;
 
     $scope.login = function login() {
-        blockUI.start();
+        if (!blockUI.state().blocking) {
+            blockUI.start();
+        }
 
         dataService.getToken($scope.player.name, $scope.player.password)
             .then(function (token) {

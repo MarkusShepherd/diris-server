@@ -12,7 +12,9 @@ dirisApp.controller('RegistrationController', function RegistrationController(
     blockUI.stop();
 
     $scope.register = function register() {
-        blockUI.start();
+        if (!blockUI.state().blocking) {
+            blockUI.start();
+        }
 
         $log.debug($scope.player);
 
