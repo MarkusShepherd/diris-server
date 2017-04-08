@@ -1,5 +1,5 @@
 // Platform: browser
-// 8ca0f3b2b87e0759c5236b91c80f18438544409c
+// c517ca811b4948b630e0b74dbae6c9637939da24
 /*
  Licensed to the Apache Software Foundation (ASF) under one
  or more contributor license agreements.  See the NOTICE file
@@ -19,7 +19,7 @@
  under the License.
 */
 ;(function() {
-var PLATFORM_VERSION_BUILD_LABEL = '3.6.0';
+var PLATFORM_VERSION_BUILD_LABEL = '4.1.0';
 // file: src/scripts/require.js
 
 /*jshint -W079 */
@@ -101,9 +101,16 @@ if (typeof module === "object" && typeof require === "function") {
 // file: src/cordova.js
 define("cordova", function(require, exports, module) {
 
+// Workaround for Windows 10 in hosted environment case
+// http://www.w3.org/html/wg/drafts/html/master/browsers.html#named-access-on-the-window-object
+if (window.cordova && !(window.cordova instanceof HTMLElement)) {
+    throw new Error("cordova already defined");
+}
+
 
 var channel = require('cordova/channel');
 var platform = require('cordova/platform');
+
 
 /**
  * Intercept calls to addEventListener + removeEventListener and handle deviceready,
@@ -263,11 +270,7 @@ var cordova = {
      * Called by native code when returning successful result from an action.
      */
     callbackSuccess: function(callbackId, args) {
-        try {
-            cordova.callbackFromNative(callbackId, true, args.status, [args.message], args.keepCallback);
-        } catch (e) {
-            console.log("Error in success callback: " + callbackId + " = "+e);
-        }
+        cordova.callbackFromNative(callbackId, true, args.status, [args.message], args.keepCallback);
     },
 
     /**
@@ -276,29 +279,39 @@ var cordova = {
     callbackError: function(callbackId, args) {
         // TODO: Deprecate callbackSuccess and callbackError in favour of callbackFromNative.
         // Derive success from status.
-        try {
-            cordova.callbackFromNative(callbackId, false, args.status, [args.message], args.keepCallback);
-        } catch (e) {
-            console.log("Error in error callback: " + callbackId + " = "+e);
-        }
+        cordova.callbackFromNative(callbackId, false, args.status, [args.message], args.keepCallback);
     },
 
     /**
      * Called by native code when returning the result from an action.
      */
-    callbackFromNative: function(callbackId, success, status, args, keepCallback) {
-        var callback = cordova.callbacks[callbackId];
-        if (callback) {
-            if (success && status == cordova.callbackStatus.OK) {
-                callback.success && callback.success.apply(null, args);
-            } else if (!success) {
-                callback.fail && callback.fail.apply(null, args);
+    callbackFromNative: function(callbackId, isSuccess, status, args, keepCallback) {
+        try {
+            var callback = cordova.callbacks[callbackId];
+            if (callback) {
+                if (isSuccess && status == cordova.callbackStatus.OK) {
+                    callback.success && callback.success.apply(null, args);
+                } else if (!isSuccess) {
+                    callback.fail && callback.fail.apply(null, args);
+                }
+                /*
+                else
+                    Note, this case is intentionally not caught.
+                    this can happen if isSuccess is true, but callbackStatus is NO_RESULT
+                    which is used to remove a callback from the list without calling the callbacks
+                    typically keepCallback is false in this case
+                */
+                // Clear callback if not expecting any more results
+                if (!keepCallback) {
+                    delete cordova.callbacks[callbackId];
+                }
             }
-
-            // Clear callback if not expecting any more results
-            if (!keepCallback) {
-                delete cordova.callbacks[callbackId];
-            }
+        }
+        catch (err) {
+            var msg = "Error in " + (isSuccess ? "Success" : "Error") + " callbackId: " + callbackId + " : " + err;
+            console && console.log && console.log(msg);
+            cordova.fireWindowEvent("cordovacallbackerror", { 'message': msg });
+            throw err;
         }
     },
     addConstructor: function(func) {
@@ -320,7 +333,6 @@ module.exports = cordova;
 // file: src/common/argscheck.js
 define("cordova/argscheck", function(require, exports, module) {
 
-var exec = require('cordova/exec');
 var utils = require('cordova/utils');
 
 var moduleExports = module.exports;
@@ -464,9 +476,14 @@ function each(objects, func, context) {
 
 function clobber(obj, key, value) {
     exports.replaceHookForTesting(obj, key);
-    obj[key] = value;
+    var needsProperty = false;
+    try {
+        obj[key] = value;
+    } catch (e) {
+        needsProperty = true;
+    }
     // Getters can only be overridden by getters.
-    if (obj[key] !== value) {
+    if (needsProperty || obj[key] !== value) {
         utils.defineGetter(obj, key, function() {
             return value;
         });
@@ -581,7 +598,6 @@ var utils = require('cordova/utils'),
  * onDeviceReady*              User event fired to indicate that Cordova is ready
  * onResume                    User event fired to indicate a start/resume lifecycle event
  * onPause                     User event fired to indicate a pause lifecycle event
- * onDestroy*                  Internal event fired when app is being destroyed (User should use window.onunload event, not this one).
  *
  * The events marked with an * are sticky. Once they have fired, they will stay in the fired state.
  * All listeners that subscribe after the event is fired will be executed right away.
@@ -793,9 +809,6 @@ channel.create('onResume');
 // Event to indicate a pause lifecycle event
 channel.create('onPause');
 
-// Event to indicate a destroy lifecycle event
-channel.createSticky('onDestroy');
-
 // Channels that must fire before "deviceready" is fired.
 channel.waitForInitialization('onCordovaReady');
 channel.waitForInitialization('onDOMContentLoaded');
@@ -804,34 +817,180 @@ module.exports = channel;
 
 });
 
-// file: src/browser/exec.js
+// file: e:/cordova/cordova-browser/cordova-js-src/confighelper.js
+define("cordova/confighelper", function(require, exports, module) {
+
+var config;
+
+function Config(xhr) {
+    function loadPreferences(xhr) {
+       var parser = new DOMParser();
+       var doc = parser.parseFromString(xhr.responseText, "application/xml");
+
+       var preferences = doc.getElementsByTagName("preference");
+       return Array.prototype.slice.call(preferences);
+    }
+
+    this.xhr = xhr;
+    this.preferences = loadPreferences(this.xhr);
+}
+
+function readConfig(success, error) {
+    var xhr;
+
+    if(typeof config != 'undefined') {
+        success(config);
+    }
+
+    function fail(msg) {
+        console.error(msg);
+
+        if(error) {
+            error(msg);
+        }
+    }
+
+    var xhrStatusChangeHandler = function() {
+        if (xhr.readyState == 4) {
+            if (xhr.status == 200 || xhr.status == 304 || xhr.status === 0 /* file:// */) {
+                config = new Config(xhr);
+                success(config);
+            }
+            else {
+                fail('[Browser][cordova.js][xhrStatusChangeHandler] Could not XHR config.xml: ' + xhr.statusText);
+            }
+        }
+    };
+
+    if ("ActiveXObject" in window) {
+        // Needed for XHR-ing via file:// protocol in IE
+        xhr = new window.ActiveXObject("MSXML2.XMLHTTP");
+        xhr.onreadystatechange = xhrStatusChangeHandler;
+    } else {
+        xhr = new XMLHttpRequest();
+        xhr.addEventListener("load", xhrStatusChangeHandler);
+    }
+
+    try {
+        xhr.open("get", "/config.xml", true);
+        xhr.send();
+    } catch(e) {
+        fail('[Browser][cordova.js][readConfig] Could not XHR config.xml: ' + JSON.stringify(e));
+    }
+}
+
+/**
+ * Reads a preference value from config.xml.
+ * Returns preference value or undefined if it does not exist.
+ * @param {String} preferenceName Preference name to read */
+Config.prototype.getPreferenceValue = function getPreferenceValue(preferenceName) {
+    var preferenceItem = this.preferences && this.preferences.filter(function(item) {
+        return item.attributes.name && item.attributes.name.value === preferenceName;
+    });
+
+    if(preferenceItem && preferenceItem[0] && preferenceItem[0].attributes && preferenceItem[0].attributes.value) {
+        return preferenceItem[0].attributes.value.value;
+    }
+};
+
+exports.readConfig = readConfig;
+
+});
+
+// file: e:/cordova/cordova-browser/cordova-js-src/exec.js
 define("cordova/exec", function(require, exports, module) {
+
+/*jslint sloppy:true, plusplus:true*/
+/*global require, module, console */
 
 var cordova = require('cordova');
 var execProxy = require('cordova/exec/proxy');
 
-module.exports = function(success, fail, service, action, args) {
+/**
+ * Execute a cordova command.  It is up to the native side whether this action
+ * is synchronous or asynchronous.  The native side can return:
+ *      Synchronous: PluginResult object as a JSON string
+ *      Asynchronous: Empty string ""
+ * If async, the native side will cordova.callbackSuccess or cordova.callbackError,
+ * depending upon the result of the action.
+ *
+ * @param {Function} success    The success callback
+ * @param {Function} fail       The fail callback
+ * @param {String} service      The name of the service to use
+ * @param {String} action       Action to be run in cordova
+ * @param {String[]} [args]     Zero or more arguments to pass to the method
+ */
+module.exports = function (success, fail, service, action, args) {
 
     var proxy = execProxy.get(service, action);
 
+    args = args || [];
+
     if (proxy) {
+        
         var callbackId = service + cordova.callbackId++;
-
-        if (typeof success == "function" || typeof fail == "function") {
-            cordova.callbacks[callbackId] = {success:success, fail:fail};
+        
+        if (typeof success === "function" || typeof fail === "function") {
+            cordova.callbacks[callbackId] = {success: success, fail: fail};
         }
-
         try {
-            proxy(success, fail, args);
+
+            
+
+            // callbackOptions param represents additional optional parameters command could pass back, like keepCallback or
+            // custom callbackId, for example {callbackId: id, keepCallback: true, status: cordova.callbackStatus.JSON_EXCEPTION }
+            var onSuccess = function (result, callbackOptions) {
+                callbackOptions = callbackOptions || {};
+                var callbackStatus;
+                // covering both undefined and null.
+                // strict null comparison was causing callbackStatus to be undefined
+                // and then no callback was called because of the check in cordova.callbackFromNative
+                // see CB-8996 Mobilespec app hang on windows
+                if (callbackOptions.status !== undefined && callbackOptions.status !== null) {
+                    callbackStatus = callbackOptions.status;
+                }
+                else {
+                    callbackStatus = cordova.callbackStatus.OK;
+                }
+                cordova.callbackSuccess(callbackOptions.callbackId || callbackId,
+                    {
+                        status: callbackStatus,
+                        message: result,
+                        keepCallback: callbackOptions.keepCallback || false
+                    });
+            };
+            var onError = function (err, callbackOptions) {
+                callbackOptions = callbackOptions || {};
+                var callbackStatus;
+                // covering both undefined and null.
+                // strict null comparison was causing callbackStatus to be undefined
+                // and then no callback was called because of the check in cordova.callbackFromNative
+                // note: status can be 0
+                if (callbackOptions.status !== undefined && callbackOptions.status !== null) {
+                    callbackStatus = callbackOptions.status;
+                }
+                else {
+                    callbackStatus = cordova.callbackStatus.OK;
+                }
+                cordova.callbackError(callbackOptions.callbackId || callbackId,
+                {
+                    status: callbackStatus,
+                    message: err,
+                    keepCallback: callbackOptions.keepCallback || false
+                });
+            };
+            proxy(onSuccess, onError, args);
+
+        } catch (e) {
+            console.log("Exception calling native with command :: " + service + " :: " + action  + " ::exception=" + e);
         }
-        catch(e) {
-            // TODO throw maybe?
-            var msg = "Exception calling :: " + service + " :: " + action  + " ::exception=" + e;
-            console.log(msg);
+    } else {
+
+        console.log("Error: exec proxy not found for :: " + service + " :: " + action);
+        
+        if(typeof fail === "function" ) {
+            fail("Missing Command Error");
         }
-    }
-    else {
-        fail && fail("Missing Command Error");
     }
 };
 
@@ -875,6 +1034,7 @@ var cordova = require('cordova');
 var modulemapper = require('cordova/modulemapper');
 var platform = require('cordova/platform');
 var pluginloader = require('cordova/pluginloader');
+var utils = require('cordova/utils');
 
 var platformInitChannelsArray = [channel.onNativeReady, channel.onPluginsReady];
 
@@ -906,21 +1066,19 @@ function replaceNavigator(origNavigator) {
         for (var key in origNavigator) {
             if (typeof origNavigator[key] == 'function') {
                 newNavigator[key] = origNavigator[key].bind(origNavigator);
-            } else {
+            }
+            else {
                 (function(k) {
-                        Object.defineProperty(newNavigator, k, {
-                            get: function() {
-                                return origNavigator[k];
-                            },
-                            configurable: true,
-                            enumerable: true
-                        });
-                    })(key);
+                    utils.defineGetterSetter(newNavigator,key,function() {
+                        return origNavigator[k];
+                    });
+                })(key);
             }
         }
     }
     return newNavigator;
 }
+
 if (window.navigator) {
     window.navigator = replaceNavigator(window.navigator);
 }
@@ -939,6 +1097,7 @@ if (!window.console.warn) {
 // Register pause, resume and deviceready channels as events on document.
 channel.onPause = cordova.addDocumentEventHandler('pause');
 channel.onResume = cordova.addDocumentEventHandler('resume');
+channel.onActivated = cordova.addDocumentEventHandler('activated');
 channel.onDeviceReady = cordova.addStickyDocumentEventHandler('deviceready');
 
 // Listen for DOMContentLoaded and notify our channel subscribers.
@@ -1000,9 +1159,12 @@ define("cordova/init_b", function(require, exports, module) {
 
 var channel = require('cordova/channel');
 var cordova = require('cordova');
+var modulemapper = require('cordova/modulemapper');
 var platform = require('cordova/platform');
+var pluginloader = require('cordova/pluginloader');
+var utils = require('cordova/utils');
 
-var platformInitChannelsArray = [channel.onDOMContentLoaded, channel.onNativeReady];
+var platformInitChannelsArray = [channel.onDOMContentLoaded, channel.onNativeReady, channel.onPluginsReady];
 
 // setting exec
 cordova.exec = require('cordova/exec');
@@ -1035,16 +1197,13 @@ function replaceNavigator(origNavigator) {
         for (var key in origNavigator) {
             if (typeof origNavigator[key] == 'function') {
                 newNavigator[key] = origNavigator[key].bind(origNavigator);
-            } else {
+            }
+            else {
                 (function(k) {
-                        Object.defineProperty(newNavigator, k, {
-                            get: function() {
-                                return origNavigator[k];
-                            },
-                            configurable: true,
-                            enumerable: true
-                        });
-                    })(key);
+                    utils.defineGetterSetter(newNavigator,key,function() {
+                        return origNavigator[k];
+                    });
+                })(key);
             }
         }
     }
@@ -1068,6 +1227,7 @@ if (!window.console.warn) {
 // Register pause, resume and deviceready channels as events on document.
 channel.onPause = cordova.addDocumentEventHandler('pause');
 channel.onResume = cordova.addDocumentEventHandler('resume');
+channel.onActivated = cordova.addDocumentEventHandler('activated');
 channel.onDeviceReady = cordova.addStickyDocumentEventHandler('deviceready');
 
 // Listen for DOMContentLoaded and notify our channel subscribers.
@@ -1089,11 +1249,20 @@ if (window._nativeReady) {
 // Call the platform-specific initialization.
 platform.bootstrap && platform.bootstrap();
 
+// Wrap in a setTimeout to support the use-case of having plugin JS appended to cordova.js.
+// The delay allows the attached modules to be defined before the plugin loader looks for them.
+setTimeout(function() {
+    pluginloader.load(function() {
+        channel.onPluginsReady.fire();
+    });
+}, 0);
+
 /**
  * Create all cordova objects once native side is ready.
  */
 channel.join(function() {
-    
+    modulemapper.mapModules(window);
+
     platform.initialize && platform.initialize();
 
     // Fire event to notify that all objects are created
@@ -1211,7 +1380,104 @@ exports.reset();
 
 });
 
-// file: src/browser/platform.js
+// file: src/common/modulemapper_b.js
+define("cordova/modulemapper_b", function(require, exports, module) {
+
+var builder = require('cordova/builder'),
+    symbolList = [],
+    deprecationMap;
+
+exports.reset = function() {
+    symbolList = [];
+    deprecationMap = {};
+};
+
+function addEntry(strategy, moduleName, symbolPath, opt_deprecationMessage) {
+    symbolList.push(strategy, moduleName, symbolPath);
+    if (opt_deprecationMessage) {
+        deprecationMap[symbolPath] = opt_deprecationMessage;
+    }
+}
+
+// Note: Android 2.3 does have Function.bind().
+exports.clobbers = function(moduleName, symbolPath, opt_deprecationMessage) {
+    addEntry('c', moduleName, symbolPath, opt_deprecationMessage);
+};
+
+exports.merges = function(moduleName, symbolPath, opt_deprecationMessage) {
+    addEntry('m', moduleName, symbolPath, opt_deprecationMessage);
+};
+
+exports.defaults = function(moduleName, symbolPath, opt_deprecationMessage) {
+    addEntry('d', moduleName, symbolPath, opt_deprecationMessage);
+};
+
+exports.runs = function(moduleName) {
+    addEntry('r', moduleName, null);
+};
+
+function prepareNamespace(symbolPath, context) {
+    if (!symbolPath) {
+        return context;
+    }
+    var parts = symbolPath.split('.');
+    var cur = context;
+    for (var i = 0, part; part = parts[i]; ++i) {
+        cur = cur[part] = cur[part] || {};
+    }
+    return cur;
+}
+
+exports.mapModules = function(context) {
+    var origSymbols = {};
+    context.CDV_origSymbols = origSymbols;
+    for (var i = 0, len = symbolList.length; i < len; i += 3) {
+        var strategy = symbolList[i];
+        var moduleName = symbolList[i + 1];
+        var module = require(moduleName);
+        // <runs/>
+        if (strategy == 'r') {
+            continue;
+        }
+        var symbolPath = symbolList[i + 2];
+        var lastDot = symbolPath.lastIndexOf('.');
+        var namespace = symbolPath.substr(0, lastDot);
+        var lastName = symbolPath.substr(lastDot + 1);
+
+        var deprecationMsg = symbolPath in deprecationMap ? 'Access made to deprecated symbol: ' + symbolPath + '. ' + deprecationMsg : null;
+        var parentObj = prepareNamespace(namespace, context);
+        var target = parentObj[lastName];
+
+        if (strategy == 'm' && target) {
+            builder.recursiveMerge(target, module);
+        } else if ((strategy == 'd' && !target) || (strategy != 'd')) {
+            if (!(symbolPath in origSymbols)) {
+                origSymbols[symbolPath] = target;
+            }
+            builder.assignOrWrapInDeprecateGetter(parentObj, lastName, module, deprecationMsg);
+        }
+    }
+};
+
+exports.getOriginalSymbol = function(context, symbolPath) {
+    var origSymbols = context.CDV_origSymbols;
+    if (origSymbols && (symbolPath in origSymbols)) {
+        return origSymbols[symbolPath];
+    }
+    var parts = symbolPath.split('.');
+    var obj = context;
+    for (var i = 0; i < parts.length; ++i) {
+        obj = obj && obj[parts[i]];
+    }
+    return obj;
+};
+
+exports.reset();
+
+
+});
+
+// file: e:/cordova/cordova-browser/cordova-js-src/platform.js
 define("cordova/platform", function(require, exports, module) {
 
 module.exports = {
@@ -1356,6 +1622,54 @@ exports.load = function(callback) {
 
 });
 
+// file: src/common/pluginloader_b.js
+define("cordova/pluginloader_b", function(require, exports, module) {
+
+var modulemapper = require('cordova/modulemapper');
+
+// Handler for the cordova_plugins.js content.
+// See plugman's plugin_loader.js for the details of this object.
+function handlePluginsObject(moduleList) {
+    // if moduleList is not defined or empty, we've nothing to do
+    if (!moduleList || !moduleList.length) {
+        return;
+    }
+
+    // Loop through all the modules and then through their clobbers and merges.
+    for (var i = 0, module; module = moduleList[i]; i++) {
+        if (module.clobbers && module.clobbers.length) {
+            for (var j = 0; j < module.clobbers.length; j++) {
+                modulemapper.clobbers(module.id, module.clobbers[j]);
+            }
+        }
+
+        if (module.merges && module.merges.length) {
+            for (var k = 0; k < module.merges.length; k++) {
+                modulemapper.merges(module.id, module.merges[k]);
+            }
+        }
+
+        // Finally, if runs is truthy we want to simply require() the module.
+        if (module.runs) {
+            modulemapper.runs(module.id);
+        }
+    }
+}
+
+// Loads all plugins' js-modules. Plugin loading is syncronous in browserified bundle
+// but the method accepts callback to be compatible with non-browserify flow.
+// onDeviceReady is blocked on onPluginsReady. onPluginsReady is fired when there are
+// no plugins to load, or they are all done.
+exports.load = function(callback) {
+    var moduleList = require("cordova/plugin_list");
+    handlePluginsObject(moduleList);
+
+    callback();
+};
+
+
+});
+
 // file: src/common/urlutil.js
 define("cordova/urlutil", function(require, exports, module) {
 
@@ -1435,15 +1749,14 @@ utils.typeName = function(val) {
 /**
  * Returns an indication of whether the argument is an array or not
  */
-utils.isArray = function(a) {
-    return utils.typeName(a) == 'Array';
-};
+utils.isArray = Array.isArray ||
+                function(a) {return utils.typeName(a) == 'Array';};
 
 /**
  * Returns an indication of whether the argument is a Date or not
  */
 utils.isDate = function(d) {
-    return utils.typeName(d) == 'Date';
+    return (d instanceof Date);
 };
 
 /**
@@ -1477,16 +1790,24 @@ utils.clone = function(obj) {
  * Returns a wrapped version of the function
  */
 utils.close = function(context, func, params) {
-    if (typeof params == 'undefined') {
-        return function() {
-            return func.apply(context, arguments);
-        };
-    } else {
-        return function() {
-            return func.apply(context, params);
-        };
-    }
+    return function() {
+        var args = params || arguments;
+        return func.apply(context, args);
+    };
 };
+
+//------------------------------------------------------------------------------
+function UUIDcreatePart(length) {
+    var uuidpart = "";
+    for (var i=0; i<length; i++) {
+        var uuidchar = parseInt((Math.random() * 256), 10).toString(16);
+        if (uuidchar.length == 1) {
+            uuidchar = "0" + uuidchar;
+        }
+        uuidpart += uuidchar;
+    }
+    return uuidpart;
+}
 
 /**
  * Create a UUID
@@ -1499,6 +1820,7 @@ utils.createUUID = function() {
         UUIDcreatePart(6);
 };
 
+
 /**
  * Extends a child object from a parent object using classical inheritance
  * pattern.
@@ -1508,6 +1830,7 @@ utils.extend = (function() {
     var F = function() {};
     // extend Child from Parent
     return function(Child, Parent) {
+
         F.prototype = Parent.prototype;
         Child.prototype = new F();
         Child.__super__ = Parent.prototype;
@@ -1527,18 +1850,7 @@ utils.alert = function(msg) {
 };
 
 
-//------------------------------------------------------------------------------
-function UUIDcreatePart(length) {
-    var uuidpart = "";
-    for (var i=0; i<length; i++) {
-        var uuidchar = parseInt((Math.random() * 256), 10).toString(16);
-        if (uuidchar.length == 1) {
-            uuidchar = "0" + uuidchar;
-        }
-        uuidpart += uuidchar;
-    }
-    return uuidpart;
-}
+
 
 
 });

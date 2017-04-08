@@ -1,22 +1,6 @@
 cordova.define('cordova/plugin_list', function(require, exports, module) {
 module.exports = [
     {
-        "file": "plugins/phonegap-plugin-push/www/push.js",
-        "id": "phonegap-plugin-push.PushNotification",
-        "pluginId": "phonegap-plugin-push",
-        "clobbers": [
-            "PushNotification"
-        ]
-    },
-    {
-        "file": "plugins/phonegap-plugin-push/www/browser/push.js",
-        "id": "phonegap-plugin-push.BrowserPush",
-        "pluginId": "phonegap-plugin-push",
-        "clobbers": [
-            "PushNotification"
-        ]
-    },
-    {
         "file": "plugins/cordova-plugin-camera/www/CameraConstants.js",
         "id": "cordova-plugin-camera.Camera",
         "pluginId": "cordova-plugin-camera",
@@ -61,30 +45,30 @@ module.exports = [
         "runs": true
     },
     {
-        "file": "plugins/cordova-plugin-inappbrowser/www/inappbrowser.js",
-        "id": "cordova-plugin-inappbrowser.inappbrowser",
-        "pluginId": "cordova-plugin-inappbrowser",
+        "file": "plugins/phonegap-plugin-push/www/push.js",
+        "id": "phonegap-plugin-push.PushNotification",
+        "pluginId": "phonegap-plugin-push",
         "clobbers": [
-            "cordova.InAppBrowser.open",
-            "window.open"
+            "PushNotification"
         ]
     },
     {
-        "file": "plugins/cordova-plugin-inappbrowser/src/browser/InAppBrowserProxy.js",
-        "id": "cordova-plugin-inappbrowser.InAppBrowserProxy",
-        "pluginId": "cordova-plugin-inappbrowser",
-        "runs": true
+        "file": "plugins/phonegap-plugin-push/www/browser/push.js",
+        "id": "phonegap-plugin-push.BrowserPush",
+        "pluginId": "phonegap-plugin-push",
+        "clobbers": [
+            "PushNotification"
+        ]
     }
 ];
 module.exports.metadata = 
 // TOP OF METADATA
 {
-    "phonegap-plugin-push": "1.8.1",
     "cordova-plugin-compat": "1.1.0",
     "cordova-plugin-camera": "2.4.0",
     "cordova-plugin-device": "1.1.5",
     "cordova-plugin-whitelist": "1.3.2",
-    "cordova-plugin-inappbrowser": "1.7.0"
+    "phonegap-plugin-push": "1.10.1"
 }
 // BOTTOM OF METADATA
 });
