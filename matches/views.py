@@ -4,6 +4,7 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals, with_statement
 
+import json
 import logging
 import os.path
 import random
@@ -39,7 +40,8 @@ def upload_image(request, owner=None, file_extension=None):
     if copyright not in {c[0] for c in Image.COPYRIGHTS}:
         copyright = Image.OWNER if owner else Image.RESTRICTED
 
-    info = merge(request.query_params or {}, request.data.get('info') or {})
+    # TODO catch errors
+    info = merge(request.query_params or {}, json.loads(request.data.get('info') or '{}'))
 
     return Image.objects.create_image(file=image, owner=owner, copyright=copyright, info=info)
 
