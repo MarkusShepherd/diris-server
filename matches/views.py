@@ -7,6 +7,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 import os
 import random
+import six
 
 from django.contrib.auth import login
 from django.db.models import Q
@@ -14,7 +15,7 @@ from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
 from rest_framework import mixins, permissions, views, viewsets
 from rest_framework.decorators import detail_route, list_route
 from rest_framework.response import Response
-from rest_framework.parsers import FileUploadParser
+from rest_framework.parsers import FileUploadParser, MultiPartParser
 from rest_framework_jwt.settings import api_settings
 
 from .models import Match, Player, Image
@@ -135,8 +136,23 @@ class MatchViewSet(
         return Response(serializer.data)
 
 
+def upload_image(request, owner=None, file_extension=None):
+    image = request.data['file']
+    orig_extension = (os.path.splitext(image.name)[1]
+                      if hasattr(image, 'name') and isinstance(image.name, six.string_types)
+                      else None)
+    file_extension = file_extension or orig_extension or '.jpeg'
+    image.name = random_string() + file_extension
+
+    copyright = request.data.get('copyright') or request.query_params.get('copyright')
+    if copyright not in {c[0] for c in Image.COPYRIGHTS}:
+        copyright = Image.OWNER if owner else Image.RESTRICTED
+
+    return Image.objects.create(file=image, owner=owner, copyright=copyright)
+
+
 class MatchImageView(views.APIView):
-    parser_classes = (FileUploadParser,)
+    parser_classes = (MultiPartParser, FileUploadParser)
     permission_classes = (permissions.IsAuthenticated,)
 
     def post(self, request, match_pk, round_number, filename):
@@ -146,11 +162,11 @@ class MatchImageView(views.APIView):
         round_ = match.rounds.get(number=round_number)
         details = round_.player_round_details.get(player=player)
 
-        file = request.data.get('file')
-        file.name = random_string() + (os.path.splitext(file.name)[1] or '.jpeg')
-        image = Image.objects.create(file=file, owner=player)
+        image = upload_image(request, player)
 
-        details.submit_image(image, story=request.query_params.get('story'))
+        story = request.data.get('story') or request.query_params.get('story')
+
+        details.submit_image(image, story=story)
 
         serializer = MatchSerializer(instance=match, player=player)
         return Response(serializer.data)
@@ -224,7 +240,7 @@ class ImageViewSet(viewsets.ModelViewSet):
 
 
 class ImageUploadView(views.APIView):
-    parser_classes = (FileUploadParser,)
+    parser_classes = (MultiPartParser, FileUploadParser)
 
     def put(self, request, filename):
         try:
@@ -232,13 +248,6 @@ class ImageUploadView(views.APIView):
         except AttributeError:
             owner = None
 
-        file = request.data.get('file')
-        file.name = random_string() + os.path.splitext(file.name)[1]
-
-        copyright = request.query_params.get('copyright')
-        if copyright not in {c[0] for c in Image.COPYRIGHTS}:
-            copyright = Image.OWNER if owner else Image.DIRIS
-
-        image = Image.objects.create(file=file, owner=owner, copyright=copyright)
+        image = image = upload_image(request, owner)
         serializer = ImageSerializer(instance=image)
         return Response(serializer.data)
