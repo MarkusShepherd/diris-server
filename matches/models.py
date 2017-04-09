@@ -111,10 +111,6 @@ class Match(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 
-    # @property
-    # def players(self):
-    #     return [details.player for details in self.player_match_details.all()]
-
     def respond(self, player_pk, accept=False):
         player_details = self.player_match_details.get(player=player_pk)
         if player_details.invitation_status != PlayerMatchDetails.INVITED:
@@ -132,8 +128,9 @@ class Match(models.Model):
     def check_status(self, *updated):
         self.status = (Match.WAITING
                        if any(details.invitation_status != PlayerMatchDetails.ACCEPTED
-                           for details
-                           in ensure_instances_consistent(self.player_match_details.all(), updated))
+                              for details
+                              in ensure_instances_consistent(self.player_match_details.all(),
+                                                             updated))
                        else Match.IN_PROGESS)
 
         prev_round = None
@@ -206,10 +203,6 @@ class Round(models.Model):
     status = fields.CharField(max_length=1, choices=ROUND_STATUSES, default=WAITING)
     story = fields.CharField(max_length=256, blank=True)
     last_modified = models.DateTimeField(auto_now=True)
-
-    # @property
-    # def storyteller(self):
-    #     return self.player_round_details.get(is_storyteller=True).player
 
     def display_images_to(self, player=None):
         return (self.status == Round.SUBMIT_VOTES
@@ -292,7 +285,6 @@ class Round(models.Model):
 
 class Player(models.Model):
     user = models.OneToOneField(GaeDatastoreUser, on_delete=models.CASCADE)
-    # name = fields.CharField(max_length=10)
     avatar = models.ForeignKey('Image',
                                related_name='used_as_avatars',
                                blank=True, null=True,
@@ -330,8 +322,9 @@ class Image(models.Model):
     owner = models.ForeignKey(Player, related_name='images',
                               blank=True, null=True, on_delete=models.PROTECT)
     copyright = fields.CharField(max_length=1, choices=COPYRIGHTS, default=OWNER)
+    info = fields.JSONField(blank=True, null=True)
     is_available_publically = fields.ComputedBooleanField(
-        func=lambda image: image.copyright in (Image.DIRIS, Image.PUBLIC),
+        func=lambda image: image.copyright in (image.DIRIS, image.PUBLIC),
         default=False,
     )
     created = models.DateTimeField(auto_now_add=True)
@@ -362,9 +355,6 @@ class PlayerMatchDetails(models.Model):
     match = models.ForeignKey(Match, related_name='player_match_details',
                               on_delete=models.CASCADE)
     is_inviting_player = models.BooleanField(default=False)
-    # is_inviting_player = fields.ComputedBooleanField(
-    #     computer=lambda d: d.match.inviting_player == d.player
-    # )
     date_invited = models.DateTimeField(auto_now_add=True)
     invitation_status = fields.CharField(max_length=1, choices=INVITATION_STATUSES, default=INVITED)
     date_responded = models.DateTimeField(blank=True, null=True)

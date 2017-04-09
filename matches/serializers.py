@@ -15,6 +15,8 @@ LOGGER = logging.getLogger(__name__)
 
 
 class ImageSerializer(serializers.ModelSerializer):
+    info = serializers.DictField()
+
     class Meta(object):
         model = Image
         fields = (
@@ -24,6 +26,8 @@ class ImageSerializer(serializers.ModelSerializer):
             'height',
             'owner',
             'copyright',
+            'info',
+            'is_available_publically',
             'created',
             'last_modified',
         )
@@ -31,6 +35,7 @@ class ImageSerializer(serializers.ModelSerializer):
             'file',
             'width',
             'height',
+            'is_available_publically',
             'created',
             'last_modified',
         )

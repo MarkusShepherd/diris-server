@@ -5,8 +5,9 @@
 from __future__ import absolute_import, division, print_function, unicode_literals, with_statement
 
 import logging
-import os
+import os.path
 import random
+
 import six
 
 from django.contrib.auth import login
@@ -20,9 +21,27 @@ from rest_framework_jwt.settings import api_settings
 
 from .models import Match, Player, Image
 from .serializers import MatchSerializer, PlayerSerializer, ImageSerializer
-from .utils import random_string
+from .utils import merge, normalize_space, random_string
 
 LOGGER = logging.getLogger(__name__)
+
+
+def upload_image(request, owner=None, file_extension=None):
+    image = request.data['file']
+    orig_extension = (os.path.splitext(image.name)[1]
+                      if hasattr(image, 'name') and isinstance(image.name, six.string_types)
+                      else None)
+    file_extension = file_extension or orig_extension or '.jpeg'
+    image.name = random_string() + file_extension
+
+    copyright = (normalize_space(request.data.get('copyright'))
+                 or normalize_space(request.query_params.get('copyright')))
+    if copyright not in {c[0] for c in Image.COPYRIGHTS}:
+        copyright = Image.OWNER if owner else Image.RESTRICTED
+
+    info = merge(request.query_params or {}, request.data.get('info') or {})
+
+    return Image.objects.create(file=image, owner=owner, copyright=copyright, info=info)
 
 
 class MatchViewSet(
@@ -136,21 +155,6 @@ class MatchViewSet(
         return Response(serializer.data)
 
 
-def upload_image(request, owner=None, file_extension=None):
-    image = request.data['file']
-    orig_extension = (os.path.splitext(image.name)[1]
-                      if hasattr(image, 'name') and isinstance(image.name, six.string_types)
-                      else None)
-    file_extension = file_extension or orig_extension or '.jpeg'
-    image.name = random_string() + file_extension
-
-    copyright = request.data.get('copyright') or request.query_params.get('copyright')
-    if copyright not in {c[0] for c in Image.COPYRIGHTS}:
-        copyright = Image.OWNER if owner else Image.RESTRICTED
-
-    return Image.objects.create(file=image, owner=owner, copyright=copyright)
-
-
 class MatchImageView(views.APIView):
     parser_classes = (MultiPartParser, FileUploadParser)
     permission_classes = (permissions.IsAuthenticated,)
@@ -162,9 +166,12 @@ class MatchImageView(views.APIView):
         round_ = match.rounds.get(number=round_number)
         details = round_.player_round_details.get(player=player)
 
-        image = upload_image(request, player)
+        file_extension = (os.path.splitext(filename)[1] if isinstance(filename, six.string_types)
+                          else None)
+        image = upload_image(request, player, file_extension)
 
-        story = request.data.get('story') or request.query_params.get('story')
+        story = (normalize_space(request.data.get('story'))
+                 or normalize_space(request.query_params.get('story')))
 
         details.submit_image(image, story=story)
 
@@ -248,6 +255,8 @@ class ImageUploadView(views.APIView):
         except AttributeError:
             owner = None
 
-        image = image = upload_image(request, owner)
+        file_extension = (os.path.splitext(filename)[1] if isinstance(filename, six.string_types)
+                          else None)
+        image = upload_image(request, owner, file_extension)
         serializer = ImageSerializer(instance=image)
         return Response(serializer.data)

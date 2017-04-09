@@ -9,10 +9,9 @@ import random
 import string
 
 from collections import OrderedDict
-# from functools import reduce
 
-# from django.db.models import Model
-# from djangae.db.consistency import ensure_instance_consistent
+import six
+
 from rest_framework_jwt.utils import jwt_payload_handler
 
 try:
@@ -29,23 +28,48 @@ LOGGER = logging.getLogger(__name__)
 
 
 def random_string(length=20, choices=string.digits + string.ascii_letters):
+    '''random string of given length sample from choices'''
+
     return ''.join(random.choice(choices) for _ in range(length))
 
 
-# def ensure_consistency(queryset, *updates):
-#     update_pks = []
-
-#     for update in updates:
-#         if isinstance(update, (str, int, long, Model)):
-#             update_pks.append(update)
-#         elif update:
-#             update_pks.extend(filter(None, update))
-
-#     return reduce(ensure_instance_consistent, update_pks, queryset)
-
-
 def clear_list(items):
-    return list(OrderedDict.fromkeys(item for item in items if item))
+    '''remove duplicates and empty values from a list without changing the order'''
+
+    return list(OrderedDict.fromkeys(filter(None, items)))
+
+
+def merge(*dicts):
+    '''merge a list of dictionaries'''
+
+    if len(dicts) == 0:
+        return {}
+    elif len(dicts) == 1:
+        return dicts[0]
+
+    result = {}
+    for dictionary in dicts:
+        for key, value in six.iteritems(dictionary):
+            old_value = result.get(key)
+            if isinstance(old_value, dict) and isinstance(value, dict):
+                value = merge(old_value, value)
+            elif isinstance(old_value, (list, tuple)) and isinstance(value, (list, tuple)):
+                value = old_value + type(old_value)(value)
+            elif isinstance(old_value, (set, frozenset)) and isinstance(value, (set, frozenset)):
+                value = old_value | type(old_value)(value)
+            result[key] = value
+    return result
+
+
+def normalize_space(item, preserve_linebreaks=False):
+    '''replace all runs of whitespace with a single space'''
+
+    if not item:
+        return None
+    elif preserve_linebreaks:
+        return '\n'.join(normalize_space(s) or '' for s in str(item).splitlines()).strip()
+    else:
+        return ' '.join(str(item).split())
 
 
 def jwt_payload(user):
