@@ -238,6 +238,9 @@ dirisApp.factory('dataService', function dataService(
     };
 
     function setImage(image) {
+        if (_.startsWith(image.file, '//')) {
+            image.file = 'http:' + image.file;
+        }
         $localStorage['image_' + image.pk] = image;
         images[image.pk] = image;
     }
@@ -325,8 +328,10 @@ dirisApp.factory('dataService', function dataService(
 
     factory.submitImage = function submitImage(mPk, rNo, image, story) {
         return $http.post(BACKEND_URL + '/matches/' + mPk + '/' + rNo + '/image/filename.jpeg',
-            image, {params: {story: story}})
-            .then(function (response) {
+            image, {
+                headers: {'Content-Type': 'image/jpeg'},
+                params: {story: story},
+            }).then(function (response) {
                 var match = response.data;
 
                 if (!match) {
