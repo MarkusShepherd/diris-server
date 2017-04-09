@@ -300,12 +300,62 @@ class Player(models.Model):
 
 
 class GaeImageField(models.ImageField):
-    def update_dimension_fields(self, instance, *args, **kwargs):
-        # TODO find dimensions
-        if self.width_field:
-            setattr(instance, self.width_field, -1)
-        if self.height_field:
-            setattr(instance, self.height_field, -1)
+    def update_dimension_fields(self, *args, **kwargs):
+        try:
+            super(GaeImageField, self).update_dimension_fields(*args, **kwargs)
+        except Exception as exc:
+            LOGGER.warning(exc)
+
+
+class ImageManager(models.Manager):
+    def create_image(self, *args, **kwargs):
+        image = self.create(*args, **kwargs)
+
+        width = int(image.width) if image.width else -1
+        height = int(image.height) if image.height else -1
+
+        if width > 0 and height > 0:
+            return image
+
+        try:
+            width = image.file.width
+            height = image.file.height
+        except Exception as exc:
+            LOGGER.warning(exc)
+
+        if width > 0 and height > 0:
+            image.width = width
+            image.height = height
+            image.save()
+            return image
+
+        try:
+            import google.appengine.api.images
+            image.file.open(mode='r')
+            image_obj = google.appengine.api.images.Image(image_data=image.file.read())
+            width = image_obj.width
+            height = image_obj.height
+        except Exception as exc:
+            LOGGER.warning(exc)
+        finally:
+            image.file.close()
+
+        if width > 0 and height > 0:
+            image.width = width
+            image.height = height
+            image.save()
+            return image
+
+        try:
+            width = int(image.info.get('width'))
+            height = int(image.info.get('height'))
+        except Exception as e:
+            LOGGER.warning(exc)
+
+        image.width = width if width and width > 0 else None
+        image.height = height if height and height > 0 else None
+        image.save()
+        return image
 
 
 class Image(models.Model):
@@ -319,6 +369,8 @@ class Image(models.Model):
         (DIRIS, 'diris'),
         (PUBLIC, 'public'),
     )
+
+    objects = ImageManager()
 
     file = GaeImageField(
         upload_to='%Y/%m/%d/%H/%M/',

@@ -41,7 +41,7 @@ def upload_image(request, owner=None, file_extension=None):
 
     info = merge(request.query_params or {}, request.data.get('info') or {})
 
-    return Image.objects.create(file=image, owner=owner, copyright=copyright, info=info)
+    return Image.objects.create_image(file=image, owner=owner, copyright=copyright, info=info)
 
 
 class MatchViewSet(
