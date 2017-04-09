@@ -299,6 +299,15 @@ class Player(models.Model):
         ordering = ('user',)
 
 
+class GaeImageField(models.ImageField):
+    def update_dimension_fields(self, instance, *args, **kwargs):
+        # TODO find dimensions
+        if self.width_field:
+            setattr(instance, self.width_field, -1)
+        if self.height_field:
+            setattr(instance, self.height_field, -1)
+
+
 class Image(models.Model):
     OWNER = 'o'
     RESTRICTED = 'r'
@@ -311,11 +320,11 @@ class Image(models.Model):
         (PUBLIC, 'public'),
     )
 
-    file = models.ImageField(
+    file = GaeImageField(
         upload_to='%Y/%m/%d/%H/%M/',
         storage=STORAGE,
-        # width_field='width',
-        # height_field='height',
+        width_field='width',
+        height_field='height',
     )
     width = models.PositiveSmallIntegerField(blank=True, null=True)
     height = models.PositiveSmallIntegerField(blank=True, null=True)
