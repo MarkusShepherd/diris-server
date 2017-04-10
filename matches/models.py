@@ -378,6 +378,9 @@ class Image(models.Model):
         width_field='width',
         height_field='height',
     )
+    # TODO handle '//...' URLs
+    url = fields.ComputedCharField(func=lambda image: image.file.url, max_length=1500,
+                                   blank=True, null=True, default=None)
     width = models.PositiveSmallIntegerField(blank=True, null=True)
     height = models.PositiveSmallIntegerField(blank=True, null=True)
     owner = models.ForeignKey(Player, related_name='images',

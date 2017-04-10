@@ -21,7 +21,8 @@ class ImageSerializer(serializers.ModelSerializer):
         model = Image
         fields = (
             'pk',
-            'file',
+            # 'file',
+            'url',
             'width',
             'height',
             'owner',
@@ -32,7 +33,8 @@ class ImageSerializer(serializers.ModelSerializer):
             'last_modified',
         )
         read_only_fields = (
-            'file',
+            # 'file',
+            'url',
             'width',
             'height',
             'is_available_publically',
