@@ -116,10 +116,11 @@ class MatchSerializer(serializers.ModelSerializer):
     players = serializers.PrimaryKeyRelatedField(
         many=True,
         required=False,
-        queryset=Player.objects.all(),
     )
-    player_match_details = PlayerMatchDetailsSerializer(many=True, required=False)
-    rounds = RoundSerializer(many=True, required=False)
+    details = serializers.DictField(required=False)
+    # player_match_details = PlayerMatchDetailsSerializer(many=True, required=False)
+    # rounds = RoundSerializer(many=True, required=False)
+    rounds = serializers.DictField(many=True, required=False)
     total_rounds = serializers.IntegerField(required=False)
 
     def __init__(self, player=None, *args, **kwargs):

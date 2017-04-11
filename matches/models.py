@@ -104,7 +104,10 @@ class Match(models.Model):
     players = fields.RelatedSetField('Player', related_name='matches')
     inviting_player = models.ForeignKey('Player', related_name='invited_to',
                                         on_delete=models.PROTECT)
-    total_rounds = models.PositiveSmallIntegerField()
+    details = fields.JSONField()
+    rounds = fields.ListField(fields.JSONField())
+    # total_rounds = models.PositiveSmallIntegerField()
+    total_rounds = fields.ComputedIntegerField(func=lambda match: len(match.rounds))
     current_round = models.PositiveSmallIntegerField(default=1)
     status = fields.CharField(max_length=1, choices=MATCH_STATUSES, default=WAITING)
     timeout = models.PositiveIntegerField(default=STANDARD_TIMEOUT)
