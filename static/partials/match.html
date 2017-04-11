@@ -25,12 +25,12 @@
 				{{ players['' + round.storyteller].user.username }}<span ng-show="round.story">: "{{ round.story }}"</span>
 			</p>
 			<div ng-if="round.status == 'f'" class="image-overview-container">
-				<img ng-src="{{ images[round.detailsPlayers[round.storyteller].image].file }}" class="img-responsive img-rounded image-overview" />
+				<img ng-src="{{ images[round.detailsPlayers[round.storyteller].image].url }}" class="img-responsive img-rounded image-overview" />
 			</div>
 			<p ng-if="round.readyForStoryImage" class="list-group-item-text">Tell your story!</p>
 			<p ng-if="round.readyForOtherImage" class="list-group-item-text">Submit your image!</p>
 			<span ng-if="round.readyForVote" ng-repeat="image in round.images">
-				<img ng-src="{{ images[image].file }}" class="img-circle" style="width: 100px; height: 100px;" />
+				<img ng-src="{{ images[image].url }}" class="img-circle" style="width: 100px; height: 100px;" />
 			</span>
 			<p ng-if="round.readyForVote" class="list-group-item-text">Vote!</p>
 		</a>

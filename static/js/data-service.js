@@ -238,8 +238,9 @@ dirisApp.factory('dataService', function dataService(
     };
 
     function setImage(image) {
-        if (_.startsWith(image.file, '//')) {
-            image.file = 'http:' + image.file;
+        // TODO http or https?
+        if (_.startsWith(image.url, '//')) {
+            image.url = 'http:' + image.url;
         }
         $localStorage['image_' + image.pk] = image;
         images[image.pk] = image;

@@ -34,8 +34,8 @@
 			<div class="frame" id="centered">
 				<div class="slidee clearfix">
 					<img ng-repeat="image in randomImages"
-						ng-src="{{ image.file }}"
-						ng-click="setImage(image.file)"
+						ng-src="{{ image.url }}"
+						ng-click="setImage(image.url)"
 						alt="Image"
 						class="img-responsive"
 						style="height: 150px; width: auto;" />
@@ -54,7 +54,7 @@
 			<img src="default-placeholder.png" id="image" alt="Image" class="img-responsive image-upload" />
 		</div>
 		<div ng-show="round.hasSubmittedImage" class="image-upload-wrapper">
-			<img ng-src="{{ image.file }}" id="image-uploaded" alt="Image" class="img-responsive image-upload" />
+			<img ng-src="{{ image.url }}" id="image-uploaded" alt="Image" class="img-responsive image-upload" />
 		</div>
 
 		<div ng-hide="round.hasSubmittedImage" class="image-edit-wrapper">
