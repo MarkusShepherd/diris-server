@@ -1,5 +1,5 @@
 application: diris-app
-version: 0-0-3
+version: 0-1-0
 runtime: python27
 api_version: 1
 threadsafe: true
