@@ -57,11 +57,11 @@ class MatchManager(models.Manager):
         for player_detail in player_details:
             is_inviting_player = player_detail.get('is_inviting_player') or False
             player_detail['match'] = match
-            player_detail['invitation_status'] = (PlayerMatchDetails.ACCEPTED
+            player_detail['invitation_status'] = (MatchDetails.ACCEPTED
                                                   if is_inviting_player
-                                                  else PlayerMatchDetails.INVITED)
+                                                  else MatchDetails.INVITED)
             player_detail['date_responded'] = timezone.now() if is_inviting_player else None
-            PlayerMatchDetails.objects.create(**player_detail)
+            MatchDetails.objects.create(**player_detail)
 
         random.shuffle(players)
 
@@ -81,7 +81,7 @@ class MatchManager(models.Manager):
                     'match_round': match_round,
                     'is_storyteller': players[i % len(players)] == player,
                 }
-                PlayerRoundDetails.objects.create(**data)
+                RoundDetails.objects.create(**data)
 
         return match
 
@@ -106,9 +106,11 @@ class Match(models.Model):
                                         on_delete=models.PROTECT)
     details = fields.JSONField()
     rounds = fields.ListField(fields.JSONField())
-    # total_rounds = models.PositiveSmallIntegerField()
     total_rounds = fields.ComputedIntegerField(func=lambda match: len(match.rounds))
+    # TODO could be a computed field
     current_round = models.PositiveSmallIntegerField(default=1)
+    # TODO could be a computed field
+    images = fields.RelatedSetField('Image', related_name='used_in_matches')
     status = fields.CharField(max_length=1, choices=MATCH_STATUSES, default=WAITING)
     timeout = models.PositiveIntegerField(default=STANDARD_TIMEOUT)
     created = models.DateTimeField(auto_now_add=True)
@@ -116,11 +118,11 @@ class Match(models.Model):
 
     def respond(self, player_pk, accept=False):
         player_details = self.player_match_details.get(player=player_pk)
-        if player_details.invitation_status != PlayerMatchDetails.INVITED:
+        if player_details.invitation_status != MatchDetails.INVITED:
             raise ValueError('Player already responded to this invitation')
 
-        player_details.invitation_status = (PlayerMatchDetails.ACCEPTED if accept
-                                            else PlayerMatchDetails.DECLINED)
+        player_details.invitation_status = (MatchDetails.ACCEPTED if accept
+                                            else MatchDetails.DECLINED)
         player_details.date_responded = timezone.now()
         player_details.save()
 
@@ -130,7 +132,7 @@ class Match(models.Model):
 
     def check_status(self, *updated):
         self.status = (Match.WAITING
-                       if any(details.invitation_status != PlayerMatchDetails.ACCEPTED
+                       if any(details.invitation_status != MatchDetails.ACCEPTED
                               for details
                               in ensure_instances_consistent(self.player_match_details.all(),
                                                              updated))
@@ -174,7 +176,27 @@ class Match(models.Model):
         verbose_name_plural = 'matches'
 
 
-class Round(models.Model):
+class MatchDetails(object):
+    INVITED = 'i'
+    ACCEPTED = 'a'
+    DECLINED = 'd'
+    INVITATION_STATUSES = (
+        (INVITED, 'invited'),
+        (ACCEPTED, 'accepted'),
+        (DECLINED, 'declined'),
+    )
+
+    def __init__(self, player, is_inviting_player=False, date_invited=None,
+                 invitation_status=INVITED, date_responded=None, score=0):
+        self.player = player
+        self.is_inviting_player = is_inviting_player
+        self.date_invited = date_invited or timezone.now()
+        self.invitation_status = invitation_status
+        self.date_responded = date_responded or timezone.now() if is_inviting_player else None
+        self.score = score
+
+
+class Round(object):
     WAITING = 'w'
     SUBMIT_STORY = 's'
     SUBMIT_OTHERS = 'o'
@@ -197,15 +219,14 @@ class Round(models.Model):
     NOT_ALL_CORRECT_OR_WRONG_SCORE = 3
     NOT_ALL_CORRECT_OR_WRONG_STORYTELLER_SCORE = 3
 
-    match = models.ForeignKey(Match, related_name='rounds', on_delete=models.CASCADE)
-    # players = fields.RelatedSetField('Player', related_name='rounds')
-    storyteller = models.ForeignKey('Player', related_name='storyteller_in',
-                                    on_delete=models.PROTECT)
-    number = models.PositiveSmallIntegerField()
-    is_current_round = models.BooleanField(default=False)
-    status = fields.CharField(max_length=1, choices=ROUND_STATUSES, default=WAITING)
-    story = fields.CharField(max_length=256, blank=True)
-    last_modified = models.DateTimeField(auto_now=True)
+    def __init__(self, number, storyteller, details,
+                 is_current_round=False, status=WAITING, story=None):
+        self.number = number
+        self.storyteller = storyteller
+        self.details = details
+        self.is_current_round = is_current_round
+        self.status = status
+        self.story = story
 
     def display_images_to(self, player=None):
         return (self.status == Round.SUBMIT_VOTES
@@ -280,179 +301,18 @@ class Round(models.Model):
         return scores
 
     def __str__(self):
-        return 'Match #%d Round #%d' % (self.match.id, self.number)
-
-    class Meta(object):
-        ordering = ('number',)
+        return 'Round #{}'.format(self.number)
 
 
-class Player(models.Model):
-    user = models.OneToOneField(GaeDatastoreUser, on_delete=models.CASCADE)
-    avatar = models.ForeignKey('Image',
-                               related_name='used_as_avatars',
-                               blank=True, null=True,
-                               on_delete=models.SET_NULL)
-    created = models.DateTimeField(auto_now_add=True)
-    last_modified = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.user.username
-
-    class Meta(object):
-        ordering = ('user',)
-
-
-class GaeImageField(models.ImageField):
-    def update_dimension_fields(self, *args, **kwargs):
-        try:
-            super(GaeImageField, self).update_dimension_fields(*args, **kwargs)
-        except Exception as exc:
-            LOGGER.warning(exc)
-
-
-class ImageManager(models.Manager):
-    def create_image(self, *args, **kwargs):
-        image = self.create(*args, **kwargs)
-
-        width = int(image.width) if image.width else -1
-        height = int(image.height) if image.height else -1
-
-        if width > 0 and height > 0:
-            return image
-
-        try:
-            width = image.file.width
-            height = image.file.height
-        except Exception as exc:
-            LOGGER.warning(exc)
-
-        if width > 0 and height > 0:
-            image.width = width
-            image.height = height
-            image.save()
-            return image
-
-        try:
-            import google.appengine.api.images
-            image.file.open(mode='r')
-            image_obj = google.appengine.api.images.Image(image_data=image.file.read())
-            width = image_obj.width
-            height = image_obj.height
-        except Exception as exc:
-            LOGGER.warning(exc)
-        finally:
-            image.file.close()
-
-        if width > 0 and height > 0:
-            image.width = width
-            image.height = height
-            image.save()
-            return image
-
-        try:
-            width = int(image.info.get('width'))
-            height = int(image.info.get('height'))
-        except Exception as e:
-            LOGGER.warning(exc)
-
-        image.width = width if width and width > 0 else None
-        image.height = height if height and height > 0 else None
-        image.save()
-        return image
-
-
-class Image(models.Model):
-    OWNER = 'o'
-    RESTRICTED = 'r'
-    DIRIS = 'd'
-    PUBLIC = 'p'
-    COPYRIGHTS = (
-        (OWNER, 'owner'),
-        (RESTRICTED, 'restricted'),
-        (DIRIS, 'diris'),
-        (PUBLIC, 'public'),
-    )
-
-    objects = ImageManager()
-
-    file = GaeImageField(
-        upload_to='%Y/%m/%d/%H/%M/',
-        storage=STORAGE,
-        width_field='width',
-        height_field='height',
-    )
-    # TODO handle '//...' URLs
-    url = fields.ComputedCharField(func=lambda image: image.file.url, max_length=1500,
-                                   blank=True, null=True, default=None)
-    width = models.PositiveSmallIntegerField(blank=True, null=True)
-    height = models.PositiveSmallIntegerField(blank=True, null=True)
-    owner = models.ForeignKey(Player, related_name='images',
-                              blank=True, null=True, on_delete=models.PROTECT)
-    copyright = fields.CharField(max_length=1, choices=COPYRIGHTS, default=OWNER)
-    info = fields.JSONField(blank=True, null=True)
-    is_available_publically = fields.ComputedBooleanField(
-        func=lambda image: image.copyright in (image.DIRIS, image.PUBLIC),
-        default=False,
-    )
-    created = models.DateTimeField(auto_now_add=True)
-    last_modified = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return str(self.file)
-
-    def is_available_to(self, player=None):
-        return self.is_available_publically or (player and player == self.owner)
-
-    class Meta(object):
-        ordering = ('created',)
-
-
-class PlayerMatchDetails(models.Model):
-    INVITED = 'i'
-    ACCEPTED = 'a'
-    DECLINED = 'd'
-    INVITATION_STATUSES = (
-        (INVITED, 'invited'),
-        (ACCEPTED, 'accepted'),
-        (DECLINED, 'declined'),
-    )
-
-    player = models.ForeignKey(Player, related_name='player_match_details',
-                               on_delete=models.PROTECT)
-    match = models.ForeignKey(Match, related_name='player_match_details',
-                              on_delete=models.CASCADE)
-    is_inviting_player = models.BooleanField(default=False)
-    date_invited = models.DateTimeField(auto_now_add=True)
-    invitation_status = fields.CharField(max_length=1, choices=INVITATION_STATUSES, default=INVITED)
-    date_responded = models.DateTimeField(blank=True, null=True)
-    score = models.PositiveSmallIntegerField(default=0)
-
-    def __str__(self):
-        return '%s in Match #%d' % (self.player.user.username, self.match.id)
-
-
-class PlayerRoundDetails(models.Model):
-    player = models.ForeignKey(Player, related_name='player_round_details',
-                               on_delete=models.PROTECT)
-    match_round = models.ForeignKey(Round, related_name='player_round_details',
-                                    on_delete=models.CASCADE)
-    is_storyteller = models.BooleanField(default=False)
-    image = models.ForeignKey(Image,
-                              related_name='used_in_round_details',
-                              blank=True, null=True,
-                              on_delete=models.PROTECT)
-    score = models.PositiveSmallIntegerField(default=0)
-    vote = models.ForeignKey(Image,
-                             related_name='voted_by',
-                             blank=True, null=True,
-                             on_delete=models.PROTECT)
-    vote_player = models.ForeignKey(Player,
-                                    related_name='voted_by',
-                                    blank=True, null=True,
-                                    on_delete=models.PROTECT)
-
-    def __str__(self):
-        return '%s in %s' % (self.player.user.username, str(self.match_round))
+class RoundDetails(object):
+    def __init__(self, player, is_storyteller=False, image=None,
+                 score=0, vote=None, vote_player=None):
+        self.player = player
+        self.is_storyteller = is_storyteller
+        self.image = image
+        self.score = score
+        self.vote = vote
+        self.vote_player = vote_player
 
     def display_vote_to(self, player=None):
         if (self.match_round.status == Round.FINISHED
@@ -531,3 +391,117 @@ class PlayerRoundDetails(models.Model):
 
         self.match_round.match.check_status(self.pk)
         self.match_round.match.score(self.pk)
+
+
+class Player(models.Model):
+    user = models.OneToOneField(GaeDatastoreUser, on_delete=models.CASCADE)
+    avatar = models.ForeignKey('Image',
+                               related_name='used_by_players',
+                               blank=True, null=True,
+                               on_delete=models.SET_NULL)
+    created = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.user.username
+
+    class Meta(object):
+        ordering = ('-last_modified',)
+
+
+class ImageManager(models.Manager):
+    def create_image(self, *args, **kwargs):
+        image = self.create(*args, **kwargs)
+
+        # TODO factor out into utils function
+        width = int(image.width) if image.width else -1
+        height = int(image.height) if image.height else -1
+
+        # TODO set size
+        if width > 0 and height > 0:
+            return image
+
+        try:
+            width = image.file.width
+            height = image.file.height
+        except Exception as exc:
+            LOGGER.warning(exc)
+
+        if width > 0 and height > 0:
+            image.width = width
+            image.height = height
+            image.save()
+            return image
+
+        try:
+            import google.appengine.api.images
+            image.file.open(mode='r')
+            image_obj = google.appengine.api.images.Image(image_data=image.file.read())
+            width = image_obj.width
+            height = image_obj.height
+        except Exception as exc:
+            LOGGER.warning(exc)
+        finally:
+            image.file.close()
+
+        if width > 0 and height > 0:
+            image.width = width
+            image.height = height
+            image.save()
+            return image
+
+        try:
+            width = int(image.info.get('width'))
+            height = int(image.info.get('height'))
+        except Exception as exc:
+            LOGGER.warning(exc)
+
+        image.width = width if width and width > 0 else None
+        image.height = height if height and height > 0 else None
+        image.save()
+        return image
+
+
+class Image(models.Model):
+    OWNER = 'o'
+    RESTRICTED = 'r'
+    DIRIS = 'd'
+    PUBLIC = 'p'
+    COPYRIGHTS = (
+        (OWNER, 'owner'),
+        (RESTRICTED, 'restricted'),
+        (DIRIS, 'diris'),
+        (PUBLIC, 'public'),
+    )
+
+    objects = ImageManager()
+
+    file = models.ImageField(
+        upload_to='%Y/%m/%d/%H/%M/',
+        storage=STORAGE,
+    )
+    url = fields.ComputedCharField(func=lambda image: image.file.url, max_length=1500,
+                                   blank=True, null=True, default=None)
+    # TODO computed fields?
+    width = models.PositiveSmallIntegerField(blank=True, null=True)
+    height = models.PositiveSmallIntegerField(blank=True, null=True)
+    size = models.PositiveIntegerField(blank=True, null=True)
+    owner = models.ForeignKey(Player, related_name='images',
+                              blank=True, null=True, on_delete=models.SET_NULL)
+    copyright = fields.CharField(max_length=1, choices=COPYRIGHTS, default=OWNER)
+    info = fields.JSONField(blank=True, null=True)
+    is_available_publically = fields.ComputedBooleanField(
+        func=lambda image: image.copyright in (image.DIRIS, image.PUBLIC),
+        default=False,
+    )
+    created = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return str(self.url)
+
+    def is_available_to(self, player=None):
+        return self.is_available_publically or (player and player == self.owner)
+
+    class Meta(object):
+        ordering = ('-last_modified',)

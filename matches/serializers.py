@@ -9,22 +9,23 @@ import logging
 from rest_framework import serializers
 from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
 
-from .models import Match, Round, Player, Image, PlayerMatchDetails, PlayerRoundDetails
+from .models import Match, Round, Player, Image, MatchDetails, RoundDetails
 
 LOGGER = logging.getLogger(__name__)
 
 
 class ImageSerializer(serializers.ModelSerializer):
-    info = serializers.DictField()
+    url = serializers.URLField(required=False, read_only=True)
+    info = serializers.DictField(required=False)
 
     class Meta(object):
         model = Image
         fields = (
             'pk',
-            # 'file',
             'url',
             'width',
             'height',
+            'size',
             'owner',
             'copyright',
             'info',
@@ -33,7 +34,6 @@ class ImageSerializer(serializers.ModelSerializer):
             'last_modified',
         )
         read_only_fields = (
-            # 'file',
             'url',
             'width',
             'height',
@@ -43,53 +43,43 @@ class ImageSerializer(serializers.ModelSerializer):
         )
 
 
-class PlayerMatchDetailsSerializer(serializers.ModelSerializer):
-    class Meta(object):
-        model = PlayerMatchDetails
-        fields = (
-            'pk',
-            'player',
-            'is_inviting_player',
-            'date_invited',
-            'invitation_status',
-            'date_responded',
-            'score',
-        )
+class MatchDetailsSerializer(serializers.Serializer):
+    player = serializers.IntegerField()
+    is_inviting_player = serializers.BooleanField(default=False)
+    date_invited = serializers.DateTimeField(required=False)
+    invitation_status = serializers.ChoiceField(choices=MatchDetails.INVITATION_STATUSES,
+                                                default=MatchDetails.INVITED)
+    date_responded = serializers.DateTimeField(required=False)
+    score = serializers.IntegerField(min_value=0, default=0)
+
+    def create(self, validated_data):
+        return MatchDetails(**validated_data)
 
 
-class PlayerRoundDetailsSerializer(serializers.ModelSerializer):
-    class Meta(object):
-        model = PlayerRoundDetails
-        fields = (
-            'pk',
-            'player',
-            'is_storyteller',
-            'image',
-            'score',
-            'vote',
-            'vote_player',
-        )
+class RoundDetailsSerializer(serializers.Serializer):
+    player = serializers.IntegerField()
+    is_storyteller = serializers.BooleanField(default=False)
+    image = serializers.IntegerField(required=False)
+    score = serializers.IntegerField(min_value=0, default=0)
+    vote = serializers.IntegerField(required=False)
+    vote_player = serializers.IntegerField(required=False, read_only=True)
+
+    def create(self, validated_data):
+        return RoundDetails(**validated_data)
 
 
-class RoundSerializer(serializers.ModelSerializer):
-    player_round_details = PlayerRoundDetailsSerializer(many=True)
+class RoundSerializer(serializers.Serializer):
+    number = serializers.IntegerField(min_value=1)
+    storyteller = serializers.IntegerField()
+    details = serializers.DictField(child=RoundDetailsSerializer())
+    is_current_round = serializers.BooleanField(default=False)
+    status = serializers.ChoiceField(choices=Round.ROUND_STATUSES,
+                                     default=Round.WAITING)
+    story = serializers.CharField(required=False, min_length=3,
+                                  allow_blank=False, trim_whitespace=True)
 
-    class Meta(object):
-        model = Round
-        fields = (
-            'pk',
-            'match',
-            'number',
-            'is_current_round',
-            'storyteller',
-            'player_round_details',
-            'status',
-            'story',
-            'last_modified',
-        )
-        read_only_fields = (
-            'last_modified',
-        )
+    def create(self, validated_data):
+        return Round(**validated_data)
 
 
 def display_vote(round_, round_details, player=None):
@@ -113,19 +103,34 @@ def display_images(round_data, player=None):
 
 
 class MatchSerializer(serializers.ModelSerializer):
-    players = serializers.PrimaryKeyRelatedField(
-        many=True,
-        required=False,
-    )
-    details = serializers.DictField(required=False)
-    # player_match_details = PlayerMatchDetailsSerializer(many=True, required=False)
-    # rounds = RoundSerializer(many=True, required=False)
-    rounds = serializers.DictField(many=True, required=False)
+    details = serializers.DictField(child=MatchDetailsSerializer(), required=False, read_only=True)
+    rounds = RoundSerializer(many=True, required=False, read_only=True)
     total_rounds = serializers.IntegerField(required=False)
 
     def __init__(self, player=None, *args, **kwargs):
         super(MatchSerializer, self).__init__(*args, **kwargs)
         self.player = player
+
+    class Meta(object):
+        model = Match
+        fields = (
+            'pk',
+            'players',
+            'inviting_player',
+            'details',
+            'rounds',
+            'total_rounds',
+            'current_round',
+            'images',
+            'status',
+            'timeout',
+            'created',
+            'last_modified',
+        )
+        read_only_fields = (
+            'created',
+            'last_modified',
+        )
 
     def to_representation(self, obj):
         data = super(MatchSerializer, self).to_representation(obj)
@@ -146,31 +151,8 @@ class MatchSerializer(serializers.ModelSerializer):
 
         return data
 
-    class Meta(object):
-        model = Match
-        fields = (
-            'pk',
-            'players',
-            'inviting_player',
-            'player_match_details',
-            'total_rounds',
-            'current_round',
-            'rounds',
-            'status',
-            'timeout',
-            'created',
-            'last_modified',
-        )
-        read_only_fields = (
-            'created',
-            'last_modified',
-        )
-
     def create(self, validated_data):
         return Match.objects.create_match(**validated_data)
-
-    def update(self, instance, validated_data):
-        pass
 
 
 class UserSerializer(serializers.ModelSerializer):

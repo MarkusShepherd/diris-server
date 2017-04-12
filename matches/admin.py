@@ -6,11 +6,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 from django.contrib import admin
 
-from .models import Match, Round, Player, Image, PlayerMatchDetails, PlayerRoundDetails
+from .models import Match, Player, Image
 
 admin.site.register(Match)
-admin.site.register(Round)
 admin.site.register(Player)
 admin.site.register(Image)
-admin.site.register(PlayerMatchDetails)
-admin.site.register(PlayerRoundDetails)
