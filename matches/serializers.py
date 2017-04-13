@@ -9,7 +9,7 @@ import logging
 from rest_framework import serializers
 from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
 
-from .models import Match, Round, Player, Image, MatchDetails, RoundDetails
+from .models import Match, Round, Player, Image, MatchDetails, RoundDetails, MatchDetailsSerializer, RoundSerializer
 
 LOGGER = logging.getLogger(__name__)
 
@@ -43,45 +43,6 @@ class ImageSerializer(serializers.ModelSerializer):
         )
 
 
-class MatchDetailsSerializer(serializers.Serializer):
-    player = serializers.IntegerField()
-    is_inviting_player = serializers.BooleanField(default=False)
-    date_invited = serializers.DateTimeField(required=False)
-    invitation_status = serializers.ChoiceField(choices=MatchDetails.INVITATION_STATUSES,
-                                                default=MatchDetails.INVITED)
-    date_responded = serializers.DateTimeField(required=False)
-    score = serializers.IntegerField(min_value=0, default=0)
-
-    def create(self, validated_data):
-        return MatchDetails(**validated_data)
-
-
-class RoundDetailsSerializer(serializers.Serializer):
-    player = serializers.IntegerField()
-    is_storyteller = serializers.BooleanField(default=False)
-    image = serializers.IntegerField(required=False)
-    score = serializers.IntegerField(min_value=0, default=0)
-    vote = serializers.IntegerField(required=False)
-    vote_player = serializers.IntegerField(required=False, read_only=True)
-
-    def create(self, validated_data):
-        return RoundDetails(**validated_data)
-
-
-class RoundSerializer(serializers.Serializer):
-    number = serializers.IntegerField(min_value=1)
-    storyteller = serializers.IntegerField()
-    details = serializers.DictField(child=RoundDetailsSerializer())
-    is_current_round = serializers.BooleanField(default=False)
-    status = serializers.ChoiceField(choices=Round.ROUND_STATUSES,
-                                     default=Round.WAITING)
-    story = serializers.CharField(required=False, min_length=3,
-                                  allow_blank=False, trim_whitespace=True)
-
-    def create(self, validated_data):
-        return Round(**validated_data)
-
-
 def display_vote(round_, round_details, player=None):
     if (round_.get('status') == Round.FINISHED
             or (player and player.pk == round_details.get('player'))):
@@ -105,7 +66,7 @@ def display_images(round_data, player=None):
 class MatchSerializer(serializers.ModelSerializer):
     details = serializers.DictField(child=MatchDetailsSerializer(), required=False, read_only=True)
     rounds = RoundSerializer(many=True, required=False, read_only=True)
-    total_rounds = serializers.IntegerField(required=False)
+    total_rounds = serializers.IntegerField(required=False, min_value=Match.MINIMUM_PLAYER)
 
     def __init__(self, player=None, *args, **kwargs):
         super(MatchSerializer, self).__init__(*args, **kwargs)
