@@ -296,7 +296,8 @@ class MatchManager(models.Manager):
         match_details = {player: MatchDetails(player=player,
                                               is_inviting_player=player == inviting_player)
                          for player in players}
-        match_details_data = {str(player): MatchDetailsSerializer(instance=details).data for player, details in match_details.items()}
+        match_details_data = {player: MatchDetailsSerializer(instance=details).data
+                              for player, details in match_details.items()}
 
         total_rounds = total_rounds or len(players)
 
@@ -307,7 +308,7 @@ class MatchManager(models.Manager):
             storyteller=players[i % len(players)],
             is_current_round=i == 0,
             status=Round.WAITING,
-            details={str(player): RoundDetails(
+            details={player: RoundDetails(
                 player=player,
                 is_storyteller=players[i % len(players)] == player,
             ) for player in players},
@@ -323,8 +324,6 @@ class MatchManager(models.Manager):
 
         if timeout:
             data['timeout'] = timeout
-
-        LOGGER.info(data)
 
         return self.create(**data)
 
@@ -348,7 +347,7 @@ class Match(models.Model):
     inviting_player = models.ForeignKey('Player', related_name='inviting_matches',
                                         on_delete=models.PROTECT)
     details = fields.JSONField()
-    rounds = fields.ListField(fields.JSONField())
+    rounds = fields.JSONField()
     total_rounds = fields.ComputedIntegerField(func=lambda match: len(match.rounds))
     # TODO could be a computed field
     current_round = models.PositiveSmallIntegerField(default=1)

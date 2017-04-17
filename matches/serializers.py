@@ -9,7 +9,7 @@ import logging
 from rest_framework import serializers
 from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
 
-from .models import Match, Round, Player, Image, MatchDetails, RoundDetails, MatchDetailsSerializer, RoundSerializer
+from .models import Match, Round, Player, Image, MatchDetailsSerializer, RoundSerializer
 
 LOGGER = logging.getLogger(__name__)
 
@@ -93,24 +93,24 @@ class MatchSerializer(serializers.ModelSerializer):
             'last_modified',
         )
 
-    def to_representation(self, obj):
-        data = super(MatchSerializer, self).to_representation(obj)
+    # def to_representation(self, obj):
+    #     data = super(MatchSerializer, self).to_representation(obj)
 
-        for round_data in data['rounds']:
-            images = []
+    #     for round_data in data['rounds']:
+    #         images = []
 
-            for details_data in round_data['player_round_details']:
-                if details_data.get('image'):
-                    images.append(details_data['image'])
+    #         for details_data in round_data['player_round_details']:
+    #             if details_data.get('image'):
+    #                 images.append(details_data['image'])
 
-                if not display_vote(round_data, details_data, self.player):
-                    details_data['image'] = bool(details_data.get('image'))
-                    details_data['vote'] = bool(details_data.get('vote'))
-                    details_data['vote_player'] = bool(details_data.get('vote_player'))
+    #             if not display_vote(round_data, details_data, self.player):
+    #                 details_data['image'] = bool(details_data.get('image'))
+    #                 details_data['vote'] = bool(details_data.get('vote'))
+    #                 details_data['vote_player'] = bool(details_data.get('vote_player'))
 
-            round_data['images'] = images if display_images(round_data, self.player) else None
+    #         round_data['images'] = images if display_images(round_data, self.player) else None
 
-        return data
+    #     return data
 
     def create(self, validated_data):
         return Match.objects.create_match(**validated_data)
