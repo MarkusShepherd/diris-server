@@ -302,36 +302,31 @@ class MatchManager(models.Manager):
         if inviting_player and inviting_player not in players:
             players.insert(0, inviting_player)
 
-        player_pks = players
-        players = Player.objects.filter(pk__in=players)
-        inviting_player = players.get(pk=inviting_player) if inviting_player else players[0]
-
-        if len(players) != len(player_pks):
-            raise ValueError('Some of the players were not found in the database')
-
         if len(players) < Match.MINIMUM_PLAYER:
             raise ValueError('Not enough players - need to give at least {} players '
                              'to create a match'.format(Match.MINIMUM_PLAYER))
 
-        match_details = {player: MatchDetails(player=player,
-                                              is_inviting_player=player == inviting_player.pk)
-                         for player in player_pks}
+        inviting_player = inviting_player or players[0]
+
+        match_details = {player.pk: MatchDetails(player=player.pk,
+                                                 is_inviting_player=player.pk == inviting_player.pk)
+                         for player in players}
         match_details_data = {player: MatchDetailsSerializer(instance=details).data
                               for player, details in match_details.items()}
 
         total_rounds = total_rounds or len(players)
 
-        random.shuffle(player_pks)
+        random.shuffle(players)
 
         rounds = [Round(
             number=i + 1,
-            storyteller=player_pks[i % len(player_pks)],
+            storyteller=players[i % len(players)].pk,
             is_current_round=i == 0,
             status=Round.WAITING,
-            details={player: RoundDetails(
-                player=player,
-                is_storyteller=player_pks[i % len(player_pks)] == player,
-            ) for player in player_pks},
+            details={player.pk: RoundDetails(
+                player=player.pk,
+                is_storyteller=players[i % len(players)].pk == player.pk,
+            ) for player in players},
         ) for i in range(total_rounds)]
         round_data = RoundSerializer(instance=rounds, many=True).data
 

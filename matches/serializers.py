@@ -64,6 +64,9 @@ def display_images(round_data, player=None):
 
 
 class MatchSerializer(serializers.ModelSerializer):
+    players = serializers.PrimaryKeyRelatedField(queryset=Player.objects.all(), many=True)
+    inviting_player = serializers.PrimaryKeyRelatedField(queryset=Player.objects.all(),
+                                                         required=False)
     details = serializers.DictField(child=MatchDetailsSerializer(), required=False)
     rounds = RoundSerializer(many=True, required=False)
     total_rounds = serializers.IntegerField(required=False, min_value=Match.MINIMUM_PLAYER)
