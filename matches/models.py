@@ -47,10 +47,10 @@ class MatchDetails(object):
 class MatchDetailsSerializer(serializers.Serializer):
     player = serializers.IntegerField()
     is_inviting_player = serializers.BooleanField(default=False)
-    date_invited = serializers.DateTimeField(required=False)
+    date_invited = serializers.DateTimeField(required=False, allow_null=True)
     invitation_status = serializers.ChoiceField(choices=MatchDetails.INVITATION_STATUSES,
                                                 default=MatchDetails.INVITED)
-    date_responded = serializers.DateTimeField(required=False)
+    date_responded = serializers.DateTimeField(required=False, allow_null=True)
     score = serializers.IntegerField(min_value=0, default=0)
 
     def create(self, validated_data):
@@ -149,10 +149,10 @@ class RoundDetails(object):
 class RoundDetailsSerializer(serializers.Serializer):
     player = serializers.IntegerField()
     is_storyteller = serializers.BooleanField(default=False)
-    image = serializers.IntegerField(required=False)
+    image = serializers.IntegerField(required=False, allow_null=True)
     score = serializers.IntegerField(min_value=0, default=0)
-    vote = serializers.IntegerField(required=False)
-    vote_player = serializers.IntegerField(required=False, read_only=True)
+    vote = serializers.IntegerField(required=False, allow_null=True)
+    vote_player = serializers.IntegerField(required=False, allow_null=True, read_only=True)
 
     def create(self, validated_data):
         return RoundDetails(**validated_data)
@@ -189,6 +189,21 @@ class Round(object):
         self.is_current_round = is_current_round
         self.status = status
         self.story = story
+
+    _details_dict = None
+    @property
+    def details_dict(self):
+        if self._details_dict is not None:
+            return self._details_dict
+
+        result = {}
+        for player_pk, data in self.details.items():
+            serializer = MatchDetailsSerializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            result[int(player_pk)] = serializer.save()
+
+        self._details_dict = result
+        return self._details_dict
 
     def display_images_to(self, player=None):
         return (self.status == Round.SUBMIT_VOTES
@@ -273,7 +288,7 @@ class RoundSerializer(serializers.Serializer):
     is_current_round = serializers.BooleanField(default=False)
     status = serializers.ChoiceField(choices=Round.ROUND_STATUSES,
                                      default=Round.WAITING)
-    story = serializers.CharField(required=False, min_length=3,
+    story = serializers.CharField(required=False, allow_null=True, min_length=3,
                                   allow_blank=False, trim_whitespace=True)
 
     def create(self, validated_data):
@@ -287,37 +302,42 @@ class MatchManager(models.Manager):
         if inviting_player and inviting_player not in players:
             players.insert(0, inviting_player)
 
-        inviting_player = inviting_player or players[0]
+        player_pks = players
+        players = Player.objects.filter(pk__in=players)
+        inviting_player = players.get(pk=inviting_player) if inviting_player else players[0]
+
+        if len(players) != len(player_pks):
+            raise ValueError('Some of the players were not found in the database')
 
         if len(players) < Match.MINIMUM_PLAYER:
             raise ValueError('Not enough players - need to give at least {} players '
                              'to create a match'.format(Match.MINIMUM_PLAYER))
 
         match_details = {player: MatchDetails(player=player,
-                                              is_inviting_player=player == inviting_player)
-                         for player in players}
+                                              is_inviting_player=player == inviting_player.pk)
+                         for player in player_pks}
         match_details_data = {player: MatchDetailsSerializer(instance=details).data
                               for player, details in match_details.items()}
 
         total_rounds = total_rounds or len(players)
 
-        random.shuffle(players)
+        random.shuffle(player_pks)
 
         rounds = [Round(
             number=i + 1,
-            storyteller=players[i % len(players)],
+            storyteller=player_pks[i % len(player_pks)],
             is_current_round=i == 0,
             status=Round.WAITING,
             details={player: RoundDetails(
                 player=player,
-                is_storyteller=players[i % len(players)] == player,
-            ) for player in players},
+                is_storyteller=player_pks[i % len(player_pks)] == player,
+            ) for player in player_pks},
         ) for i in range(total_rounds)]
         round_data = RoundSerializer(instance=rounds, many=True).data
 
         data = {
-            'players': Player.objects.filter(pk__in=players),
-            'inviting_player': Player.objects.get(pk=inviting_player),
+            'players': players,
+            'inviting_player': inviting_player,
             'details': match_details_data,
             'rounds': round_data,
         }
@@ -346,13 +366,45 @@ class Match(models.Model):
     players = fields.RelatedSetField('Player', related_name='matches', on_delete=models.PROTECT)
     inviting_player = models.ForeignKey('Player', related_name='inviting_matches',
                                         on_delete=models.PROTECT)
+
     details = fields.JSONField()
+    _details_dict = None
+    @property
+    def details_dict(self):
+        if self._details_dict is not None:
+            return self._details_dict
+
+        result = {}
+        for player_pk, data in self.details.items():
+            serializer = MatchDetailsSerializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            result[int(player_pk)] = serializer.save()
+
+        self._details_dict = result
+        return self._details_dict
+
     rounds = fields.JSONField()
+    _rounds_list = None
+    @property
+    def rounds_list(self):
+        if self._rounds_list is not None:
+            return self._rounds_list
+
+        result = []
+        for data in self.rounds:
+            serializer = RoundSerializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            result.append(serializer.save())
+
+        self._rounds_list = result
+        return self._rounds_list
+
     total_rounds = fields.ComputedIntegerField(func=lambda match: len(match.rounds))
     # TODO could be a computed field
     current_round = models.PositiveSmallIntegerField(default=1)
     # TODO could be a computed field
     images = fields.RelatedSetField('Image', related_name='matches')
+
     status = fields.CharField(max_length=1, choices=MATCH_STATUSES, default=WAITING)
     timeout = models.PositiveIntegerField(default=STANDARD_TIMEOUT)
     created = models.DateTimeField(auto_now_add=True)
@@ -409,6 +461,16 @@ class Match(models.Model):
             details.save()
 
         return scores
+
+    def save(self, *args, **kwargs):
+        if self._details_dict is not None:
+            self.details = {player_pk: MatchDetailsSerializer(instance=details).data
+                            for player_pk, details in self._details_dict}
+
+        if self._rounds_list is not None:
+            self.rounds = RoundSerializer(instance=self._rounds_list, many=True).data
+
+        super(Match, self).save(*args, **kwargs)
 
     def __str__(self):
         return '#%d: %s' % (self.id, ', '.join([str(p) for p in self.players.all()]))

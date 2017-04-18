@@ -64,8 +64,8 @@ def display_images(round_data, player=None):
 
 
 class MatchSerializer(serializers.ModelSerializer):
-    details = serializers.DictField(child=MatchDetailsSerializer(), required=False, read_only=True)
-    rounds = RoundSerializer(many=True, required=False, read_only=True)
+    details = serializers.DictField(child=MatchDetailsSerializer(), required=False)
+    rounds = RoundSerializer(many=True, required=False)
     total_rounds = serializers.IntegerField(required=False, min_value=Match.MINIMUM_PLAYER)
 
     def __init__(self, player=None, *args, **kwargs):
@@ -113,6 +113,7 @@ class MatchSerializer(serializers.ModelSerializer):
     #     return data
 
     def create(self, validated_data):
+        LOGGER.info(validated_data)
         return Match.objects.create_match(**validated_data)
 
 
