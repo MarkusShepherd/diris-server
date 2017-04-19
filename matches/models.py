@@ -7,14 +7,12 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 import random
 
-from collections import defaultdict
-
 from django.db import models
 from django.utils import timezone
 from djangae import fields, storage
 from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
 # from djangae.contrib.pagination import paginated_model
-from djangae.db.consistency import ensure_instances_consistent
+# from djangae.db.consistency import ensure_instances_consistent
 from rest_framework import serializers
 
 from .utils import clear_list
@@ -67,83 +65,83 @@ class RoundDetails(object):
         self.vote = vote
         self.vote_player = vote_player
 
-    def display_vote_to(self, player=None):
-        if (self.match_round.status == Round.FINISHED
-                or (player and player == self.player)):
-            return True
+    # def display_vote_to(self, player=None):
+    #     if (self.match_round.status == Round.FINISHED
+    #             or (player and player == self.player)):
+    #         return True
 
-        elif not player:
-            return False
+    #     elif not player:
+    #         return False
 
-        else:
-            details = self.match_round.player_round_details.filter(player=player).first()
-            return bool(details and (details.is_storyteller or details.vote))
+    #     else:
+    #         details = self.match_round.player_round_details.filter(player=player).first()
+    #         return bool(details and (details.is_storyteller or details.vote))
 
-    def submit_image(self, image, story=None):
-        if not image:
-            # TODO other validations
-            raise ValueError('image is required')
+    # def submit_image(self, image, story=None):
+    #     if not image:
+    #         # TODO other validations
+    #         raise ValueError('image is required')
 
-        if self.is_storyteller:
-            if self.match_round.status != Round.SUBMIT_STORY:
-                raise ValueError('not ready for submission')
+    #     if self.is_storyteller:
+    #         if self.match_round.status != Round.SUBMIT_STORY:
+    #             raise ValueError('not ready for submission')
 
-            if not story:
-                # TODO validate story further
-                raise ValueError('story is required')
+    #         if not story:
+    #             # TODO validate story further
+    #             raise ValueError('story is required')
 
-            if self.image and self.match_round.story:
-                self.match_round.match.check_status()
-                raise ValueError('image and story already exists')
+    #         if self.image and self.match_round.story:
+    #             self.match_round.match.check_status()
+    #             raise ValueError('image and story already exists')
 
-            self.match_round.story = story
-            self.match_round.status = Round.SUBMIT_OTHERS
+    #         self.match_round.story = story
+    #         self.match_round.status = Round.SUBMIT_OTHERS
 
-        else:
-            if self.match_round.status != Round.SUBMIT_OTHERS:
-                raise ValueError('not ready for submission')
+    #     else:
+    #         if self.match_round.status != Round.SUBMIT_OTHERS:
+    #             raise ValueError('not ready for submission')
 
-            if self.image:
-                self.match_round.match.check_status()
-                raise ValueError('image story already exists')
+    #         if self.image:
+    #             self.match_round.match.check_status()
+    #             raise ValueError('image story already exists')
 
-            if all(details.image for details
-                   in self.match_round.player_round_details.exclude(pk=self.pk)):
-                self.match_round.status = Round.SUBMIT_VOTES
+    #         if all(details.image for details
+    #                in self.match_round.player_round_details.exclude(pk=self.pk)):
+    #             self.match_round.status = Round.SUBMIT_VOTES
 
-        self.image = image
+    #     self.image = image
 
-        self.match_round.save()
-        self.save()
+    #     self.match_round.save()
+    #     self.save()
 
-        self.match_round.match.check_status(self.pk, self.match_round.pk)
+    #     self.match_round.match.check_status(self.pk, self.match_round.pk)
 
-    def submit_vote(self, image_pk):
-        if self.is_storyteller:
-            raise ValueError('storyteller cannot vote')
+    # def submit_vote(self, image_pk):
+    #     if self.is_storyteller:
+    #         raise ValueError('storyteller cannot vote')
 
-        if self.vote:
-            raise ValueError('vote already exists')
+    #     if self.vote:
+    #         raise ValueError('vote already exists')
 
-        if self.match_round.status != Round.SUBMIT_VOTES:
-            raise ValueError('not ready for submission')
+    #     if self.match_round.status != Round.SUBMIT_VOTES:
+    #         raise ValueError('not ready for submission')
 
-        if not image_pk:
-            raise ValueError('image is required')
+    #     if not image_pk:
+    #         raise ValueError('image is required')
 
-        details = self.match_round.player_round_details.get(image=image_pk)
-        image = details.image
-        player = details.player
+    #     details = self.match_round.player_round_details.get(image=image_pk)
+    #     image = details.image
+    #     player = details.player
 
-        if player.pk == self.player.pk:
-            raise ValueError('players cannot vote for themselves')
+    #     if player.pk == self.player.pk:
+    #         raise ValueError('players cannot vote for themselves')
 
-        self.vote = image
-        self.vote_player = player
-        self.save()
+    #     self.vote = image
+    #     self.vote_player = player
+    #     self.save()
 
-        self.match_round.match.check_status(self.pk)
-        self.match_round.match.score(self.pk)
+    #     self.match_round.match.check_status(self.pk)
+    #     self.match_round.match.score(self.pk)
 
 
 class RoundDetailsSerializer(serializers.Serializer):
@@ -189,8 +187,8 @@ class Round(object):
         self.is_current_round = is_current_round
         self.status = status
         self.story = story
+        self._details_dict = None
 
-    _details_dict = None
     @property
     def details_dict(self):
         if self._details_dict is not None:
@@ -205,80 +203,69 @@ class Round(object):
         self._details_dict = result
         return self._details_dict
 
-    def display_images_to(self, player=None):
-        return (self.status == Round.SUBMIT_VOTES
-                or self.status == Round.FINISHED
-                or (player and player == self.storyteller))
+    # def display_images_to(self, player=None):
+    #     return (self.status == Round.SUBMIT_VOTES
+    #             or self.status == Round.FINISHED
+    #             or (player and player == self.storyteller))
 
-    def check_status(self, *updated, **kwargs):
-        round_details = ensure_instances_consistent(self.player_round_details.all(), updated)
-
-        if all(details.vote for details in round_details.exclude(is_storyteller=True)):
+    def check_status(self, match, prev_round=None):
+        if all(details.vote for player_pk, details in self.details_dict.items()
+               if player_pk != self.storyteller):
             self.status = Round.FINISHED
 
-        elif all(details.image for details in round_details):
+        elif all(details.image for details in self.details_dict.items()):
             self.status = Round.SUBMIT_VOTES
 
-        elif round_details.get(is_storyteller=True).image and self.story:
+        elif self.details_dict[self.storyteller].image and self.story:
             self.status = Round.SUBMIT_OTHERS
 
         elif self.number == 1:
-            match = kwargs.get('match') or self.match
             self.status = (Round.SUBMIT_STORY
                            if match.status == Match.IN_PROGESS
                            else Round.WAITING)
 
         else:
-            prev_round = kwargs.get('prev_round')
-            if not prev_round:
-                match = kwargs.get('match') or self.match
-                prev_round = match.rounds.get(number=self.number - 1)
-
+            prev_round = prev_round or match.rounds_list[self.number - 2]
             self.status = (Round.SUBMIT_STORY
                            if prev_round.status == Round.FINISHED
                            else Round.WAITING)
 
-        self.is_current_round = self.status != Round.FINISHED and self.status != Round.WAITING
-        self.save()
-        return self
+        self.is_current_round = self.status not in (Round.FINISHED, Round.WAITING)
 
-    def score(self, *updated):
-        if self.status != Round.FINISHED:
-            return defaultdict(int)
+    # def score(self, *updated):
+    #     if self.status != Round.FINISHED:
+    #         return defaultdict(int)
 
-        round_details = ensure_instances_consistent(self.player_round_details.all(), updated)
-        scores = defaultdict(int)
+    #     round_details = ensure_instances_consistent(self.player_round_details.all(), updated)
+    #     scores = defaultdict(int)
 
-        for details in round_details.exclude(is_storyteller=True):
-            if (details.vote_player != self.storyteller
-                    and scores[details.vote_player.pk] < Round.MAX_DECEIVED_VOTE_SCORE):
-                scores[details.vote_player.pk] += Round.DECEIVED_VOTE_SCORE
+    #     for details in round_details.exclude(is_storyteller=True):
+    #         if (details.vote_player != self.storyteller
+    #                 and scores[details.vote_player.pk] < Round.MAX_DECEIVED_VOTE_SCORE):
+    #             scores[details.vote_player.pk] += Round.DECEIVED_VOTE_SCORE
 
-        if all(details.vote_player == self.storyteller
-               for details in round_details.exclude(is_storyteller=True)):
-            scores[self.storyteller.pk] += Round.ALL_CORRECT_STORYTELLER_SCORE
-            for details in round_details.exclude(is_storyteller=True):
-                scores[details.player.pk] += Round.ALL_CORRECT_SCORE
+    #     if all(details.vote_player == self.storyteller
+    #            for details in round_details.exclude(is_storyteller=True)):
+    #         scores[self.storyteller.pk] += Round.ALL_CORRECT_STORYTELLER_SCORE
+    #         for details in round_details.exclude(is_storyteller=True):
+    #             scores[details.player.pk] += Round.ALL_CORRECT_SCORE
 
-        elif all(details.vote_player != self.storyteller
-                 for details in round_details.exclude(is_storyteller=True)):
-            scores[self.storyteller.pk] += Round.ALL_WRONG_STORYTELLER_SCORE
-            for details in round_details.exclude(is_storyteller=True):
-                scores[details.player.pk] += Round.ALL_WRONG_SCORE
+    #     elif all(details.vote_player != self.storyteller
+    #              for details in round_details.exclude(is_storyteller=True)):
+    #         scores[self.storyteller.pk] += Round.ALL_WRONG_STORYTELLER_SCORE
+    #         for details in round_details.exclude(is_storyteller=True):
+    #             scores[details.player.pk] += Round.ALL_WRONG_SCORE
 
-        else:
-            scores[self.storyteller.pk] += Round.NOT_ALL_CORRECT_OR_WRONG_STORYTELLER_SCORE
-            for details in round_details.filter(vote_player=self.storyteller):
-                scores[details.player.pk] += Round.NOT_ALL_CORRECT_OR_WRONG_SCORE
+    #     else:
+    #         scores[self.storyteller.pk] += Round.NOT_ALL_CORRECT_OR_WRONG_STORYTELLER_SCORE
+    #         for details in round_details.filter(vote_player=self.storyteller):
+    #             scores[details.player.pk] += Round.NOT_ALL_CORRECT_OR_WRONG_SCORE
 
-        for details in round_details:
-            details.score = scores[details.player.pk]
-            details.save()
+    #     for details in round_details:
+    #         details.score = scores[details.player.pk]
+    #         details.save()
 
-        return scores
-
-    def __str__(self):
-        return 'Round #{}'.format(self.number)
+    #     return scores
 
 
 class RoundSerializer(serializers.Serializer):
@@ -364,6 +351,7 @@ class Match(models.Model):
 
     details = fields.JSONField()
     _details_dict = None
+
     @property
     def details_dict(self):
         if self._details_dict is not None:
@@ -380,6 +368,7 @@ class Match(models.Model):
 
     rounds = fields.JSONField()
     _rounds_list = None
+
     @property
     def rounds_list(self):
         if self._rounds_list is not None:
@@ -405,33 +394,30 @@ class Match(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 
-    def respond(self, player_pk, accept=False):
-        player_details = self.player_match_details.get(player=player_pk)
-        if player_details.invitation_status != MatchDetails.INVITED:
-            raise ValueError('Player already responded to this invitation')
+    # def respond(self, player_pk, accept=False):
+    #     player_details = self.player_match_details.get(player=player_pk)
+    #     if player_details.invitation_status != MatchDetails.INVITED:
+    #         raise ValueError('Player already responded to this invitation')
 
-        player_details.invitation_status = (MatchDetails.ACCEPTED if accept
-                                            else MatchDetails.DECLINED)
-        player_details.date_responded = timezone.now()
-        player_details.save()
+    #     player_details.invitation_status = (MatchDetails.ACCEPTED if accept
+    #                                         else MatchDetails.DECLINED)
+    #     player_details.date_responded = timezone.now()
+    #     player_details.save()
 
-        self.check_status(player_details.pk)
+    #     self.check_status(player_details.pk)
 
-        return self
+    #     return self
 
-    def check_status(self, *updated):
+    def check_status(self):
         self.status = (Match.WAITING
                        if any(details.invitation_status != MatchDetails.ACCEPTED
-                              for details
-                              in ensure_instances_consistent(self.player_match_details.all(),
-                                                             updated))
+                              for details in self.details_dict.values())
                        else Match.IN_PROGESS)
 
         prev_round = None
-        curr_round = None
 
-        for curr_round in self.rounds.order_by('number'):
-            curr_round = curr_round.check_status(*updated, match=self, prev_round=prev_round)
+        for curr_round in self.rounds_list:
+            curr_round = curr_round.check_status(match=self, prev_round=prev_round)
             if curr_round.is_current_round:
                 self.current_round = curr_round.number
             prev_round = curr_round
@@ -441,21 +427,19 @@ class Match(models.Model):
 
         self.save()
 
-        return self
+    # def score(self, *updated):
+    #     scores = defaultdict(int)
 
-    def score(self, *updated):
-        scores = defaultdict(int)
+    #     for round_ in self.rounds.order_by('number'):
+    #         round_scores = round_.score(*updated)
+    #         for player, value in round_scores.items():
+    #             scores[player] += value
 
-        for round_ in self.rounds.order_by('number'):
-            round_scores = round_.score(*updated)
-            for player, value in round_scores.items():
-                scores[player] += value
+    #     for details in self.player_match_details.all():
+    #         details.score = scores[details.player.pk]
+    #         details.save()
 
-        for details in self.player_match_details.all():
-            details.score = scores[details.player.pk]
-            details.save()
-
-        return scores
+    #     return scores
 
     def save(self, *args, **kwargs):
         if self._details_dict is not None:
@@ -466,9 +450,6 @@ class Match(models.Model):
             self.rounds = RoundSerializer(instance=self._rounds_list, many=True).data
 
         super(Match, self).save(*args, **kwargs)
-
-    def __str__(self):
-        return '#%d: %s' % (self.id, ', '.join([str(p) for p in self.players.all()]))
 
     class Meta(object):
         ordering = ('-last_modified',)
@@ -483,9 +464,6 @@ class Player(models.Model):
                                on_delete=models.SET_NULL)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.user.username
 
     class Meta(object):
         ordering = ('-last_modified',)
@@ -578,9 +556,6 @@ class Image(models.Model):
     )
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return str(self.url)
 
     def is_available_to(self, player=None):
         return self.is_available_publically or (player and player == self.owner)

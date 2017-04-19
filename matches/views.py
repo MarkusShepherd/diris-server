@@ -57,8 +57,7 @@ class MatchViewSet(
     ordering = ('-last_modified',)
 
     def get_queryset(self):
-        player = self.request.user.player
-        return player.matches.all().prefetch_related('player_match_details', 'rounds')
+        return self.request.user.player.matches.all()
 
     def create(self, request, *args, **kwargs):
         player = request.user.player

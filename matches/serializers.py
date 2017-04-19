@@ -9,7 +9,7 @@ import logging
 from rest_framework import serializers
 from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
 
-from .models import Match, Round, Player, Image, MatchDetailsSerializer, RoundSerializer
+from .models import Match, Player, Image, MatchDetailsSerializer, RoundSerializer
 
 LOGGER = logging.getLogger(__name__)
 
@@ -37,30 +37,31 @@ class ImageSerializer(serializers.ModelSerializer):
             'url',
             'width',
             'height',
+            'size',
             'is_available_publically',
             'created',
             'last_modified',
         )
 
 
-def display_vote(round_, round_details, player=None):
-    if (round_.get('status') == Round.FINISHED
-            or (player and player.pk == round_details.get('player'))):
-        return True
+# def display_vote(round_, round_details, player=None):
+#     if (round_.get('status') == Round.FINISHED
+#             or (player and player.pk == round_details.get('player'))):
+#         return True
 
-    elif not player:
-        return False
+#     elif not player:
+#         return False
 
-    else:
-        details = [d for d in round_.get('player_round_details') or ()
-                   if d.get('player') == player.pk]
-        return bool(details and (details[0]['is_storyteller'] or details[0]['vote']))
+#     else:
+#         details = [d for d in round_.get('player_round_details') or ()
+#                    if d.get('player') == player.pk]
+#         return bool(details and (details[0]['is_storyteller'] or details[0]['vote']))
 
 
-def display_images(round_data, player=None):
-    return (round_data.get('status') == Round.SUBMIT_VOTES
-            or round_data.get('status') == Round.FINISHED
-            or (player and player.pk == round_data['storyteller']))
+# def display_images(round_data, player=None):
+#     return (round_data.get('status') == Round.SUBMIT_VOTES
+#             or round_data.get('status') == Round.FINISHED
+#             or (player and player.pk == round_data['storyteller']))
 
 
 class MatchSerializer(serializers.ModelSerializer):
@@ -116,7 +117,6 @@ class MatchSerializer(serializers.ModelSerializer):
     #     return data
 
     def create(self, validated_data):
-        LOGGER.info(validated_data)
         return Match.objects.create_match(**validated_data)
 
 
@@ -152,7 +152,6 @@ class PlayerSerializer(serializers.ModelSerializer):
         )
 
     def create(self, validated_data):
-        LOGGER.info(validated_data)
         user_data = validated_data.pop('user')
         password = user_data.pop('password')
 
@@ -161,11 +160,6 @@ class PlayerSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
 
-        LOGGER.info('created new user %s', user)
         player = Player.objects.create(user=user, **validated_data)
 
         return player
-
-    def update(self, instance, validated_data):
-        # TODO do something
-        pass
