@@ -61,8 +61,20 @@ indexes:
 
 - kind: matches_image
   properties:
+  - name: is_available_publically
+  - name: last_modified
+    direction: desc
+
+- kind: matches_image
+  properties:
   - name: owner_id
   - name: created
+
+- kind: matches_image
+  properties:
+  - name: owner_id
+  - name: last_modified
+    direction: desc
 
 - kind: matches_match
   properties:

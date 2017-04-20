@@ -20,7 +20,7 @@ from rest_framework.response import Response
 from rest_framework.parsers import FileUploadParser, MultiPartParser
 from rest_framework_jwt.settings import api_settings
 
-from .models import Match, Player, Image
+from .models import Player, Image
 from .serializers import MatchSerializer, PlayerSerializer, ImageSerializer
 from .utils import merge, normalize_space, random_string
 
@@ -88,23 +88,25 @@ class MatchViewSet(
 
     @list_route(methods=['post'], permission_classes=())
     def statuses(self, request, *args, **kwargs):
-        LOGGER.info(request.data)
         result = {}
         for match in self.get_queryset():
-            match = match.check_status()
+            match.check_status()
             match.score()
+            match.save()
             result[match.pk] = match.status
         return Response(result)
 
     @detail_route(methods=['post'], permission_classes=())
     def check(self, request, pk=None, *args, **kwargs):
-        match = self.get_object().check_status()
+        match = self.get_object()
+        match.check_status()
         match.score()
+        match.save()
 
         try:
             player = request.user.player
 
-            if match.players.filter(pk=player.pk).exists():
+            if player.pk in match.players_ids:
                 serializer = self.get_serializer(instance=match, player=player)
                 return Response(serializer.data)
 
@@ -117,16 +119,22 @@ class MatchViewSet(
     @detail_route(methods=['post'])
     def accept(self, request, pk, *args, **kwargs):
         player = request.user.player
+
         match = self.get_object()
-        match = match.respond(player.pk, accept=True)
+        match.respond(player.pk, accept=True)
+        match.save()
+
         serializer = self.get_serializer(instance=match, player=player)
         return Response(serializer.data)
 
     @detail_route(methods=['post'])
     def decline(self, request, pk, *args, **kwargs):
         player = request.user.player
+
         match = self.get_object()
-        match = match.respond(player.pk, accept=False)
+        match.respond(player.pk, accept=False)
+        match.save()
+
         serializer = self.get_serializer(instance=match, player=player)
         return Response(serializer.data)
 
@@ -142,17 +150,16 @@ class MatchViewSet(
         player = request.user.player
         match = self.get_object()
 
-        rounds = match.rounds
-        if request.query_params.get('round'):
-            rounds = rounds.filter(number=request.query_params['round'])
+        rounds = ([match.rounds_list[int(request.query_params['round'])]]
+                  if request.query_params.get('round') else match.rounds_list)
 
-        images = [details.image
-                  for round_ in rounds.all().prefetch_related('player_round_details')
-                  if round_.display_images_to(player)
-                  for details in round_.player_round_details.all().prefetch_related('image')
-                  if details.image]
+        image_pks = {details.image
+                     for round_ in rounds
+                     if round_.display_images_to(player.pk)
+                     for details in round_.details_dict.values()
+                     if details.image}
 
-        serializer = ImageSerializer(instance=images, many=True)
+        serializer = ImageSerializer(instance=Image.objects.filter(pk__in=image_pks), many=True)
         return Response(serializer.data)
 
 
@@ -163,9 +170,8 @@ class MatchImageView(views.APIView):
     def post(self, request, match_pk, round_number, filename):
         player = request.user.player
 
-        match = Match.objects.filter(players__contains=player.pk).all().get(pk=match_pk)
-        round_ = match.rounds.get(number=round_number)
-        details = round_.player_round_details.get(player=player)
+        match = player.matches.get(pk=match_pk)
+        round_ = match.rounds_list[int(round_number) - 1]
 
         file_extension = (os.path.splitext(filename)[1] if isinstance(filename, six.string_types)
                           else None)
@@ -174,7 +180,8 @@ class MatchImageView(views.APIView):
         story = (normalize_space(request.data.get('story'))
                  or normalize_space(request.query_params.get('story')))
 
-        details.submit_image(image, story=story)
+        round_.submit_image(player_pk=player.pk, image_pk=image.pk, story=story)
+        match.save()
 
         serializer = MatchSerializer(instance=match, player=player)
         return Response(serializer.data)
@@ -186,11 +193,11 @@ class MatchVoteView(views.APIView):
     def post(self, request, match_pk, round_number, image_pk):
         player = request.user.player
 
-        match = Match.objects.filter(players__contains=player.pk).all().get(pk=match_pk)
-        round_ = match.rounds.get(number=round_number)
-        details = round_.player_round_details.get(player=player)
+        match = player.matches.get(pk=match_pk)
+        round_ = match.rounds_list[int(round_number) - 1]
 
-        details.submit_vote(image_pk)
+        round_.submit_vote(player_pk=player.pk, image_pk=int(image_pk))
+        match.save()
 
         serializer = MatchSerializer(instance=match, player=player)
         return Response(serializer.data)

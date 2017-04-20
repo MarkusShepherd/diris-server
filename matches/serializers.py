@@ -44,26 +44,6 @@ class ImageSerializer(serializers.ModelSerializer):
         )
 
 
-# def display_vote(round_, round_details, player=None):
-#     if (round_.get('status') == Round.FINISHED
-#             or (player and player.pk == round_details.get('player'))):
-#         return True
-
-#     elif not player:
-#         return False
-
-#     else:
-#         details = [d for d in round_.get('player_round_details') or ()
-#                    if d.get('player') == player.pk]
-#         return bool(details and (details[0]['is_storyteller'] or details[0]['vote']))
-
-
-# def display_images(round_data, player=None):
-#     return (round_data.get('status') == Round.SUBMIT_VOTES
-#             or round_data.get('status') == Round.FINISHED
-#             or (player and player.pk == round_data['storyteller']))
-
-
 class MatchSerializer(serializers.ModelSerializer):
     players = serializers.PrimaryKeyRelatedField(queryset=Player.objects.all(), many=True)
     inviting_player = serializers.PrimaryKeyRelatedField(queryset=Player.objects.all(),
@@ -93,28 +73,46 @@ class MatchSerializer(serializers.ModelSerializer):
             'last_modified',
         )
         read_only_fields = (
+            'current_round',
+            'images',
+            'status',
             'created',
             'last_modified',
         )
 
-    # def to_representation(self, obj):
-    #     data = super(MatchSerializer, self).to_representation(obj)
+    def to_representation(self, obj):
+        data = super(MatchSerializer, self).to_representation(obj)
 
-    #     for round_data in data['rounds']:
-    #         images = []
+        all_images = set()
+        viewing_player = self.player.pk if self.player else None
 
-    #         for details_data in round_data['player_round_details']:
-    #             if details_data.get('image'):
-    #                 images.append(details_data['image'])
+        for round_data, round_obj in zip(data['rounds'], obj.rounds_list):
+            assert round_data['number'] == round_obj.number
 
-    #             if not display_vote(round_data, details_data, self.player):
-    #                 details_data['image'] = bool(details_data.get('image'))
-    #                 details_data['vote'] = bool(details_data.get('vote'))
-    #                 details_data['vote_player'] = bool(details_data.get('vote_player'))
+            images = []
 
-    #         round_data['images'] = images if display_images(round_data, self.player) else None
+            for player_pk in obj.players_ids:
+                details_data = round_data['details'][str(player_pk)]
+                details_obj = round_obj.details_dict[player_pk]
 
-    #     return data
+                if details_data.get('image'):
+                    images.append(details_data['image'])
+
+                if not details_obj.display_vote_to(match_round=round_obj,
+                                                   player_pk=viewing_player):
+                    details_data['image'] = bool(details_data.get('image'))
+                    details_data['vote'] = bool(details_data.get('vote'))
+                    details_data['vote_player'] = bool(details_data.get('vote_player'))
+
+            if round_obj.display_images_to(player_pk=viewing_player):
+                round_data['images'] = images
+                all_images.update(images)
+            else:
+                round_data['images'] = None
+
+        data['images'] = all_images
+
+        return data
 
     def create(self, validated_data):
         return Match.objects.create_match(**validated_data)
