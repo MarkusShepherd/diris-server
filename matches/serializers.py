@@ -5,6 +5,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals, with_statement
 
 import logging
+import random
 
 from rest_framework import serializers
 from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
@@ -105,11 +106,14 @@ class MatchSerializer(serializers.ModelSerializer):
                     details_data['vote_player'] = bool(details_data.get('vote_player'))
 
             if round_obj.display_images_to(player_pk=viewing_player):
+                random.shuffle(images)
                 round_data['images'] = images
                 all_images.update(images)
             else:
                 round_data['images'] = None
 
+        all_images = list(all_images)
+        random.shuffle(all_images)
         data['images'] = all_images
 
         return data

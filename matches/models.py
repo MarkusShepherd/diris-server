@@ -90,7 +90,7 @@ class RoundDetailsSerializer(serializers.Serializer):
     image = serializers.IntegerField(required=False, allow_null=True)
     score = serializers.IntegerField(min_value=0, default=0)
     vote = serializers.IntegerField(required=False, allow_null=True)
-    vote_player = serializers.IntegerField(required=False, allow_null=True, read_only=True)
+    vote_player = serializers.IntegerField(required=False, allow_null=True)
 
     def create(self, validated_data):
         return RoundDetails(**validated_data)
