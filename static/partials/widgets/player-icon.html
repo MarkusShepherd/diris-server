@@ -1,0 +1,6 @@
+<a ng-href="#/profile/{{ player.pk }}">
+	<img ng-if="player.avatar.url" ng-src="{{ player.avatar.url }}" class="img-circle {{ classImg }} {{ classIcon || 'player-icon' }}" />
+	<span ng-if="!player.avatar.url" class="btn btn-circle {{ classBtn }} {{ classIcon || 'player-icon' }}">
+	{{ player.user.username.substr(0,1).toUpperCase() }}
+	</span>
+</a>

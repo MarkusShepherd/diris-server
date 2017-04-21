@@ -1,0 +1,41 @@
+<div class="container-fluid" xmlns="http://www.w3.org/1999/xhtml">
+	<div class="navbar-header">
+		<button ng-show="menuItems.length || currentPlayer" type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+		</button>
+		<a class="navbar-brand" href="#/overview">Diris</a>
+		<a ng-show="refreshPath || refreshReload" ng-click="refresh()" class="navbar-brand">
+			<span class="glyphicon glyphicon-refresh"></span>
+		</a>
+	</div>
+	<div ng-show="(menuItems &amp;&amp; menuItems.length) || currentPlayer" class="collapse navbar-collapse" id="myNavbar">
+		<ul ng-show="menuItems &amp;&amp; menuItems.length" class="nav navbar-nav">
+			<!-- <li>
+				<a href="#/overview"><span class="glyphicon glyphicon-home"></span> Overview</a>
+			</li> -->
+			<li ng-repeat="item in menuItems">
+				<a ng-href="{{ item.link }}" data-toggle="collapse" data-target="#myNavbar">
+					<span ng-show="item.glyphicon" class="glyphicon glyphicon-{{ item.glyphicon }}"></span>
+					{{ item.label }}
+				</a>
+			</li>
+		</ul>
+		<ul ng-show="currentPlayer" class="nav navbar-nav navbar-right">
+			<li>
+				<a href="#/profile" data-toggle="collapse" data-target="#myNavbar">
+					<img ng-show="currentPlayer.avatarURL" ng-src="{{ currentPlayer.avatarURL }}" class="img-circle" style="width: 20px; height: 20px;" />
+					<span ng-hide="currentPlayer.avatarURL" class="glyphicon glyphicon-user"></span>
+					{{ currentPlayer.username }}
+				</a>
+			</li>
+			<li>
+				<a ng-click="logout()" data-toggle="collapse" data-target="#myNavbar">
+					<span class="glyphicon glyphicon-log-out"></span>
+					Logout
+				</a>
+			</li>
+		</ul>
+	</div>
+</div>

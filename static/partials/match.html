@@ -1,0 +1,38 @@
+<section xmlns="http://www.w3.org/1999/xhtml">
+	<section ng-if="players &amp;&amp; match.current_round &gt; 1" class="list-group">
+		<div class="list-group-item active">
+			<h4>Standings</h4>
+		</div>
+		<a ng-repeat="item in match.standingsArray | orderBy:'score':true"
+			ng-href="#/profile/{{ item.playerPk }}"
+			class="list-group-item">
+			<span class="badge">{{ item.score }}</span>
+			<player-icon player="players[item.playerPk]"
+				class-icon="player-icon-standings"
+				class-btn="btn-primary"></player-icon>
+			{{ players[item.playerPk].user.username }}
+		</a>
+	</section>
+	<section class="list-group">
+		<a ng-repeat="round in match.rounds"
+			ng-href="#/{{ action(round) }}/{{ mPk }}/{{ round.number }}"
+			class="list-group-item
+				{{ round.hasAction ? 'list-group-item-info' : '' }}
+				{{ round.status == 'w' || (round.status == 's' &amp;&amp; !round.isStoryTeller) ? 'disabled' : '' }}">
+			<h4 class="list-group-item-heading">Round {{ round.number }}</h4>
+			<p class="list-group-item-text">
+				<span ng-if="round.status == 'f'" class="badge">{{ round.scores[currentPlayer.pk] }}</span>
+				{{ players[round.storyteller].user.username }}<span ng-show="round.story">: "{{ round.story }}"</span>
+			</p>
+			<div ng-if="round.status == 'f'" class="image-overview-container">
+				<img ng-src="{{ images[round.details[round.storyteller].image].url }}" class="img-responsive img-rounded image-overview" />
+			</div>
+			<p ng-if="round.readyForStoryImage" class="list-group-item-text">Tell your story!</p>
+			<p ng-if="round.readyForOtherImage" class="list-group-item-text">Submit your image!</p>
+			<span ng-if="round.readyForVote" ng-repeat="image in round.images">
+				<img ng-src="{{ images[image].url }}" class="img-circle" style="width: 100px; height: 100px;" />
+			</span>
+			<p ng-if="round.readyForVote" class="list-group-item-text">Vote!</p>
+		</a>
+	</section>
+</section>
