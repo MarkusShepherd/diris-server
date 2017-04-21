@@ -14,27 +14,25 @@ function processRound(round, player) {
     // round.details = $.filter(round.player_round_details || [],
     //                       function (details) { return !!(details && details.player === player.pk); })[0];
 
-    round.detailsPlayers = {};
     round.votes = {};
-    _.forEach(round.player_round_details, function (details) {
-        round.detailsPlayers[details.player.toString()] = details;
+    _.forEach(round.details, function (details) {
         if (details.vote_player) {
             round.votes[details.vote_player] = round.votes[details.vote_player] || [];
             round.votes[details.vote_player].push(details.player.toString());
         }
 
         if (details.player == player.pk) {
-            round.details = details;
+            round.playerDetails = details;
         }
     });
 
-    if (!round.details) {
+    if (!round.playerDetails) {
         return round;
     }
 
     round.isStoryTeller = player.pk == round.storyteller;
-    round.hasSubmittedImage = !!round.details.image && (!round.isStoryTeller || !!round.story);
-    round.hasVoted = !!round.details.vote;
+    round.hasSubmittedImage = !!(round.playerDetails.image && (!round.isStoryTeller || round.story));
+    round.hasVoted = !!round.playerDetails.vote;
 
     round.readyForStoryImage = false;
     round.readyForOtherImage = false;
@@ -51,7 +49,7 @@ function processRound(round, player) {
     round.hasAction = round.readyForStoryImage || round.readyForOtherImage || round.readyForVote;
 
     round.scores = {};
-    round.scoresArray = _.map(round.player_round_details, function (details) {
+    round.scoresArray = _.map(round.details, function (details) {
         round.scores[details.player.toString()] = details.score;
         return {
             playerPk: details.player,
@@ -71,17 +69,17 @@ function processMatch(match, player) {
     // match.details = $.filter(match.player_match_details || [],
     //                       function (details) { return !!(details && details.player === player.pk); })[0];
     match.accepted = {};
-    _.forEach(match.player_match_details, function (details) {
+    _.forEach(match.details, function (details) {
         match.accepted[details.player.toString()] = details.invitation_status === 'a';
         if (details.player == player.pk) {
-            match.details = details;
+            match.playerDetails = details;
         }
     });
 
-    var score = match.details ? match.details.score : 0,
+    var score = match.playerDetails ? match.playerDetails.score : 0,
         pos = 1;
 
-    _.forEach(match.player_match_details, function (details) {
+    _.forEach(match.details, function (details) {
         if (details.score > score) {
             pos++;
         }
@@ -91,7 +89,7 @@ function processMatch(match, player) {
     match.playerPositionOrd = getOrdinal(pos);
 
     match.scores = {};
-    match.standingsArray = _.map(match.player_match_details, function (details) {
+    match.standingsArray = _.map(match.details, function (details) {
         match.scores[details.player.toString()] = details.score;
         return {
             playerPk: details.player,
@@ -102,7 +100,7 @@ function processMatch(match, player) {
     match.createdFromNow = moment(match.created).fromNow();
     match.lastModifiedFromNow = moment(match.last_modified).fromNow();
 
-    match.hasAccepted = match.details && match.details.invitation_status === 'a';
+    match.hasAccepted = match.playerDetails && match.playerDetails.invitation_status === 'a';
 
     return match;
 }
@@ -119,4 +117,16 @@ function isBrowser() {
     } catch (err) {
         return true;
     }
+}
+
+function roundAction(round) {
+    if (round.status === 'f' || round.hasVoted || (round.isStoryTeller && round.hasSubmittedImage)) {
+        return 'review';
+    }
+
+    if (round.status === 'v') {
+        return 'vote';
+    }
+
+    return 'image';
 }

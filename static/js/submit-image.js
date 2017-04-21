@@ -68,18 +68,16 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
 
     dataService.getMatch(mPk)
         .then(function (match) {
+            var round = match.rounds[rNo - 1],
+                action = roundAction(round);
+
+            if (action !== 'image') {
+                $location.path('/' + action + '/' + mPk + '/' + rNo).replace();
+                return;
+            }
+
             $scope.match = match;
-            $scope.round = match.rounds[rNo - 1];
-
-            if ($scope.round.status === 'v') {
-                $location.path('/vote/' + mPk + '/' + rNo).replace();
-                return;
-            }
-
-            if ($scope.round.status === 'f') {
-                $location.path('/review/' + mPk + '/' + rNo).replace();
-                return;
-            }
+            $scope.round = round;
 
             return $q.all(_.map(match.players, function (pk) {
                 return dataService.getPlayer(pk, false);
@@ -91,8 +89,8 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
                 $scope.players[player.pk] = player;
             });
 
-            if ($scope.round.details.image) {
-                return dataService.getImage($scope.round.details.image);
+            if ($scope.round.playerDetails.image) {
+                return dataService.getImage($scope.round.playerDetails.image);
             }
         }).then(function (image) {
             blockUI.stop();
@@ -110,11 +108,11 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
             }
         }).then(function (images) {
             $scope.randomImages = images;
+            $scope.useSlider = !_.isEmpty(images);
         }).then(function () {
             sliderBlock.stop();
 
-            if (!$scope.randomImages) {
-                $scope.useSlider = false;
+            if (!$scope.useSlider) {
                 return;
             }
 
@@ -189,7 +187,11 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
             return dataService.submitImage(mPk, rNo, image, $scope.round.story);
         }).then(function (match) {
             $log.debug(match);
-            $location.path('/match/' + mPk + '/refresh').replace();
+            if (match.rounds[rNo - 1].status === 'v') {
+                $location.path('/vote/' + mPk + '/' + rNo).replace();
+            } else {
+                $location.path('/match/' + mPk).replace();
+            }
         }).catch(function (response) {
             $log.debug('error');
             $log.debug(response);

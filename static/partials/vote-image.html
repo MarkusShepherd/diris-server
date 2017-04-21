@@ -5,7 +5,7 @@
 				<p>{{ round.story }}</p>
 			</blockquote>
 		</div>
-		<div class="panel-footer text-right">by <em>{{ players['' + round.storyteller].user.username }}</em></div>
+		<div class="panel-footer text-right">by <em>{{ players[round.storyteller].user.username }}</em></div>
 	</section>
 	<div ng-if="round.isStoryTeller" class="alert alert-success fade in">
 		These are the other players' submissions, wait for them to vote now...
@@ -20,15 +20,15 @@
 		<div ng-repeat="image in round.images"
 			class="col-lg-4 col-md-6 col-sm-12 container-{{ image == selectedImage.pk ? 'selected' : 'normal' }}">
 			<a ng-click="selectImage(images[image])"
-				class="select-image {{ image == round.details.image ? 'disabled' : '' }} image-vote-container">
+				class="select-image {{ image == round.playerDetails.image ? 'disabled' : '' }} image-vote-container">
 				<span ng-show="image == selectedImage.pk" class="badge image-vote-badge">
 					<span class="glyphicon glyphicon-star"></span>
 				</span>
-				<span ng-show="image == round.details.image" class="badge image-vote-badge">
+				<span ng-show="image == round.playerDetails.image" class="badge image-vote-badge">
 					<span class="glyphicon glyphicon-user"></span>
 				</span>
 				<img ng-src="{{ images[image].url }}"
-					class="img-responsive img-rounded image-{{ image == selectedImage.pk ? 'selected' : image == round.details.image ? 'user' : 'normal' }}" />
+					class="img-responsive img-rounded image-{{ image == selectedImage.pk ? 'selected' : image == round.playerDetails.image ? 'user' : 'normal' }}" />
 			</a>
 		</div>
 	</div>
@@ -36,10 +36,10 @@
 		<div ng-repeat="image in round.images"
 			class="col-lg-4 col-md-6 col-sm-12 container-normal">
 			<div class="select-image image-vote-container">
-				<span ng-show="image == round.details.vote" class="badge image-vote-badge">
+				<span ng-show="image == round.playerDetails.vote" class="badge image-vote-badge">
 					<span class="glyphicon glyphicon-star"></span>
 				</span>
-				<span ng-show="image == round.details.image" class="badge image-vote-badge">
+				<span ng-show="image == round.playerDetails.image" class="badge image-vote-badge">
 					<span class="glyphicon glyphicon-user"></span>
 				</span>
 				<img ng-src="{{ images[image].url }}"

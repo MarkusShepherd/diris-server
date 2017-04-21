@@ -73,4 +73,5 @@ dirisApp.controller('MatchController', function MatchController(
 
     $q.all([matchPromise, imagePromise]).then(blockUI.stop);
 
+    $scope.action = roundAction;
 }); // MatchController

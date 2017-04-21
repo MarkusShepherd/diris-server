@@ -15,17 +15,17 @@
 	</section>
 	<section class="list-group">
 		<a ng-repeat="round in match.rounds"
-			ng-href="#/{{ round.status == 'f' ? 'review' : round.status == 'v' ? 'vote' : 'image' }}/{{ mPk }}/{{ round.number }}"
+			ng-href="#/{{ action(round) }}/{{ mPk }}/{{ round.number }}"
 			class="list-group-item
 				{{ round.hasAction ? 'list-group-item-info' : '' }}
 				{{ round.status == 'w' || (round.status == 's' &amp;&amp; !round.isStoryTeller) ? 'disabled' : '' }}">
 			<h4 class="list-group-item-heading">Round {{ round.number }}</h4>
 			<p class="list-group-item-text">
 				<span ng-if="round.status == 'f'" class="badge">{{ round.scores[currentPlayer.pk] }}</span>
-				{{ players['' + round.storyteller].user.username }}<span ng-show="round.story">: "{{ round.story }}"</span>
+				{{ players[round.storyteller].user.username }}<span ng-show="round.story">: "{{ round.story }}"</span>
 			</p>
 			<div ng-if="round.status == 'f'" class="image-overview-container">
-				<img ng-src="{{ images[round.detailsPlayers[round.storyteller].image].url }}" class="img-responsive img-rounded image-overview" />
+				<img ng-src="{{ images[round.details[round.storyteller].image].url }}" class="img-responsive img-rounded image-overview" />
 			</div>
 			<p ng-if="round.readyForStoryImage" class="list-group-item-text">Tell your story!</p>
 			<p ng-if="round.readyForOtherImage" class="list-group-item-text">Submit your image!</p>

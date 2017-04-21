@@ -44,25 +44,23 @@ dirisApp.controller('VoteImageController', function VoteImageController(
 
     matchPromise = dataService.getMatch(mPk)
         .then(function (match) {
+            var round = match.rounds[rNo - 1],
+                action = roundAction(round);
+
+            if (action !== 'vote') {
+                $location.path('/' + action + '/' + mPk + '/' + rNo).replace();
+                return;
+            }
+
             $scope.match = match;
-            $scope.round = match.rounds[rNo - 1];
-
-            if ($scope.round.status === 's' || $scope.round.status === 'o') {
-                $location.path('/image/' + mPk + '/' + rNo).replace();
-                return;
-            }
-
-            if ($scope.round.status === 'f') {
-                $location.path('/review/' + mPk + '/' + rNo).replace();
-                return;
-            }
+            $scope.round = round;
 
             return $q.all(_.map(match.players, function (pk) {
                 return dataService.getPlayer(pk, false);
             }));
         }).then(function (players) {
             $scope.players = {};
-            _.forEach(players, function (player) {
+            _.forEach(players || [], function (player) {
                 $scope.players[player.pk.toString()] = player;
             });
         }).catch(function (response) {
@@ -74,7 +72,7 @@ dirisApp.controller('VoteImageController', function VoteImageController(
     imagePromise = dataService.getImages(mPk)
         .then(function (images) {
             $scope.images = {};
-            _.forEach(images, function (img) {
+            _.forEach(images || [], function (img) {
                 $scope.images[img.pk.toString()] = img;
             });
         }).catch(function (response) {
@@ -86,7 +84,7 @@ dirisApp.controller('VoteImageController', function VoteImageController(
     $q.all([matchPromise, imagePromise]).then(blockUI.stop);
 
     $scope.selectImage = function selectImage(image) {
-        if (image.pk != $scope.round.details.image) {
+        if (image.pk != $scope.round.playerDetails.image) {
             $scope.selectedImage = image;
         }
     };
@@ -99,7 +97,7 @@ dirisApp.controller('VoteImageController', function VoteImageController(
         dataService.submitVote(mPk, rNo, $scope.selectedImage.pk)
             .then(function (match) {
                 $log.debug('new match:', match);
-                $location.path('/match/' + mPk + '/refresh').replace();
+                $location.path('/review/' + mPk + '/' + rNo).replace();
             }).catch(function (response) {
                 $log.debug('error');
                 $log.debug(response);

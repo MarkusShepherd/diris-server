@@ -44,19 +44,16 @@ dirisApp.controller('ReviewRoundController', function ReviewRoundController(
 
     matchPromise = dataService.getMatch(mPk)
         .then(function (match) {
+            var round = match.rounds[rNo - 1],
+                action = roundAction(round);
+
+            if (action !== 'review') {
+                $location.path('/' + action + '/' + mPk + '/' + rNo).replace();
+                return;
+            }
+
             $scope.match = match;
-            $scope.round = match.rounds[rNo - 1];
-            $log.debug('current round', $scope.round);
-
-            if ($scope.round.status === 's' || $scope.round.status === 'o') {
-                $location.path('/image/' + mPk + '/' + rNo).replace();
-                return;
-            }
-
-            if ($scope.round.status === 'v') {
-                $location.path('/vote/' + mPk + '/' + rNo).replace();
-                return;
-            }
+            $scope.round = round;
 
             return $q.all(_.map(match.players, function (pk) {
                 return dataService.getPlayer(pk, false);
@@ -66,7 +63,6 @@ dirisApp.controller('ReviewRoundController', function ReviewRoundController(
             _.forEach(players || [], function (player) {
                 $scope.players[player.pk.toString()] = player;
             });
-            $log.debug('players in match:', $scope.players);
         }).catch(function (response) {
             $log.debug('error');
             $log.debug(response);

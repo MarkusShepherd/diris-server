@@ -111,9 +111,9 @@ dirisApp.factory('dataService', function dataService(
 
         return $http.post(BACKEND_URL + '/matches/', {
             players: playerPks,
-            inviting_player: player.pk,
-            total_rounds: totalRounds || 0,
-            timeout: timeout || 0
+            inviting_player: player.pk
+            // total_rounds: totalRounds || 0,
+            // timeout: timeout || 0
         })
             .then(function (response) {
                 var match = response.data;
@@ -328,21 +328,20 @@ dirisApp.factory('dataService', function dataService(
     };
 
     factory.submitImage = function submitImage(mPk, rNo, image, story) {
-        return $http.post(BACKEND_URL + '/matches/' + mPk + '/' + rNo + '/image/filename.jpeg',
-            image, {
-                headers: {'Content-Type': 'image/jpeg'},
-                params: {story: story},
-            }).then(function (response) {
-                var match = response.data;
+        return $http.post(BACKEND_URL + '/matches/' + mPk + '/' + rNo + '/image/filename.jpeg', image, {
+            headers: {'Content-Type': 'image/jpeg'},
+            params: {story: story},
+        }).then(function (response) {
+            var match = response.data;
 
-                if (!match) {
-                    throw new Error(response);
-                }
+            if (!match) {
+                throw new Error(response);
+            }
 
-                setMatch(match);
+            setMatch(match);
 
-                return match;
-            });
+            return match;
+        });
     };
 
     factory.submitVote = function submitVote(mPk, rNo, iPk) {

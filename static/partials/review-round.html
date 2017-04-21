@@ -14,7 +14,7 @@
 				<player-icon player="players[round.storyteller]"
 					class-btn="btn-primary btn-lg"></player-icon>
 			</div>
-			<img ng-src="{{ images[round.detailsPlayers[round.storyteller].image].url }}" class="img-responsive img-rounded image-review image-selected" />
+			<img ng-src="{{ images[round.details[round.storyteller].image].url }}" class="img-responsive img-rounded image-review image-selected" />
 			<div ng-if="round.votes[round.storyteller]"
 				class="guessed-by-container">
 				<player-icon ng-repeat="pPk in round.votes[round.storyteller]"
@@ -26,7 +26,7 @@
 	</section>
 	<section>
 		<h3>Other images</h3>
-		<div ng-repeat="details in filterOutKey(round.detailsPlayers, round.storyteller)" class="col-lg-4 col-md-6 col-sm-12">
+		<div ng-repeat="details in filterOutKey(round.details, round.storyteller)" ng-if="details.image" class="col-lg-4 col-md-6 col-sm-12">
 			<div class="image-review-container">
 				<div class="submitted-by-container">
 					<player-icon player="players[details.player]"
@@ -43,7 +43,7 @@
 			</div>
 		</div>
 	</section>
-	<section class="list-group clear-both">
+	<section ng-if="round.status === 'f'" class="list-group clear-both">
 		<div class="list-group-item active">
 			<h4>Scores</h4>
 		</div>
