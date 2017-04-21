@@ -1,121 +1,150 @@
+# -*- coding: utf-8 -*-
+
+'''serializers'''
+
+from __future__ import absolute_import, division, print_function, unicode_literals, with_statement
+
+import logging
+import random
+
 from rest_framework import serializers
-from matches.models import Match, Round, Player, Image, PlayerMatchDetails, PlayerRoundDetails
-from django.contrib.auth.models import User
+from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
 
-class PlayerMatchDetailsSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = PlayerMatchDetails
+from .models import Match, Player, Image, MatchDetailsSerializer, RoundSerializer
+
+LOGGER = logging.getLogger(__name__)
+
+
+class ImageSerializer(serializers.ModelSerializer):
+    url = serializers.URLField(required=False, read_only=True)
+    info = serializers.DictField(required=False)
+
+    class Meta(object):
+        model = Image
         fields = (
             'pk',
-            'player',
-            'is_inviting_player',
-            'date_invited',
-            'invitation_status',
-            'date_responded',
-            'score',
-        )
-
-class PlayerRoundDetailsSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = PlayerRoundDetails
-        fields = (
-            'pk',
-            'player',
-            'is_storyteller',
-            'image',
-            'score',
-            'vote',
-        )
-
-class RoundSerializer(serializers.HyperlinkedModelSerializer):
-    player_round_details = PlayerRoundDetailsSerializer(many=True)
-
-    class Meta:
-        model = Round
-        fields = (
-            'pk',
-            'match',
-            'number',
-            'is_current_round',
-            'player_round_details',
-            'status',
-            'story',
+            'url',
+            'width',
+            'height',
+            'size',
+            'owner',
+            'copyright',
+            'info',
+            'is_available_publically',
+            'created',
             'last_modified',
         )
         read_only_fields = (
+            'url',
+            'width',
+            'height',
+            'size',
+            'is_available_publically',
+            'created',
             'last_modified',
         )
 
-class MatchSerializer(serializers.HyperlinkedModelSerializer):
-    players = serializers.HyperlinkedRelatedField(
-        many=True,
-        required=False,
-        view_name='player-detail',
-        queryset=Player.objects.all(),
-    )
-    player_match_details = PlayerMatchDetailsSerializer(many=True, required=False)
-    rounds = RoundSerializer(many=True, required=False)
-    total_rounds = serializers.IntegerField(required=False)
 
-    class Meta:
+class MatchSerializer(serializers.ModelSerializer):
+    players = serializers.PrimaryKeyRelatedField(queryset=Player.objects.all(), many=True)
+    inviting_player = serializers.PrimaryKeyRelatedField(queryset=Player.objects.all(),
+                                                         required=False)
+    details = serializers.DictField(child=MatchDetailsSerializer(), required=False)
+    rounds = RoundSerializer(many=True, required=False)
+    total_rounds = serializers.IntegerField(required=False, min_value=Match.MINIMUM_PLAYER)
+
+    def __init__(self, player=None, *args, **kwargs):
+        super(MatchSerializer, self).__init__(*args, **kwargs)
+        self.player = player
+
+    class Meta(object):
         model = Match
         fields = (
-            'url',
             'pk',
             'players',
-            'player_match_details',
-            'total_rounds',
+            'inviting_player',
+            'details',
             'rounds',
+            'total_rounds',
+            'current_round',
+            'images',
             'status',
             'timeout',
             'created',
             'last_modified',
         )
         read_only_fields = (
+            'current_round',
+            'images',
+            'status',
             'created',
             'last_modified',
         )
 
+    def to_representation(self, obj):
+        data = super(MatchSerializer, self).to_representation(obj)
+
+        all_images = set()
+        viewing_player = self.player.pk if self.player else None
+
+        for round_data, round_obj in zip(data['rounds'], obj.rounds_list):
+            assert round_data['number'] == round_obj.number
+
+            images = []
+
+            for player_pk in obj.players_ids:
+                details_data = round_data['details'][str(player_pk)]
+                details_obj = round_obj.details_dict[player_pk]
+
+                if details_data.get('image'):
+                    images.append(details_data['image'])
+
+                if not details_obj.display_vote_to(match_round=round_obj,
+                                                   player_pk=viewing_player):
+                    details_data['image'] = bool(details_data.get('image'))
+                    details_data['vote'] = bool(details_data.get('vote'))
+                    details_data['vote_player'] = bool(details_data.get('vote_player'))
+
+            if round_obj.display_images_to(player_pk=viewing_player):
+                random.shuffle(images)
+                round_data['images'] = images
+                all_images.update(images)
+            else:
+                round_data['images'] = None
+
+        all_images = list(all_images)
+        random.shuffle(all_images)
+        data['images'] = all_images
+
+        return data
+
     def create(self, validated_data):
-        data = {
-            'player_details': validated_data.get('player_match_details'),
-            'players': validated_data.get('players'),
-            'total_rounds': validated_data.get('total_rounds'),
-            'timeout': validated_data.get('timeout'),
-        }
+        return Match.objects.create_match(**validated_data)
 
-        return Match.objects.create_match(**data)
 
-    def update(self, instance, validated_data):
-        pass
-
-class UserSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = User
+class UserSerializer(serializers.ModelSerializer):
+    class Meta(object):
+        model = GaeDatastoreUser
         fields = (
             'pk',
             'username',
             'email',
+            'password',
+            'first_name',
+            'last_name',
         )
+        extra_kwargs = {'password': {'write_only': True}}
 
-class PlayerSerializer(serializers.HyperlinkedModelSerializer):
+
+class PlayerSerializer(serializers.ModelSerializer):
     user = UserSerializer()
-    matches = serializers.HyperlinkedRelatedField(
-        many=True,
-        view_name='match-detail',
-        read_only=True,
-    )
 
-    class Meta:
+    class Meta(object):
         model = Player
         fields = (
-            'url',
             'pk',
             'user',
-            'external_id',
-            'gcm_registration_id',
             'avatar',
-            'matches',
             'created',
             'last_modified',
         )
@@ -126,27 +155,13 @@ class PlayerSerializer(serializers.HyperlinkedModelSerializer):
 
     def create(self, validated_data):
         user_data = validated_data.pop('user')
-        user = User.objects.create(**user_data)
+        password = user_data.pop('password')
+
+        user = GaeDatastoreUser.objects.create_user(**user_data)
+
+        user.set_password(password)
+        user.save()
+
         player = Player.objects.create(user=user, **validated_data)
+
         return player
-
-    def update(self, instance, validated_data):
-        # TODO do something
-        pass
-
-class ImageSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = Image
-        fields = (
-            'url',
-            'pk',
-            'image_url',
-            'file',
-            'created',
-            'last_modified',
-        )
-        read_only_fields = (
-            'file',
-            'created',
-            'last_modified',
-        )

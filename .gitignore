@@ -1,54 +1,58 @@
-target
-.recommenders
-.metadata
-.gradle
+# Byte-compiled / optimized / DLL files
+__pycache__/
 .DS_Store
-.private
-.idea
-*.iml
+*.py[cod]
+*.swp
 
-*.py[co]
+/.*
+!/.gitignore
+!/.gitmodules
 
-# Packages
-*.egg
-*.egg-info
-dist
-build
-eggs
-parts
-bin
-var
-sdist
-develop-eggs
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+/env/
+/build/
+develop-eggs/
+/dist/
+/eggs/
+/lib/
+/lib64/
+/parts/
+/sitepackages/
+/sdist/
+/var/
+*.egg-info/
 .installed.cfg
-pip-selfcheck.json
+*.egg
 
 # Installer logs
 pip-log.txt
+pip-delete-this-directory.txt
 
 # Unit test / coverage reports
+htmlcov/
+.tox/
 .coverage
-.tox
+.cache
+nosetests.xml
+coverage.xml
 
 # Translations
 *.mo
+*.pot
 
-# Mr Developer
-.mr.developer.cfg
+# Django stuff:
+*.log
 
-# Django files
-include
-lib
-local
-man
-share
-Scripts
-.Python
-*.pyc
-*~
-*.db
-db.sqlite3
+# Sphinx documentation
+docs/_build/
 
-# MacOSX
-.DS_Store
+/bin/
+/include/
+/man/
+pip-selfcheck.json
+/share/
 

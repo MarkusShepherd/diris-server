@@ -1,0 +1,24 @@
+<section xmlns="http://www.w3.org/1999/xhtml">
+	<div ng-if="!match.hasAccepted" class="alert alert-success fade in">
+		You've been invited by <b>{{ players[match.inviting_player].user.username }}</b> to participate in their match. Please hit the button below to accept the invitation.
+	</div>
+	<div ng-if="match.hasAccepted" class="alert alert-success fade in">
+		You have accepted the invitation by <b>{{ players[match.inviting_player].user.username }}</b> to participate in their match. Please wait for the other players to join the match too.
+	</div>
+	<section class="list-group">
+		<a ng-repeat="(pPk, acc) in match.accepted"
+			ng-href="#/profile/{{ pPk }}"
+			class="list-group-item {{ acc ? 'list-group-item-success' : 'list-group-item-info' }}">
+			<player-icon player="players[pPk]"
+				class-icon="player-icon-accept"
+				class-btn="btn-primary"></player-icon>
+			{{ players[pPk].user.username }}
+			<span ng-if="acc" class="glyphicon glyphicon-ok-sign icon-accepted"></span>
+			<span ng-if="!acc" class="glyphicon glyphicon-question-sign icon-accepted"></span>
+		</a>
+	</section>
+	<button ng-if="!match.hasAccepted" ng-click="accept()" class="btn btn-primary btn-lg btn-block">
+		<span class="glyphicon glyphicon-ok"></span>
+		Accept
+	</button>
+</section>

@@ -1,0 +1,97 @@
+<section xmlns="http://www.w3.org/1999/xhtml">
+	<section ng-if="!round.readyForStoryImage &amp;&amp; round.story" class="panel panel-primary">
+		<div class="panel-body">
+			<blockquote class="quote-story">
+				<p>{{ round.story }}</p>
+			</blockquote>
+		</div>
+		<div class="panel-footer text-right">by <em>{{ players[round.storyteller].user.username }}</em></div>
+	</section>
+
+	<section>
+		<div ng-show="round.readyForStoryImage || round.readyForOtherImage" class="btn-group btn-group-justified btn-group-lg">
+			<div ng-if="hasCamera" class="btn-group btn-group-lg">
+				<button ng-click="getImageFromCamera()" class="btn btn-primary">
+					<span class="glyphicon glyphicon-camera"></span>
+					Take photo
+				</button>
+			</div>
+			<div class="btn-group btn-group-lg">
+				<button ng-click="getImageFromLibrary()" class="btn btn-primary">
+					<span class="glyphicon glyphicon-upload"></span>
+					Upload
+				</button>
+			</div>
+		</div>
+
+		<div ng-show="useSlider" block-ui="slider" class="wrap">
+			<div class="scrollbar">
+				<div class="handle">
+					<div class="mousearea"></div>
+				</div>
+			</div>
+
+			<div class="frame" id="centered">
+				<div class="slidee clearfix">
+					<img ng-repeat="image in randomImages"
+						ng-src="{{ image.url }}"
+						ng-click="setImage(image.url)"
+						alt="Image"
+						class="img-responsive"
+						style="height: 150px; width: auto;" />
+				</div>
+			</div>
+
+			<div class="controls center">
+				<div class="btn-group btn-group-sm">
+					<button class="btn btn-primary prev"><span class="glyphicon glyphicon-chevron-left"></span> prev</button>
+					<button class="btn btn-primary next">next <span class="glyphicon glyphicon-chevron-right"></span></button>
+				</div>
+			</div>
+		</div>
+
+		<div ng-hide="round.hasSubmittedImage" class="image-upload-wrapper">
+			<img src="default-placeholder.png" id="image" alt="Image" class="img-responsive image-upload" />
+		</div>
+		<div ng-show="round.hasSubmittedImage" class="image-upload-wrapper">
+			<img ng-src="{{ image.url }}" id="image-uploaded" alt="Image" class="img-responsive image-upload" />
+		</div>
+
+		<div ng-hide="round.hasSubmittedImage" class="image-edit-wrapper">
+			<div class="btn-group btn-group-lg btn-group-image-edit">
+				<button ng-click="zoom(-0.1)" type="button" class="btn btn-primary" title="Zoom Out">
+					<span class="glyphicon glyphicon-zoom-out"></span>
+				</button>
+				<button ng-click="zoom(0.1)" type="button" class="btn btn-primary" title="Zoom In">
+					<span class="glyphicon glyphicon-zoom-in"></span>
+				</button>
+	        </div><div class="btn-group btn-group-lg btn-group-image-edit">
+				<button ng-click="rotate(-90)" type="button" class="btn btn-primary" title="Rotate Left">
+					<span class="glyphicon glyphicon-circle-arrow-left"></span>
+				</button>
+				<button ng-click="rotate(90)" type="button" class="btn btn-primary" title="Rotate Right">
+					<span class="glyphicon glyphicon-circle-arrow-right"></span>
+				</button>
+	        </div><div class="btn-group btn-group-lg btn-group-image-edit">
+				<button ng-click="flip('X')" type="button" class="btn btn-primary" title="Flip Horizontally">
+					<span class="glyphicon glyphicon-resize-horizontal"></span>
+				</button>
+				<button ng-click="flip('Y')" type="button" class="btn btn-primary" title="Flip Vertically">
+					<span class="glyphicon glyphicon-resize-vertical"></span>
+				</button>
+	        </div>
+		</div>
+
+		<textarea ng-show="round.readyForStoryImage"
+			ng-model="round.story"
+			placeholder="Story"
+			class="form-control text-story"></textarea>
+		<button ng-click="submitImage()"
+			ng-show="round.readyForStoryImage || round.readyForOtherImage"
+			ng-disabled="!selectedImage || !imageData || !round.story" class="btn btn-primary btn-lg btn-block">
+			<span class="glyphicon glyphicon-ok"></span>
+			Submit
+		</button>
+	</section>
+	<input id="file-input" type="file" name="file-input" style="display: none;" />
+</section>
