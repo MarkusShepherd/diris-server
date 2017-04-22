@@ -13,6 +13,13 @@
 			{{ players[item.playerPk].user.username }}
 		</a>
 	</section>
+
+	<a ng-if="match.actionStatus == 'a'"
+		ng-href="#/{{ action(match.currentRoundObj) }}/{{ mPk }}/{{ match.currentRoundObj.number }}"
+		class="btn btn-success btn-lg btn-block btn-match-action">
+		<span class="glyphicon glyphicon-fire"></span> Play
+	</a>
+
 	<section class="list-group">
 		<a ng-repeat="round in match.rounds"
 			ng-href="#/{{ action(round) }}/{{ mPk }}/{{ round.number }}"

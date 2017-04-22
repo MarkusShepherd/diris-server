@@ -35,7 +35,7 @@ dirisApp.controller('OverviewController', function OverviewController(
         .then(function (matches) {
             var status = {};
             _.forEach(matches, function (match) {
-                status[match.status] = true;
+                status[match.actionStatus] = true;
             });
             $scope.matches = _.map(matches);
             $scope.status = status;

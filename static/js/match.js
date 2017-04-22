@@ -13,9 +13,7 @@ dirisApp.controller('MatchController', function MatchController(
 ) {
     var player = dataService.getLoggedInPlayer(),
         mPk = $routeParams.mPk,
-        action = $routeParams.action,
-        matchPromise,
-        imagePromise;
+        action = $routeParams.action;
 
     if (!player) {
         $location.path('/login');
@@ -38,7 +36,7 @@ dirisApp.controller('MatchController', function MatchController(
 
     $scope.mPk = mPk;
 
-    matchPromise = dataService.getMatch(mPk, action === 'refresh')
+    dataService.getMatch(mPk, action === 'refresh')
         .then(function (match) {
             $log.debug('Match:', match);
             $scope.match = match;
@@ -56,9 +54,9 @@ dirisApp.controller('MatchController', function MatchController(
             $log.debug('error');
             $log.debug(response);
             toastr.error("There was an error fetching the data - please try again later...");
-        });
+        }).then(blockUI.stop);
 
-    imagePromise = dataService.getImages(mPk, action === 'refresh', true)
+    dataService.getImages(mPk, action === 'refresh', true)
         .then(function (images) {
             $scope.images = {};
             _.forEach(images, function (img) {
@@ -70,8 +68,6 @@ dirisApp.controller('MatchController', function MatchController(
             $log.debug(response);
             toastr.error("There was an error fetching the data - please try again later...");
         });
-
-    $q.all([matchPromise, imagePromise]).then(blockUI.stop);
 
     $scope.action = roundAction;
 }); // MatchController

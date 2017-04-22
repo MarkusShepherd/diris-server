@@ -66,6 +66,8 @@ function processMatch(match, player) {
     });
     match.currentRoundObj = match.rounds[(match.current_round || 1) - 1];
 
+    match.actionStatus = match.currentRoundObj.hasAction ? 'a' : match.status;
+
     // match.details = $.filter(match.player_match_details || [],
     //                       function (details) { return !!(details && details.player === player.pk); })[0];
     match.accepted = {};
