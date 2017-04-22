@@ -88,7 +88,8 @@
 			class="form-control text-story"></textarea>
 		<button ng-click="submitImage()"
 			ng-show="round.readyForStoryImage || round.readyForOtherImage"
-			ng-disabled="!selectedImage || !imageData || !round.story" class="btn btn-primary btn-lg btn-block">
+			ng-disabled="!selectedImage || !imageData || (round.isStoryTeller &amp;&amp; (!round.story || round.story.length &lt; minStoryLength))"
+			class="btn btn-primary btn-lg btn-block">
 			<span class="glyphicon glyphicon-ok"></span>
 			Submit
 		</button>

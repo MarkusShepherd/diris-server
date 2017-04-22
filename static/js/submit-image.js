@@ -10,7 +10,8 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
     $timeout,
     blockUI,
     toastr,
-    dataService
+    dataService,
+    MINIMUM_STORY_LENGTH
 ) {
     function setImage(url) {
         $scope.imageData = url;
@@ -156,6 +157,8 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
             toastr.error("There was an error fetching the data - please try again later...");
         }).then(blockUI.stop);
 
+    $scope.minStoryLength = MINIMUM_STORY_LENGTH;
+
     $scope.hasCamera = !!(!isBrowser() && navigator.camera && navigator.camera.getPicture);
 
     $scope.setImage = setImage;
@@ -173,6 +176,14 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
     };
 
     $scope.submitImage = function submitImage() {
+        var round = $scope.round;
+
+        if (round.isStoryTeller && (!round.story || round.story.length < MINIMUM_STORY_LENGTH)) {
+            var message = 'Story needs to have at least ' + MINIMUM_STORY_LENGTH + ' characters';
+            toastr.error(message);
+            return $q.reject(message);
+        }
+
         if (!blockUI.state().blocking) {
             blockUI.start();
         }

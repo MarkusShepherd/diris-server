@@ -110,6 +110,8 @@ class Round(object):
         (FINISHED, 'finished'),
     )
 
+    MINIMUM_STORY_LENGTH = 3
+
     MAX_DECEIVED_VOTE_SCORE = 3
     DECEIVED_VOTE_SCORE = 1
     ALL_CORRECT_SCORE = 2
@@ -157,9 +159,10 @@ class Round(object):
             if self.status != Round.SUBMIT_STORY:
                 raise ValueError('not ready for submission')
 
-            if not story:
+            if not story or len(story) < Round.MINIMUM_STORY_LENGTH:
                 # TODO validate story further
-                raise ValueError('story is required')
+                raise ValueError('story is required and needs to be at least {} characters long'
+                                 .format(Round.MINIMUM_STORY_LENGTH))
 
             if details.image and self.story:
                 raise ValueError('image and story already exists')
@@ -292,7 +295,8 @@ class RoundSerializer(serializers.Serializer):
     is_current_round = serializers.BooleanField(default=False)
     status = serializers.ChoiceField(choices=Round.ROUND_STATUSES,
                                      default=Round.WAITING)
-    story = serializers.CharField(required=False, allow_null=True, min_length=3,
+    story = serializers.CharField(required=False, allow_null=True,
+                                  min_length=Round.MINIMUM_STORY_LENGTH,
                                   allow_blank=False, trim_whitespace=True)
 
     def create(self, validated_data):
