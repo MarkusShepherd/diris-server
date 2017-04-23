@@ -27,7 +27,8 @@
 				<span ng-show="image == round.playerDetails.image" class="badge image-vote-badge">
 					<span class="glyphicon glyphicon-user"></span>
 				</span>
-				<img ng-src="{{ images[image].url }}"
+				<img src="default-placeholder.png"
+					ng-src="{{ images[image].url }}"
 					class="img-responsive img-rounded image-{{ image == selectedImage.pk ? 'selected' : image == round.playerDetails.image ? 'user' : 'normal' }}" />
 			</a>
 		</div>
@@ -42,7 +43,8 @@
 				<span ng-show="image == round.playerDetails.image" class="badge image-vote-badge">
 					<span class="glyphicon glyphicon-user"></span>
 				</span>
-				<img ng-src="{{ images[image].url }}"
+				<img src="default-placeholder.png"
+					ng-src="{{ images[image].url }}"
 					class="img-responsive img-rounded image-normal" />
 			</div>
 		</div>

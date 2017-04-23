@@ -314,6 +314,10 @@ class MatchManager(models.Manager):
             raise ValueError('Not enough players - need to give at least {} players '
                              'to create a match'.format(Match.MINIMUM_PLAYER))
 
+        if len(players) > Match.MAXIMUM_PLAYER:
+            raise ValueError('Too many players - need to give at most {} players '
+                             'to create a match'.format(Match.MAXIMUM_PLAYER))
+
         inviting_player = inviting_player or players[0]
 
         match_details = {player.pk: MatchDetails(player=player.pk,
@@ -363,6 +367,7 @@ class Match(models.Model):
     )
     STANDARD_TIMEOUT = 60 * 60 * 36  # 36
     MINIMUM_PLAYER = 4
+    MAXIMUM_PLAYER = 10
 
     objects = MatchManager()
 

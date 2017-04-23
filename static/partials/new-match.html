@@ -19,7 +19,9 @@
 		</a>
 	</div>
 
-	<button ng-click="createMatch()" ng-disabled="numPlayers < 3" class="btn btn-primary btn-block btn-lg">
+	<button ng-click="createMatch()"
+		ng-disabled="numPlayers + 1 &lt; minimumPlayer || numPlayers + 1 &gt; maximumPlayer"
+		class="btn btn-primary btn-block btn-lg">
 		<span class="glyphicon glyphicon-ok-sign"></span>
 		Send invites
 	</button>

@@ -7,7 +7,9 @@ dirisApp.controller('NewMatchController', function NewMatchController(
     $scope,
     blockUI,
     toastr,
-    dataService
+    dataService,
+    MINIMUM_PLAYER,
+    MAXIMUM_PLAYER
 ) {
     var player = dataService.getLoggedInPlayer();
 
@@ -31,6 +33,9 @@ dirisApp.controller('NewMatchController', function NewMatchController(
 
     dataService.getPlayers()
         .then(function (players) {
+            _.forEach(players, function (player) {
+                player.selected = false;
+            });
             $scope.players = players;
             $scope.playersArray = _.map(players);
         }).catch(function (response) {
@@ -42,6 +47,8 @@ dirisApp.controller('NewMatchController', function NewMatchController(
     $scope.selected = {};
     $scope.numPlayers = 0;
     $scope.roundsPerPlayer = 2;
+    $scope.minimumPlayer = MINIMUM_PLAYER;
+    $scope.maximumPlayer = MAXIMUM_PLAYER;
 
     $scope.addPlayer = function addPlayer(p) {
         p.selected = true;
@@ -76,9 +83,15 @@ dirisApp.controller('NewMatchController', function NewMatchController(
             playerPks.unshift(player.pk);
         }
 
-        if (_.size(playerPks) < 4) {
+        if (_.size(playerPks) < MINIMUM_PLAYER) {
             blockUI.stop();
-            toastr.error("Please select at least 3 players to invite to the match!");
+            toastr.error('Please select at least ' + (MINIMUM_PLAYER - 1) + ' players to invite to the match!');
+            return;
+        }
+
+        if (_.size(playerPks) > MAXIMUM_PLAYER) {
+            blockUI.stop();
+            toastr.error('Please select no more than ' + (MAXIMUM_PLAYER - 1) + ' players to invite to the match!');
             return;
         }
 

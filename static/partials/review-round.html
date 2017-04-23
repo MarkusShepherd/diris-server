@@ -14,7 +14,9 @@
 				<player-icon player="players[round.storyteller]"
 					class-btn="btn-primary btn-lg"></player-icon>
 			</div>
-			<img ng-src="{{ images[round.details[round.storyteller].image].url }}" class="img-responsive img-rounded image-review image-selected" />
+			<img src="default-placeholder.png"
+				ng-src="{{ images[round.details[round.storyteller].image].url }}"
+				class="img-responsive img-rounded image-review image-selected" />
 			<div ng-if="round.votes[round.storyteller]"
 				class="guessed-by-container">
 				<player-icon ng-repeat="pPk in round.votes[round.storyteller]"
@@ -32,7 +34,9 @@
 					<player-icon player="players[details.player]"
 						class-btn="btn-primary btn-lg"></player-icon>
 				</div>
-				<img ng-src="{{ images[details.image].url }}" class="img-responsive img-rounded image-review" />
+				<img src="default-placeholder.png"
+					ng-src="{{ images[details.image].url }}"
+					class="img-responsive img-rounded image-review" />
 				<div ng-if="round.votes[details.player]"
 					class="guessed-by-container">
 					<player-icon ng-repeat="pPk in round.votes[details.player]"

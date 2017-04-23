@@ -14,7 +14,9 @@ var dirisApp = angular.module('dirisApp', [
 
 dirisApp.constant('BACKEND_URL', liveUrl)
     .constant('MINIMUM_STORY_LENGTH', 3)
-    .constant('DEVELOPER_MODE', false);
+    .constant('MINIMUM_PLAYER', 4)
+    .constant('MAXIMUM_PLAYER', 10)
+    .constant('DEVELOPER_MODE', true);
 
 dirisApp.config(function (
     $httpProvider,

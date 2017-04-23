@@ -14,7 +14,6 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
     MINIMUM_STORY_LENGTH
 ) {
     function setImage(url) {
-        $scope.imageData = url;
         $scope.selectedImage = true;
         $("#image")
             .cropper('replace', url)
@@ -243,7 +242,9 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
             var reader = new FileReader();
 
             reader.onload = function (e) {
-                setImage(e.target.result);
+                $scope.$apply(function () {
+                    setImage(e.target.result);
+                });
             };
 
             reader.readAsDataURL(this.files[0]);
