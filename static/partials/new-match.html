@@ -1,28 +1,60 @@
 <section xmlns="http://www.w3.org/1999/xhtml">
 	<h2>New Match</h2>
 
-	<div class="list-group">
-		<a ng-repeat="player in playersArray | orderBy:'user.username'"
-			ng-hide="player.selected || player.pk == currentPlayer.pk"
-			ng-click="addPlayer(player)"
-			class="list-group-item">
-			{{ player.user.username }}
-		</a>
-	</div>
+	<form id="create" name="createForm" novalidate="novalidate" ng-submit="createMatch()" role="form" class="form-inline">
+		<div class="list-group">
+			<a ng-repeat="player in playersArray | orderBy:'user.username'"
+				ng-hide="player.selected || player.pk == currentPlayer.pk"
+				ng-click="addPlayer(player)"
+				class="list-group-item">
+				{{ player.user.username }}
+			</a>
+		</div>
 
-	<h3>Selected</h3>
-	<div class="list-group">
-		<a ng-repeat="(id, player) in selected"
-			ng-click="removePlayer(player)"
-			class="list-group-item">
-			{{ player.user.username }}
-		</a>
-	</div>
+		<h3>Selected</h3>
+		<div class="list-group">
+			<div class="list-group-item disabled">
+				{{ currentPlayer.username }}
+			</div>
+			<a ng-repeat="(id, player) in selected"
+				ng-click="removePlayer(player)"
+				class="list-group-item">
+				{{ player.user.username }}
+			</a>
+		</div>
 
-	<button ng-click="createMatch()"
-		ng-disabled="numPlayers + 1 &lt; minimumPlayer || numPlayers + 1 &gt; maximumPlayer"
-		class="btn btn-primary btn-block btn-lg">
-		<span class="glyphicon glyphicon-ok-sign"></span>
-		Send invites
-	</button>
+		<div class="form-group">
+			<label for="roundsPerPlayer">Rounds per player:</label>
+			<select id="roundsPerPlayer"
+				name="roundsPerPlayer"
+				ng-model="roundsPerPlayer"
+				ng-required="true"
+				class="form-control rounds-per-player">
+				<option ng-value="1">1</option>
+				<option ng-value="2">2</option>
+				<option ng-value="3">3</option>
+			</select>
+		</div>
+
+		<div class="form-group">
+			<label for="timeout">Timeout:</label>
+			<select id="timeout"
+				name="timeout"
+				ng-model="timeout"
+				ng-required="true"
+				class="form-control timeout">
+				<option ng-value="12">12 hours</option>
+				<option ng-value="24">24 hours</option>
+				<option ng-value="36">36 hours</option>
+				<option ng-value="48">48 hours</option>
+			</select>
+		</div>
+
+		<button type="submit"
+			ng-disabled="numPlayers &lt; minimumPlayer || numPlayers &gt; maximumPlayer"
+			class="btn btn-primary btn-block btn-lg">
+			<span class="glyphicon glyphicon-ok-sign"></span>
+			Send invites
+		</button>
+	</form>
 </section>

@@ -9,7 +9,8 @@ dirisApp.controller('NewMatchController', function NewMatchController(
     toastr,
     dataService,
     MINIMUM_PLAYER,
-    MAXIMUM_PLAYER
+    MAXIMUM_PLAYER,
+    STANDARD_TIMEOUT
 ) {
     var player = dataService.getLoggedInPlayer();
 
@@ -33,11 +34,10 @@ dirisApp.controller('NewMatchController', function NewMatchController(
 
     dataService.getPlayers()
         .then(function (players) {
-            _.forEach(players, function (player) {
-                player.selected = false;
+            _.forEach(players, function (p) {
+                p.selected = false;
             });
-            $scope.players = players;
-            $scope.playersArray = _.map(players);
+            $scope.playersArray = _(players).map().reject({pk: player.pk}).value();
         }).catch(function (response) {
             $log.debug('error');
             $log.debug(response);
@@ -45,43 +45,49 @@ dirisApp.controller('NewMatchController', function NewMatchController(
         }).then(blockUI.stop);
 
     $scope.selected = {};
-    $scope.numPlayers = 0;
     $scope.roundsPerPlayer = 2;
+    $scope.numPlayers = 1;
     $scope.minimumPlayer = MINIMUM_PLAYER;
     $scope.maximumPlayer = MAXIMUM_PLAYER;
+    $scope.timeout = _.toInteger(STANDARD_TIMEOUT / 3600);
 
     $scope.addPlayer = function addPlayer(p) {
+        if (p.pk == player.pk) {
+            $log.debug('added the current player');
+            return;
+        }
+
         p.selected = true;
         $scope.selected[p.pk.toString()] = p;
-        $scope.numPlayers = $scope.numPlayers + 1;
+        $scope.numPlayers = _.size($scope.selected) + 1;
+
+        if ($scope.createForm.roundsPerPlayer.$pristine &&
+                $scope.numPlayers >= MINIMUM_PLAYER && $scope.numPlayers <= MAXIMUM_PLAYER) {
+            $scope.roundsPerPlayer = _.toInteger(MAXIMUM_PLAYER / $scope.numPlayers);
+        }
     };
 
     $scope.removePlayer = function removePlayer(p) {
         p.selected = false;
         delete $scope.selected[p.pk.toString()];
-        $scope.numPlayers = $scope.numPlayers - 1;
+        $scope.numPlayers = _.size($scope.selected) + 1;
+
+        if ($scope.createForm.roundsPerPlayer.$pristine &&
+                $scope.numPlayers >= MINIMUM_PLAYER && $scope.numPlayers <= MAXIMUM_PLAYER) {
+            $scope.roundsPerPlayer = _.toInteger(MAXIMUM_PLAYER / $scope.numPlayers);
+        }
     };
 
     $scope.createMatch = function createMatch() {
-        var playerPks = [],
-            includeCurrent = false;
+        var playerPks,
+            timeout,
+            totalRounds;
 
         if (!blockUI.state().blocking) {
             blockUI.start();
         }
 
-        _.forEach($scope.selected, function (p, pk) {
-            if (pk == player.pk) {
-                includeCurrent = true;
-                playerPks.unshift(pk);
-            } else {
-                playerPks.push(pk);
-            }
-        });
-
-        if (!includeCurrent) {
-            playerPks.unshift(player.pk);
-        }
+        playerPks = _(_.keys($scope.selected)).without(player.pk).unshift(player.pk).value();
 
         if (_.size(playerPks) < MINIMUM_PLAYER) {
             blockUI.stop();
@@ -95,7 +101,10 @@ dirisApp.controller('NewMatchController', function NewMatchController(
             return;
         }
 
-        dataService.createMatch(playerPks)
+        totalRounds = _.size(playerPks) * $scope.roundsPerPlayer;
+        timeout = $scope.timeout * 3600;
+
+        dataService.createMatch(playerPks, totalRounds, timeout)
             .then(function (match) {
                 $log.debug(match);
                 $location.path('/overview');

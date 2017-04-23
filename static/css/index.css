@@ -58,6 +58,12 @@ a.disabled {
     margin-top: 20px;
 }
 
+.rounds-per-player,
+.timeout {
+    display: inline-block;
+    width: auto;
+}
+
 .text-right {
     text-align: right;
 }

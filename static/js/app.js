@@ -16,7 +16,8 @@ dirisApp.constant('BACKEND_URL', liveUrl)
     .constant('MINIMUM_STORY_LENGTH', 3)
     .constant('MINIMUM_PLAYER', 4)
     .constant('MAXIMUM_PLAYER', 10)
-    .constant('DEVELOPER_MODE', true);
+    .constant('STANDARD_TIMEOUT', 60 * 60 * 36)
+    .constant('DEVELOPER_MODE', false);
 
 dirisApp.config(function (
     $httpProvider,

@@ -107,14 +107,21 @@ dirisApp.factory('dataService', function dataService(
     }
 
     factory.createMatch = function createMatch(playerPks, totalRounds, timeout) {
-        var player = factory.getLoggedInPlayer();
+        var player = factory.getLoggedInPlayer(),
+            options = {
+                players: playerPks,
+                inviting_player: player.pk
+            };
 
-        return $http.post(BACKEND_URL + '/matches/', {
-            players: playerPks,
-            inviting_player: player.pk
-            // total_rounds: totalRounds || 0,
-            // timeout: timeout || 0
-        })
+        if (_.isFinite(totalRounds)) {
+            options.total_rounds = totalRounds;
+        }
+
+        if (_.isFinite(timeout)) {
+            options.timeout = timeout;
+        }
+
+        return $http.post(BACKEND_URL + '/matches/', options)
             .then(function (response) {
                 var match = response.data;
 

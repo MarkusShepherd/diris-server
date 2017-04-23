@@ -37,6 +37,7 @@ dirisApp.controller('AcceptController', function AcceptController(
     dataService.getMatch(mPk)
         .then(function (match) {
             $scope.match = match;
+            $scope.timeout = _.toInteger(match.timeout / 3600);
             return $q.all(_.map(match.players, function (pk) {
                 return dataService.getPlayer(pk, false);
             }));
