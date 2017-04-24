@@ -52,14 +52,24 @@ dirisApp.controller('AcceptController', function AcceptController(
             toastr.error('There was an error fetching the data - please try again later...');
         }).then(blockUI.stop);
 
-    $scope.accept = function accept() {
+    $scope.respond = function respond(accept) {
+        accept = !!accept;
+
+        if (!accept && !confirm('Are you sure you want to decline the invitation?')) {
+            return;
+        }
+
         if (!blockUI.state().blocking) {
             blockUI.start();
         }
 
-        dataService.respondToInvitation(mPk, true)
+        dataService.respondToInvitation(mPk, accept)
             .then(function () {
-                $location.path('/overview');
+                if (accept) {
+                    $location.path('/overview');
+                } else {
+                    $location.path('/overview/refresh');
+                }
             }).catch(function (response) {
                 $log.debug('error');
                 $log.debug(response);

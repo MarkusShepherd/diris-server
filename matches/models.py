@@ -360,10 +360,12 @@ class Match(models.Model):
     WAITING = 'w'
     IN_PROGESS = 'p'
     FINISHED = 'f'
+    DELETE = 'd'
     MATCH_STATUSES = (
         (WAITING, 'waiting'),
         (IN_PROGESS, 'in progress'),
         (FINISHED, 'finished'),
+        (DELETE, 'delete'),
     )
     STANDARD_TIMEOUT = 60 * 60 * 36  # 36
     MINIMUM_PLAYER = 4
@@ -430,6 +432,13 @@ class Match(models.Model):
         self.check_status()
 
     def check_status(self):
+        for details in self.details_dict.values():
+            if details.invitation_status == MatchDetails.DECLINED:
+                # TODO remove the player instead (if possible) and adjust rounds & details
+                LOGGER.info('player %d declined the invitation, delete the match', details.player)
+                self.status = Match.DELETE
+                return
+
         self.status = (Match.WAITING
                        if any(details.invitation_status != MatchDetails.ACCEPTED
                               for details in self.details_dict.values())
@@ -464,6 +473,11 @@ class Match(models.Model):
         return scores
 
     def save(self, *args, **kwargs):
+        if self.status == Match.DELETE:
+            LOGGER.info('match %d marked for deletion', self.pk)
+            LOGGER.info(self.delete())
+            return
+
         if self._details_dict is not None:
             self.details = {player_pk: MatchDetailsSerializer(instance=details).data
                             for player_pk, details in self._details_dict.items()}

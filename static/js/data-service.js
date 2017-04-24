@@ -2,6 +2,7 @@
 
 dirisApp.factory('dataService', function dataService(
     $localStorage,
+    $location,
     $log,
     $http,
     $q,
@@ -245,10 +246,12 @@ dirisApp.factory('dataService', function dataService(
     };
 
     function setImage(image) {
-        // TODO http or https?
+        var protocol;
         if (_.startsWith(image.url, '//')) {
-            image.url = 'http:' + image.url;
+            protocol = $location.protocol() === 'file' ? 'https' : $location.protocol();
+            image.url = protocol + ':' + image.url;
         }
+
         $localStorage['image_' + image.pk] = image;
         images[image.pk] = image;
     }
