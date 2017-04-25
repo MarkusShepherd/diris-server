@@ -1,5 +1,8 @@
 'use strict';
 
+/*jslint browser: true, nomen: true */
+/*global angular, $, _, moment, device, navigator, utils, dirisApp */
+
 dirisApp.factory('dataService', function dataService(
     $localStorage,
     $location,
@@ -102,7 +105,7 @@ dirisApp.factory('dataService', function dataService(
     };
 
     function setMatch(match) {
-        match = processMatch(match, loggedInPlayer);
+        match = utils.processMatch(match, loggedInPlayer);
         $localStorage['match_' + match.pk] = match;
         matches[match.pk] = match;
     }

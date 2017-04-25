@@ -1,5 +1,8 @@
 'use strict';
 
+/*jslint browser: true, nomen: true */
+/*global angular, $, _, moment, device, navigator, utils, dirisApp */
+
 dirisApp.controller('LoginController', function LoginController(
     $location,
     $log,

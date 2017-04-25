@@ -1,5 +1,8 @@
 'use strict';
 
+/*jslint browser: true, nomen: true */
+/*global angular, $, _, moment, device, navigator, Camera, FileReader, utils, dirisApp */
+
 dirisApp.controller('SubmitImageController', function SubmitImageController(
     $location,
     $log,
@@ -69,7 +72,7 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
     dataService.getMatch(mPk)
         .then(function (match) {
             var round = match.rounds[rNo - 1],
-                action = roundAction(round);
+                action = utils.roundAction(round);
 
             if (action !== 'image') {
                 $location.path('/' + action + '/' + mPk + '/' + rNo).replace();
@@ -158,7 +161,7 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
 
     $scope.minStoryLength = MINIMUM_STORY_LENGTH;
 
-    $scope.hasCamera = !!(!isBrowser() && navigator.camera && navigator.camera.getPicture);
+    $scope.hasCamera = !!(!utils.isBrowser() && navigator.camera && navigator.camera.getPicture);
 
     $scope.setImage = setImage;
 
@@ -167,7 +170,7 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
     };
 
     $scope.getImageFromLibrary = function getImageFromLibrary() {
-        if (isBrowser()) {
+        if (utils.isBrowser()) {
             $('#file-input').trigger('click');
         } else {
             getImage(Camera.PictureSourceType.PHOTOLIBRARY);
@@ -175,10 +178,11 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
     };
 
     $scope.submitImage = function submitImage() {
-        var round = $scope.round;
+        var round = $scope.round,
+            message;
 
         if (round.isStoryTeller && (!round.story || round.story.length < MINIMUM_STORY_LENGTH)) {
-            var message = 'Story needs to have at least ' + MINIMUM_STORY_LENGTH + ' characters';
+            message = 'Story needs to have at least ' + MINIMUM_STORY_LENGTH + ' characters';
             toastr.error(message);
             return $q.reject(message);
         }

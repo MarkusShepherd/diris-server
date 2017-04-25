@@ -1,5 +1,8 @@
 'use strict';
 
+/*jslint browser: true, nomen: true */
+/*global angular, $, _, moment, device, navigator, utils, dirisApp */
+
 dirisApp.controller('ReviewRoundController', function ReviewRoundController(
     $location,
     $log,
@@ -13,9 +16,7 @@ dirisApp.controller('ReviewRoundController', function ReviewRoundController(
 ) {
     var player = dataService.getLoggedInPlayer(),
         mPk = $routeParams.mPk,
-        rNo = $routeParams.rNo,
-        matchPromise,
-        imagePromise;
+        rNo = $routeParams.rNo;
 
     if (!player) {
         $location.path('/login');
@@ -42,10 +43,10 @@ dirisApp.controller('ReviewRoundController', function ReviewRoundController(
     $rootScope.refreshPath = null;
     $rootScope.refreshReload = false;
 
-    matchPromise = dataService.getMatch(mPk)
+    dataService.getMatch(mPk)
         .then(function (match) {
             var round = match.rounds[rNo - 1],
-                action = roundAction(round);
+                action = utils.roundAction(round);
 
             if (action !== 'review') {
                 $location.path('/' + action + '/' + mPk + '/' + rNo).replace();
@@ -67,9 +68,9 @@ dirisApp.controller('ReviewRoundController', function ReviewRoundController(
             $log.debug('error');
             $log.debug(response);
             toastr.error("There was an error fetching the data - please try again later...");
-        });
+        }).then(blockUI.stop);
 
-    imagePromise = dataService.getImages(mPk, true, true)
+    dataService.getImages(mPk, true, true)
         .then(function (images) {
             $scope.images = {};
             _.forEach(images, function (img) {
@@ -80,27 +81,4 @@ dirisApp.controller('ReviewRoundController', function ReviewRoundController(
             $log.debug(response);
             toastr.error("There was an error fetching the data - please try again later...");
         });
-
-    $q.all([matchPromise, imagePromise]).then(blockUI.stop);
-
-    $scope.filterValues = function filterValues(items, value) {
-        var result = [];
-        _.forEach(items, function (v, k) {
-            if (v == value) {
-                result.push(k);
-            }
-        });
-        return result;
-    };
-
-    $scope.filterOutKey = function filterOutKey(items, key) {
-        var result = [];
-        _.forEach(items, function (v, k) {
-            if (k != key) {
-                result.push(v);
-            }
-        });
-        return result;
-    };
-
 });

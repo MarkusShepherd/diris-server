@@ -1,5 +1,8 @@
 'use strict';
 
+/*jslint browser: true, nomen: true */
+/*global angular, $, _, moment, device, navigator, utils, dirisApp */
+
 dirisApp.controller('ProfileController', function ProfileController(
     $location,
     $log,
@@ -10,7 +13,7 @@ dirisApp.controller('ProfileController', function ProfileController(
     dataService
 ) {
     var player = dataService.getLoggedInPlayer(),
-        pPk = $routeParams.pPk,
+        pPk = _.parseInt($routeParams.pPk),
         action = $routeParams.action;
 
     if (!player) {
@@ -34,7 +37,7 @@ dirisApp.controller('ProfileController', function ProfileController(
     }
 
     if (!action) {
-        action = pPk == player.pk ? 'edit' : 'view';
+        action = pPk === player.pk ? 'edit' : 'view';
     }
 
     $rootScope.refreshPath = null;

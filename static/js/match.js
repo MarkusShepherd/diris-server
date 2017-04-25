@@ -1,5 +1,8 @@
 'use strict';
 
+/*jslint browser: true, nomen: true */
+/*global angular, $, _, moment, device, navigator, utils, dirisApp */
+
 dirisApp.controller('MatchController', function MatchController(
     $location,
     $log,
@@ -69,5 +72,5 @@ dirisApp.controller('MatchController', function MatchController(
             toastr.error("There was an error fetching the data - please try again later...");
         });
 
-    $scope.action = roundAction;
+    $scope.action = utils.roundAction;
 }); // MatchController

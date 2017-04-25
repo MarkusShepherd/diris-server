@@ -59,16 +59,33 @@ module.exports = [
         "clobbers": [
             "PushNotification"
         ]
+    },
+    {
+        "file": "plugins/cordova-plugin-dialogs/www/notification.js",
+        "id": "cordova-plugin-dialogs.notification",
+        "pluginId": "cordova-plugin-dialogs",
+        "merges": [
+            "navigator.notification"
+        ]
+    },
+    {
+        "file": "plugins/cordova-plugin-dialogs/www/browser/notification.js",
+        "id": "cordova-plugin-dialogs.notification_browser",
+        "pluginId": "cordova-plugin-dialogs",
+        "merges": [
+            "navigator.notification"
+        ]
     }
 ];
 module.exports.metadata = 
 // TOP OF METADATA
 {
-    "cordova-plugin-compat": "1.1.0",
     "cordova-plugin-camera": "2.4.0",
     "cordova-plugin-device": "1.1.5",
     "cordova-plugin-whitelist": "1.3.2",
-    "phonegap-plugin-push": "1.10.1"
+    "phonegap-plugin-push": "1.10.1",
+    "cordova-plugin-dialogs": "1.3.2",
+    "cordova-plugin-compat": "1.1.0"
 }
 // BOTTOM OF METADATA
 });

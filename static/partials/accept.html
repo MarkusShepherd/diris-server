@@ -23,7 +23,7 @@
 		The game will last a total of <b>{{ match.total_rounds }} rounds</b> with a timeout of <b>{{ timeout }} hours</b>.
 	</div>
 
-	<div ng-if="!match.hasAccepted" class="btn-group btn-group-justified btn-group-lg">
+	<div ng-if="!match.hasAccepted" class="btn-group btn-group-justified btn-group-lg btn-group-accept">
 		<div class="btn-group btn-group-lg">
 			<button ng-click="respond(true)" class="btn btn-success">
 				<span class="glyphicon glyphicon-ok-sign"></span>

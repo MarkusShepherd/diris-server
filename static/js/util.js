@@ -1,9 +1,14 @@
 'use strict';
 
-function shuffle(o) {
-    var j, x, i;
-    for (i = o.length; i; j = Math.floor(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x) {}
-    return o;
+/*jslint browser: true, nomen: true */
+/*global angular, $, _, moment, device */
+
+var utils;
+
+function getOrdinal(n) {
+    var s = ['th', 'st', 'nd', 'rd'],
+        v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
 }
 
 function processRound(round, player) {
@@ -21,7 +26,7 @@ function processRound(round, player) {
             round.votes[details.vote_player].push(details.player.toString());
         }
 
-        if (details.player == player.pk) {
+        if (details.player === player.pk) {
             round.playerDetails = details;
         }
     });
@@ -30,7 +35,7 @@ function processRound(round, player) {
         return round;
     }
 
-    round.isStoryTeller = player.pk == round.storyteller;
+    round.isStoryTeller = player.pk === round.storyteller;
     round.hasSubmittedImage = !!(round.playerDetails.image && (!round.isStoryTeller || round.story));
     round.hasVoted = !!round.playerDetails.vote;
 
@@ -73,7 +78,7 @@ function processMatch(match, player) {
     match.accepted = {};
     _.forEach(match.details, function (details) {
         match.accepted[details.player.toString()] = details.invitation_status === 'a';
-        if (details.player == player.pk) {
+        if (details.player === player.pk) {
             match.playerDetails = details;
         }
     });
@@ -83,7 +88,7 @@ function processMatch(match, player) {
 
     _.forEach(match.details, function (details) {
         if (details.score > score) {
-            pos++;
+            pos += 1;
         }
     });
 
@@ -107,15 +112,9 @@ function processMatch(match, player) {
     return match;
 }
 
-function getOrdinal(n) {
-    var s = ['th', 'st', 'nd', 'rd'],
-        v = n % 100;
-    return n + (s[(v - 20) % 10] || s[v] || s[0]);
-}
-
 function isBrowser() {
     try {
-        return device && device.platform === 'browser';
+        return !!(device && device.platform === 'browser');
     } catch (err) {
         return true;
     }
@@ -132,3 +131,10 @@ function roundAction(round) {
 
     return 'image';
 }
+
+utils = {
+    processMatch: processMatch,
+    getOrdinal: getOrdinal,
+    isBrowser: isBrowser,
+    roundAction: roundAction
+};

@@ -50,7 +50,8 @@ a.disabled {
 
 .form,
 .text-story,
-.btn-block {
+.btn-block,
+.btn-group-accept {
     margin-bottom: 20px;
 }
 

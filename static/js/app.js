@@ -1,5 +1,8 @@
 'use strict';
 
+/*jslint browser: true, nomen: true */
+/*global angular, $, _, moment, device, navigator, PushNotification, utils */
+
 var testUrl = 'http://localhost:8000';
 var liveUrl = 'https://diris-app.appspot.com';
 
@@ -135,7 +138,7 @@ dirisApp.directive('playerIcon', function () {
 dirisApp.run(function ($log, authManager, toastr, dataService) {
     authManager.checkAuthOnRefresh();
 
-    if (isBrowser()) {
+    if (utils.isBrowser()) {
         $log.debug('No notifications on browser');
     } else {
         var push = PushNotification.init({

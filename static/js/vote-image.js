@@ -1,5 +1,8 @@
 'use strict';
 
+/*jslint browser: true, nomen: true */
+/*global angular, $, _, moment, device, navigator, utils, dirisApp */
+
 dirisApp.controller('VoteImageController', function VoteImageController(
     $location,
     $log,
@@ -45,7 +48,7 @@ dirisApp.controller('VoteImageController', function VoteImageController(
     matchPromise = dataService.getMatch(mPk)
         .then(function (match) {
             var round = match.rounds[rNo - 1],
-                action = roundAction(round);
+                action = utils.roundAction(round);
 
             if (action !== 'vote') {
                 $location.path('/' + action + '/' + mPk + '/' + rNo).replace();
@@ -84,7 +87,7 @@ dirisApp.controller('VoteImageController', function VoteImageController(
     $q.all([matchPromise, imagePromise]).then(blockUI.stop);
 
     $scope.selectImage = function selectImage(image) {
-        if (image.pk != $scope.round.playerDetails.image) {
+        if (image.pk !== $scope.round.playerDetails.image) {
             $scope.selectedImage = image;
         }
     };

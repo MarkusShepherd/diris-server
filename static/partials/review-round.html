@@ -28,18 +28,18 @@
 	</section>
 	<section>
 		<h3>Other images</h3>
-		<div ng-repeat="details in filterOutKey(round.details, round.storyteller)" ng-if="details.image" class="col-lg-4 col-md-6 col-sm-12">
+		<div ng-repeat="(pPk, details) in round.details" ng-if="details.image && pPk != round.storyteller" class="col-lg-4 col-md-6 col-sm-12">
 			<div class="image-review-container">
 				<div class="submitted-by-container">
-					<player-icon player="players[details.player]"
+					<player-icon player="players[pPk]"
 						class-btn="btn-primary btn-lg"></player-icon>
 				</div>
 				<img src="default-placeholder.png"
 					ng-src="{{ images[details.image].url }}"
 					class="img-responsive img-rounded image-review" />
-				<div ng-if="round.votes[details.player]"
+				<div ng-if="round.votes[pPk]"
 					class="guessed-by-container">
-					<player-icon ng-repeat="pPk in round.votes[details.player]"
+					<player-icon ng-repeat="pPk in round.votes[pPk]"
 						player="players[pPk]"
 						class-img="image-player-incorrect"
 						class-btn="btn-danger btn-lg"></player-icon>

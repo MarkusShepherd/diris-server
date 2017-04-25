@@ -1,5 +1,8 @@
 'use strict';
 
+/*jslint browser: true, nomen: true */
+/*global angular, $, _, moment, device, navigator, utils, dirisApp */
+
 dirisApp.controller('NewMatchController', function NewMatchController(
     $location,
     $log,
@@ -52,7 +55,7 @@ dirisApp.controller('NewMatchController', function NewMatchController(
     $scope.timeout = _.toInteger(STANDARD_TIMEOUT / 3600);
 
     $scope.addPlayer = function addPlayer(p) {
-        if (p.pk == player.pk) {
+        if (p.pk === player.pk) {
             $log.debug('added the current player');
             return;
         }
