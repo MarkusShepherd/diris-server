@@ -502,6 +502,7 @@ class Player(models.Model):
                                related_name='avatars',
                                blank=True, null=True,
                                on_delete=models.SET_NULL)
+    gcm_registration_id = fields.CharField(blank=True, null=True)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 

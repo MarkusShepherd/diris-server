@@ -145,6 +145,7 @@ class PlayerSerializer(serializers.ModelSerializer):
             'pk',
             'user',
             'avatar',
+            'gcm_registration_id',
             'created',
             'last_modified',
         )
@@ -165,3 +166,26 @@ class PlayerSerializer(serializers.ModelSerializer):
         player = Player.objects.create(user=user, **validated_data)
 
         return player
+
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop('user', None)
+        if user_data:
+            user = instance.user
+
+            user.username = user_data.get('username') or user.username
+            user.email = user_data.get('email') or user.email
+            user.first_name = user_data.get('first_name') or user.first_name
+            user.last_name = user_data.get('last_name') or user.last_name
+
+            password = user_data.pop('password')
+            if password:
+                user.set_password(password)
+
+            user.save()
+
+        instance.avatar = validated_data.get('avatar') or instance.avatar
+        instance.gcm_registration_id = (validated_data.get('gcm_registration_id')
+                                        or instance.gcm_registration_id)
+        instance.save()
+
+        return instance
