@@ -1,7 +1,7 @@
 'use strict';
 
 /*jslint browser: true, nomen: true */
-/*global angular, $, _, moment, device */
+/*global _, device, moment */
 
 var utils;
 

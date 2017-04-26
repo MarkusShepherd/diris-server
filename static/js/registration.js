@@ -1,7 +1,7 @@
 'use strict';
 
-/*jslint browser: true, nomen: true */
-/*global angular, $, _, moment, device, navigator, utils, dirisApp */
+/*jslint browser: true */
+/*global dirisApp */
 
 dirisApp.controller('RegistrationController', function RegistrationController(
     $location,
@@ -21,7 +21,7 @@ dirisApp.controller('RegistrationController', function RegistrationController(
 
         $log.debug($scope.player);
 
-        dataService.registerPlayer($scope.player)
+        dataService.createPlayer($scope.player)
             .then(function () {
                 $location.path('/overview/refresh');
             }).catch(function () {

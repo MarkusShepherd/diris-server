@@ -1,7 +1,7 @@
 'use strict';
 
-/*jslint browser: true, nomen: true */
-/*global angular, $, _, moment, device, navigator, PushNotification, utils */
+/*jslint browser: true, stupid: true, todo: true */
+/*global angular, PushNotification */
 
 var testUrl = 'http://localhost:8000';
 var liveUrl = 'https://diris-app.appspot.com';
@@ -20,6 +20,7 @@ dirisApp.constant('BACKEND_URL', liveUrl)
     .constant('MINIMUM_PLAYER', 4)
     .constant('MAXIMUM_PLAYER', 10)
     .constant('STANDARD_TIMEOUT', 60 * 60 * 36)
+    .constant('GCM_SENDER_ID', 696693451234)
     .constant('DEVELOPER_MODE', false);
 
 dirisApp.config(function (
@@ -110,6 +111,7 @@ dirisApp.config(function (
 
     blockUIConfig.autoBlock = false;
 
+    // TODO replace with _ function
     angular.extend(toastrConfig, {
         autoDismiss: false,
         newestOnTop: false,
@@ -135,56 +137,44 @@ dirisApp.directive('playerIcon', function () {
     };
 });
 
-dirisApp.run(function ($log, authManager, toastr, dataService) {
+dirisApp.run(function ($log, authManager, toastr, dataService, GCM_SENDER_ID) {
     authManager.checkAuthOnRefresh();
 
-    if (utils.isBrowser()) {
-        $log.debug('No notifications on browser');
-    } else {
-        var push = PushNotification.init({
-            android: {
-                senderID: 879361060795
-            },
-            ios: {
-                alert: true,
-                badge: true,
-                sound: true
-            },
-            windows: {}
-        });
+    var push = PushNotification.init({
+        android: {
+            senderID: GCM_SENDER_ID
+        },
+        browser: {},
+        ios: {
+            alert: true,
+            badge: true,
+            sound: true,
+            vibration: true
+        },
+        windows: {}
+    });
 
-        push.on('registration', function (data) {
-            $log.debug("Registered push");
-            $log.debug(data);
-            $log.debug(data.registrationId);
+    push.on('registration', function (data) {
+        $log.debug('registration event:', data.registrationId);
+        dataService.setGcmRegistrationID(data.registrationId);
+    });
 
-            var player = dataService.getLoggedInPlayer();
-            if (player && player.pk) {
-                dataService.updatePlayer(player.pk, {
-                    gcmRegistrationID: data.registrationId
-                });
-            } else {
-                dataService.setGcmRegistrationId(data.registrationId);
-            }
-        });
+    push.on('notification', function (data) {
+        $log.debug("Received notification");
+        $log.debug(data);
+        $log.debug(data.message);
+        $log.debug(data.title);
+        $log.debug(data.count);
+        $log.debug(data.sound);
+        $log.debug(data.image);
+        $log.debug(data.additionalData);
+        toastr.info(data.message, data.title);
+    });
 
-        push.on('notification', function (data) {
-            $log.debug("Received notification");
-            $log.debug(data);
-            $log.debug(data.message);
-            $log.debug(data.title);
-            $log.debug(data.count);
-            $log.debug(data.sound);
-            $log.debug(data.image);
-            $log.debug(data.additionalData);
-            toastr.info(data.message, data.title);
-        });
-
-        push.on('error', function (e) {
-            $log.debug("Error in notifications");
-            $log.debug(e);
-            $log.debug(e.message);
-            toastr.error(e.message);
-        });
-    }
+    push.on('error', function (e) {
+        $log.debug("Error in notifications");
+        $log.debug(e);
+        $log.debug(e.message);
+        toastr.error(e.message);
+    });
 });

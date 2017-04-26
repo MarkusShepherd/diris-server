@@ -1,36 +1,22 @@
 'use strict';
 
 /*jslint browser: true */
-/*global document */
+/*global angular, console */
 
 var app = {
-    // Application Constructor
-    initialize: function () {
+    initialize: function initialize() {
         this.bindEvents();
     },
-    // Bind Event Listeners
-    //
-    // Bind any events that are required on startup. Common events are:
-    // 'load', 'deviceready', 'offline', and 'online'.
-    bindEvents: function () {
+    bindEvents: function bindEvents() {
         document.addEventListener('deviceready', this.onDeviceReady, false);
     },
-    // deviceready Event Handler
-    //
-    // The scope of 'this' is the event. In order to call the 'receivedEvent'
-    // function, we must explicitly call 'app.receivedEvent(...);'
-    onDeviceReady: function () {
+    onDeviceReady: function onDeviceReady() {
         app.receivedEvent('deviceready');
     },
-    // Update DOM on a Received Event
-    receivedEvent: function (id) {
-        var parentElement = document.getElementById(id),
-            listeningElement = parentElement.querySelector('.listening'),
-            receivedElement = parentElement.querySelector('.received');
-
-        listeningElement.setAttribute('style', 'display:none;');
-        receivedElement.setAttribute('style', 'display:block;');
-
+    receivedEvent: function receivedEvent(id) {
         console.log('Received Event: ' + id);
+        angular.bootstrap(document, ['dirisApp']);
     }
 };
+
+app.initialize();

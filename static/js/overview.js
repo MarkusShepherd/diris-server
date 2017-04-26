@@ -1,7 +1,7 @@
 'use strict';
 
 /*jslint browser: true, nomen: true */
-/*global angular, $, _, moment, device, navigator, utils, dirisApp */
+/*global _, dirisApp */
 
 dirisApp.controller('OverviewController', function OverviewController(
     $location,

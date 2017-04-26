@@ -1,7 +1,7 @@
 'use strict';
 
-/*jslint browser: true, nomen: true */
-/*global angular, $, _, moment, device, navigator, Camera, FileReader, utils, dirisApp */
+/*jslint browser: true, nomen: true, todo: true */
+/*global $, _, Camera, FileReader, dirisApp, navigator, utils */
 
 dirisApp.controller('SubmitImageController', function SubmitImageController(
     $location,
@@ -105,10 +105,10 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
                     sliderBlock.start();
                 }
                 return dataService.getRandomImages(10);
-            } else {
-                $scope.image = image;
-                return [];
             }
+
+            $scope.image = image;
+            return [];
         }).then(function (images) {
             $scope.randomImages = images;
             $scope.useSlider = !_.isEmpty(images);

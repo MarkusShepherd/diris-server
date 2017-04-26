@@ -1,7 +1,7 @@
 'use strict';
 
-/*jslint browser: true, nomen: true */
-/*global angular, $, _, moment, device, navigator, utils, dirisApp */
+/*jslint browser: true, nomen: true, stupid: true, todo: true */
+/*global _, dirisApp, utils */
 
 dirisApp.factory('dataService', function dataService(
     $localStorage,
@@ -18,8 +18,8 @@ dirisApp.factory('dataService', function dataService(
         players = {},
         images = {},
         token = null,
-        loggedInPlayer = null;
-        // gcmRegistrationID = null;
+        loggedInPlayer = null,
+        gcmRegistrationID = null;
 
     factory.logout = function logout() {
         factory.setToken(null);
@@ -53,12 +53,13 @@ dirisApp.factory('dataService', function dataService(
         }
 
         return $http.post(BACKEND_URL + '/jwt',
-            {username: username, password: password},
-            {skipAuthorization: true})
+                {username: username, password: password},
+                {skipAuthorization: true})
             .then(function (response) {
                 factory.setToken(response.data.token);
                 return token;
             }).catch(function (response) {
+                $log.debug(response);
                 factory.logout();
                 throw new Error(response);
             });
@@ -69,27 +70,8 @@ dirisApp.factory('dataService', function dataService(
         return (token && !jwtHelper.isTokenExpired(token)) ? token : undefined;
     };
 
-    factory.registerPlayer = function registerPlayer(newPlayer) {
-        return $http.post(BACKEND_URL + '/players/',
-            {user: newPlayer}, {skipAuthorization: true})
-            .then(function (response) {
-                var player = response.data;
-
-                if (!player) {
-                    throw new Error(response);
-                }
-
-                factory.setToken(player.token);
-
-                return player;
-            }).catch(function (response) {
-                $log.debug('error');
-                $log.debug(response);
-
-                factory.logout();
-
-                throw new Error(response);
-            });
+    factory.setGcmRegistrationID = function setGcmRegistrationID(gri) {
+        gcmRegistrationID = gri || gcmRegistrationID;
     };
 
     factory.getLoggedInPlayer = function getLoggedInPlayer() {
@@ -101,6 +83,20 @@ dirisApp.factory('dataService', function dataService(
         }
 
         loggedInPlayer = loggedInPlayer || $localStorage.loggedInPlayer;
+
+        if (loggedInPlayer && gcmRegistrationID &&
+                gcmRegistrationID !== loggedInPlayer.gcm_registration_id) {
+            var gri = gcmRegistrationID;
+            gcmRegistrationID = null;
+            $log.debug('old GCM registration ID:', loggedInPlayer.gcm_registration_id);
+            $log.debug('new GCM registration ID:', gri);
+            factory.updatePlayer(loggedInPlayer.pk, {
+                gcm_registration_id: gri
+            })
+                .then($log.debug)
+                .catch($log.debug);
+        }
+
         return loggedInPlayer;
     };
 
@@ -202,7 +198,50 @@ dirisApp.factory('dataService', function dataService(
     function setPlayer(player) {
         $localStorage['player_' + player.pk] = player;
         players[player.pk] = player;
+
+        if (player && loggedInPlayer && loggedInPlayer.pk === player.pk) {
+            loggedInPlayer = _.merge(loggedInPlayer, player);
+            $localStorage.loggedInPlayer = loggedInPlayer;
+        }
     }
+
+    factory.createPlayer = function createPlayer(newPlayer) {
+        return $http.post(BACKEND_URL + '/players/',
+            {user: newPlayer}, {skipAuthorization: true})
+            .then(function (response) {
+                var player = response.data;
+
+                if (!player) {
+                    throw new Error(response);
+                }
+
+                factory.setToken(player.token);
+
+                setPlayer(player);
+
+                return player;
+            }).catch(function (response) {
+                $log.debug('error');
+                $log.debug(response);
+
+                factory.logout();
+
+                throw new Error(response);
+            });
+    };
+
+    factory.updatePlayer = function updatePlayer(pPk, player) {
+        return $http.patch(BACKEND_URL + '/players/' + pPk + '/', player)
+            .then(function (player) {
+                $log.debug("Successfully updated player", pPk);
+                $log.debug(player);
+                setPlayer(player);
+                return player;
+            }).catch(function (response) {
+                $log.debug("Failed to updated player", pPk);
+                $log.debug(response);
+            });
+    };
 
     factory.getPlayers = function getPlayers(forceRefresh, fallback) {
         if (!forceRefresh) {
@@ -371,24 +410,6 @@ dirisApp.factory('dataService', function dataService(
                 return match;
             });
     };
-
-    // TODO
-    // factory.setGcmRegistrationId = function(gri) {
-    //  gcmRegistrationID = gri;
-    // };
-
-    // TODO
-    // factory.updatePlayer = function(pId, player) {
-    //  $http.post(BACKEND_URL + '/player/update/' + pId, player)
-    //  .then(function(response) {
-    //      $log.debug("Successfully updated player " + pId);
-    //      $log.debug(response);
-    //  })
-    //  .catch(function(response) {
-    //      $log.debug("Failed to updated player " + pId);
-    //      $log.debug(response);
-    //  });
-    // };
 
     return factory;
 });

@@ -1,7 +1,7 @@
 'use strict';
 
 /*jslint browser: true, nomen: true */
-/*global angular, $, _, moment, device, navigator, utils, dirisApp */
+/*global _, dirisApp */
 
 dirisApp.controller('AcceptController', function AcceptController(
     $location,
@@ -76,9 +76,8 @@ dirisApp.controller('AcceptController', function AcceptController(
         }).then(function (buttonIndex) {
             if (buttonIndex === 1) {
                 return dataService.respondToInvitation(mPk, accept);
-            } else {
-                return false;
             }
+            return false;
         }).then(function (response) {
             if (!response) {
                 $log.debug('canceled declining invitation');
