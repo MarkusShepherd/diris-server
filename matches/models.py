@@ -9,16 +9,19 @@ import random
 
 from collections import defaultdict
 
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from djangae import fields, storage
 from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
 # from djangae.contrib.pagination import paginated_model
 # from djangae.db.consistency import ensure_instances_consistent
+from gcm import GCM
 from rest_framework import serializers
 
 from .utils import clear_list
 
+GCM_SENDER = GCM(settings.GCM_API_KEY, debug=True)
 LOGGER = logging.getLogger(__name__)
 STORAGE = storage.CloudStorage(bucket='diris-images', google_acl='public-read')
 
@@ -508,6 +511,11 @@ class Player(models.Model):
 
     class Meta(object):
         ordering = ('-last_modified',)
+
+    def send_message(self, **data):
+        if self.gcm_registration_id:
+            return GCM_SENDER.plaintext_request(registration_id=self.gcm_registration_id,
+                                                data=data)
 
 
 class ImageManager(models.Manager):

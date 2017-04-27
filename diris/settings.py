@@ -180,3 +180,7 @@ JWT_AUTH = {
     'JWT_REFRESH_EXPIRATION_DELTA': timedelta(days=30),
     'JWT_PAYLOAD_HANDLER': 'matches.utils.jwt_payload',
 }
+
+# other settings
+GCM_API_KEY = ('AAAAojYqaeI:APA91bGcwqIczB4M7HiZgBxMP2iB7k4A2i2OKnCbjJBRDDPtc2FnKKuuLPaiaBb-'
+               'tKCM1kVvqH8KE0t31VRZVVJv-xWK2Sho-2FOD9PfSJindz10uIN4ZUP-7Ksh_4ivf0awTReEl43k')

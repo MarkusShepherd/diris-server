@@ -6,6 +6,7 @@ git+https://github.com/adamalton/django-csp-reports.git#egg=cspreports
 django-session-csrf
 six
 PyJWT==1.4.2
+python-gcm==0.4
 djangorestframework-jwt==1.9.0
 
 coreapi
