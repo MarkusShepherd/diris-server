@@ -224,6 +224,18 @@ class PlayerViewSet(viewsets.ModelViewSet):
 
         return response
 
+    @list_route(methods=['post'], permission_classes=())
+    def send(self, request, *args, **kwargs):
+        # player = self.get_object()
+
+        # LOGGER.info(player)
+        LOGGER.info(request)
+        LOGGER.info(request.data)
+        # LOGGER.info(player.send_message(**request.data))
+
+        # return Response('ok')
+        raise ValueError('need to give player')
+
 
 class ImageViewSet(viewsets.ModelViewSet):
     queryset = Image.objects.all()
