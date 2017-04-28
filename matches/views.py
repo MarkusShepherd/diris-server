@@ -17,8 +17,9 @@ from django.conf import settings
 from django.contrib.auth import login
 from django.db.models import Q
 from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
-from rest_framework import mixins, permissions, status, views, viewsets
+from rest_framework import mixins, permissions, views, viewsets
 from rest_framework.decorators import detail_route, list_route
+from rest_framework.exceptions import NotAuthenticated
 from rest_framework.response import Response
 from rest_framework.parsers import FileUploadParser, MultiPartParser
 from rest_framework_jwt.settings import api_settings
@@ -230,7 +231,8 @@ class PlayerViewSet(viewsets.ModelViewSet):
     @list_route(methods=['post'], permission_classes=())
     def send(self, request, *args, **kwargs):
         if request.query_params.get('key') != settings.GCM_SERVER_KEY:
-            return Response('fail', status=status.HTTP_401_UNAUTHORIZED)
+            raise NotAuthenticated('the supplied key "{}" is not valid'
+                                   .format(request.query_params.get('key')))
 
         if request.data.get('message') and request.data.get('subscription'):
             msg_obj = request.data.get('message')

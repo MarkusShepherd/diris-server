@@ -21,7 +21,7 @@ from rest_framework import serializers
 
 from .utils import clear_list
 
-GCM_SENDER = GCM(settings.GCM_API_KEY, debug=True)
+GCM_SENDER = GCM(settings.GCM_API_KEY, debug=settings.DEBUG)
 LOGGER = logging.getLogger(__name__)
 STORAGE = storage.CloudStorage(bucket='diris-images', google_acl='public-read')
 
