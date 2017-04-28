@@ -41,6 +41,10 @@ handlers:
   script: diris.wsgi.application
   secure: always
 
+libraries:
+- name: ssl
+  version: latest
+
 skip_files:
   - ^(.*/)?#.*#$
   - ^(.*/)?.*~$

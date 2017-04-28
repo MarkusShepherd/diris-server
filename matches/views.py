@@ -9,12 +9,15 @@ import logging
 import os.path
 import random
 
+from base64 import b64decode
+
 import six
 
+from django.conf import settings
 from django.contrib.auth import login
 from django.db.models import Q
 from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
-from rest_framework import mixins, permissions, views, viewsets
+from rest_framework import mixins, permissions, status, views, viewsets
 from rest_framework.decorators import detail_route, list_route
 from rest_framework.response import Response
 from rest_framework.parsers import FileUploadParser, MultiPartParser
@@ -226,15 +229,44 @@ class PlayerViewSet(viewsets.ModelViewSet):
 
     @list_route(methods=['post'], permission_classes=())
     def send(self, request, *args, **kwargs):
-        # player = self.get_object()
+        if request.query_params.get('key') != settings.GCM_SERVER_KEY:
+            return Response('fail', status=status.HTTP_401_UNAUTHORIZED)
 
-        # LOGGER.info(player)
-        LOGGER.info(request)
-        LOGGER.info(request.data)
-        # LOGGER.info(player.send_message(**request.data))
+        if request.data.get('message') and request.data.get('subscription'):
+            msg_obj = request.data.get('message')
+            attributes = msg_obj.get('attributes') or {}
+            try:
+                add_data = json.loads(b64decode(msg_obj.get('data') or 'e30='))
+                data = merge(attributes, add_data)
+            except Exception as exc:
+                LOGGER.warning('could not process data "%s"', msg_obj.get('data'))
+                LOGGER.warning(exc)
+                data = attributes
 
-        # return Response('ok')
-        raise ValueError('need to give player')
+        else:
+            data = request.data
+
+        player_pk = data.pop('player_pk', None)
+        player_pks = data.pop('player_pks', [])
+
+        if isinstance(player_pks, (list, tuple, set, frozenset)):
+            player_pks = set(player_pks)
+        elif player_pks:
+            player_pks = {player_pks}
+        else:
+            player_pks = set()
+
+        if player_pk:
+            player_pks.add(player_pk)
+
+        LOGGER.info(player_pks)
+        LOGGER.info(data)
+
+        for player in Player.objects.filter(pk__in=player_pks):
+            LOGGER.info(player.pk)
+            LOGGER.info(player.send_message(**data))
+
+        return Response('ok')
 
 
 class ImageViewSet(viewsets.ModelViewSet):

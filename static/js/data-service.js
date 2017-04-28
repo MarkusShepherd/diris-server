@@ -232,10 +232,10 @@ dirisApp.factory('dataService', function dataService(
 
     factory.updatePlayer = function updatePlayer(pPk, player) {
         return $http.patch(BACKEND_URL + '/players/' + pPk + '/', player)
-            .then(function (player) {
+            .then(function (response) {
                 $log.debug("Successfully updated player", pPk);
-                $log.debug(player);
-                setPlayer(player);
+                $log.debug(response);
+                setPlayer(response.data);
                 return player;
             }).catch(function (response) {
                 $log.debug("Failed to updated player", pPk);
