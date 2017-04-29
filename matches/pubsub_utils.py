@@ -8,16 +8,21 @@ https://github.com/GoogleCloudPlatform/cloud-pubsub-samples-python/
 
 from __future__ import absolute_import, unicode_literals
 
+import json
+import logging
+
 from base64 import b64encode
 
+import httplib2
+import six
+
+from apiclient import discovery
 from django.conf import settings
 from google.appengine.api import app_identity
 from google.appengine.api import memcache
-
-from apiclient import discovery
-import httplib2
 from oauth2client.client import GoogleCredentials
 
+LOGGER = logging.getLogger(__name__)
 PUBSUB_SCOPES = ['https://www.googleapis.com/auth/pubsub']
 
 def get_client_from_credentials(credentials):
@@ -39,6 +44,9 @@ class PubSubSender(object):
 
     def send_message(self, data=None, attributes=None):
         data = data or ''
+        if not isinstance(data, six.string_types):
+            data = json.dumps(data)
+
         attributes = attributes or {}
 
         body = {
@@ -47,6 +55,9 @@ class PubSubSender(object):
                 'attributes': attributes,
             }]
         }
+
+        LOGGER.info('publish message; topic: %s; data: %s; attributes: %s',
+                    self.full_topic_name, data, attributes)
 
         return self.client.projects().topics().publish(
             topic=self.full_topic_name,

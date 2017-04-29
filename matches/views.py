@@ -249,7 +249,7 @@ class PlayerViewSet(viewsets.ModelViewSet):
             data = request.data
 
         player_pk = data.pop('player_pk', None)
-        player_pks = data.pop('player_pks', [])
+        player_pks = data.pop('player_pks', ())
 
         if isinstance(player_pks, (list, tuple, set, frozenset)):
             player_pks = set(player_pks)

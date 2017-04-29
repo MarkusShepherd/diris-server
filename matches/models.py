@@ -18,11 +18,14 @@ from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
 # from djangae.db.consistency import ensure_instances_consistent
 from gcm import GCM
 from rest_framework import serializers
+from six import iteritems, itervalues
 
+from .pubsub_utils import PubSubSender
 from .utils import clear_list
 
 GCM_SENDER = GCM(settings.GCM_API_KEY, debug=settings.DEBUG)
 LOGGER = logging.getLogger(__name__)
+PUBSUB_SENDER = PubSubSender()
 STORAGE = storage.CloudStorage(bucket='diris-images', google_acl='public-read')
 
 
@@ -42,10 +45,14 @@ class MatchDetails(object):
         self.player = player
         self.is_inviting_player = is_inviting_player
         self.date_invited = date_invited or timezone.now()
-        self.invitation_status = (MatchDetails.ACCEPTED if is_inviting_player
+        self.invitation_status = (MatchDetails.ACCEPTED
+                                  if is_inviting_player
                                   else invitation_status or MatchDetails.INVITED)
         self.date_responded = date_responded or timezone.now() if is_inviting_player else None
         self.score = score
+        self.notification_sent = (timezone.now()
+                                  if self.invitation_status == MatchDetails.ACCEPTED
+                                  else None)
 
 
 class MatchDetailsSerializer(serializers.Serializer):
@@ -56,6 +63,7 @@ class MatchDetailsSerializer(serializers.Serializer):
                                                 default=MatchDetails.INVITED)
     date_responded = serializers.DateTimeField(required=False, allow_null=True)
     score = serializers.IntegerField(min_value=0, default=0)
+    notification_sent = serializers.DateTimeField(required=False, allow_null=True)
 
     def create(self, validated_data):
         return MatchDetails(**validated_data)
@@ -71,6 +79,9 @@ class RoundDetails(object):
         self.score = score
         self.vote = vote
         self.vote_player = vote_player
+        self.notification_image_sent = None
+        self.notification_vote_sent = timezone.now() if self.is_storyteller else None
+        self.notification_finished_sent = None
 
     def display_vote_to(self, match_round=None, player_pk=None):
         match_round = match_round or self.match_round
@@ -94,6 +105,9 @@ class RoundDetailsSerializer(serializers.Serializer):
     score = serializers.IntegerField(min_value=0, default=0)
     vote = serializers.IntegerField(required=False, allow_null=True)
     vote_player = serializers.IntegerField(required=False, allow_null=True)
+    notification_image_sent = serializers.DateTimeField(required=False, allow_null=True)
+    notification_vote_sent = serializers.DateTimeField(required=False, allow_null=True)
+    notification_finished_sent = serializers.DateTimeField(required=False, allow_null=True)
 
     def create(self, validated_data):
         return RoundDetails(**validated_data)
@@ -141,7 +155,7 @@ class Round(object):
             return self._details_dict
 
         result = {}
-        for player_pk, data in self.details.items():
+        for player_pk, data in iteritems(self.details):
             serializer = RoundDetailsSerializer(data=data)
             serializer.is_valid(raise_exception=True)
             result[int(player_pk)] = serializer.save(match_round=self)
@@ -205,7 +219,7 @@ class Round(object):
         if self.status != Round.SUBMIT_VOTES:
             raise ValueError('not ready for submission')
 
-        vote_player = [d.player for d in self.details_dict.values() if d.image == image_pk]
+        vote_player = [d.player for d in itervalues(self.details_dict) if d.image == image_pk]
 
         if len(vote_player) != 1:
             raise ValueError('image not found in this round')
@@ -226,11 +240,11 @@ class Round(object):
             self.score()
 
     def check_status(self, match=None, prev_round=None):
-        if all(details.vote for player_pk, details in self.details_dict.items()
+        if all(details.vote for player_pk, details in iteritems(self.details_dict)
                if player_pk != self.storyteller):
             self.status = Round.FINISHED
 
-        elif all(details.image for details in self.details_dict.values()):
+        elif all(details.image for details in itervalues(self.details_dict)):
             self.status = Round.SUBMIT_VOTES
 
         elif self.details_dict[self.storyteller].image and self.story:
@@ -257,7 +271,7 @@ class Round(object):
 
         scores = defaultdict(int)
 
-        non_storyteller_details = [details for player_pk, details in self.details_dict.items()
+        non_storyteller_details = [details for player_pk, details in iteritems(self.details_dict)
                                    if player_pk != self.storyteller]
 
         for details in non_storyteller_details:
@@ -281,10 +295,84 @@ class Round(object):
                 if details.vote_player == self.storyteller:
                     scores[details.player] += Round.NOT_ALL_CORRECT_OR_WRONG_SCORE
 
-        for details in self.details_dict.values():
+        for details in itervalues(self.details_dict):
             details.score = scores[details.player]
 
         return scores
+
+    def send_notifications(self, match=None):
+        if (self.status == Round.SUBMIT_STORY
+                and not self.details_dict[self.storyteller].notification_image_sent):
+            data = {
+                'player_pk': self.storyteller,
+                'title': 'Tell your story!',
+                'message': 'A new round has started - tell us your story',
+            }
+            response = PUBSUB_SENDER.send_message(data=data)
+
+            if response:
+                self.details_dict[self.storyteller].notification_image_sent = timezone.now()
+
+        elif self.status == Round.SUBMIT_OTHERS:
+            player_pks = [player_pk for player_pk, details in iteritems(self.details_dict)
+                          if not (details.is_storyteller or details.notification_image_sent)]
+
+            if player_pks:
+                storyteller = Player.objects.get(pk=self.storyteller).user.username
+                data = {
+                    'player_pks': player_pks,
+                    'title': 'Submit your image!',
+                    'message': ("Player {} has told their story, now it's find an image that fits"
+                                .format(storyteller)),
+                }
+                response = PUBSUB_SENDER.send_message(data=data)
+
+                if response:
+                    for player_pk in player_pks:
+                        self.details_dict[player_pk].notification_image_sent = timezone.now()
+
+        elif self.status == Round.SUBMIT_VOTES:
+            player_pks = [player_pk for player_pk, details in iteritems(self.details_dict)
+                          if not (details.is_storyteller or details.notification_vote_sent)]
+
+            if player_pks:
+                data = {
+                    'player_pks': player_pks,
+                    'title': 'Vote for the right image!',
+                    'message': ('Everybody has submitted their image, '
+                                'now find the one that fits the story'),
+                }
+                response = PUBSUB_SENDER.send_message(data=data)
+
+                if response:
+                    for player_pk in player_pks:
+                        self.details_dict[player_pk].notification_vote_sent = timezone.now()
+
+        elif self.status == Round.FINISHED:
+            player_pks = [player_pk for player_pk, details in iteritems(self.details_dict)
+                          if not details.notification_finished_sent]
+
+            if player_pks:
+                match = match or self.match
+
+                if match and match.status == Match.FINISHED:
+                    title = 'The match has finished'
+                    message = ('The last round has finished - '
+                               'check out the votes and the final scores!')
+                else:
+                    title = 'The round has finished'
+                    message = 'Everybody has submitted their votes, now check out the scores!'
+
+                data = {
+                    'player_pks': player_pks,
+                    'title': title,
+                    'message': message,
+                }
+                response = PUBSUB_SENDER.send_message(data=data)
+
+                if response:
+                    for player_pk in player_pks:
+                        self.details_dict[player_pk].notification_finished_sent = timezone.now()
 
     def display_images_to(self, player_pk=None):
         return bool(self.status in (Round.SUBMIT_VOTES, Round.FINISHED)
@@ -327,7 +415,7 @@ class MatchManager(models.Manager):
                                                  is_inviting_player=player.pk == inviting_player.pk)
                          for player in players}
         match_details_data = {player: MatchDetailsSerializer(instance=details).data
-                              for player, details in match_details.items()}
+                              for player, details in iteritems(match_details)}
 
         total_rounds = total_rounds or len(players)
 
@@ -401,7 +489,7 @@ class Match(models.Model):
             return self._details_dict
 
         result = {}
-        for player_pk, data in self.details.items():
+        for player_pk, data in iteritems(self.details):
             serializer = MatchDetailsSerializer(data=data)
             serializer.is_valid(raise_exception=True)
             result[int(player_pk)] = serializer.save(match=self)
@@ -435,7 +523,7 @@ class Match(models.Model):
         self.check_status()
 
     def check_status(self):
-        for details in self.details_dict.values():
+        for details in itervalues(self.details_dict):
             if details.invitation_status == MatchDetails.DECLINED:
                 # TODO remove the player instead (if possible) and adjust rounds & details
                 LOGGER.info('player %d declined the invitation, delete the match', details.player)
@@ -444,7 +532,7 @@ class Match(models.Model):
 
         self.status = (Match.WAITING
                        if any(details.invitation_status != MatchDetails.ACCEPTED
-                              for details in self.details_dict.values())
+                              for details in itervalues(self.details_dict))
                        else Match.IN_PROGESS)
 
         prev_round = None
@@ -454,7 +542,7 @@ class Match(models.Model):
             curr_round.check_status(match=self, prev_round=prev_round)
             if curr_round.is_current_round:
                 self.current_round = curr_round.number
-            for details in curr_round.details_dict.values():
+            for details in itervalues(curr_round.details_dict):
                 if details.image:
                     self.images_ids.add(details.image)
             prev_round = curr_round
@@ -467,13 +555,34 @@ class Match(models.Model):
 
         for round_ in self.rounds_list:
             round_scores = round_.score()
-            for player_pk, value in round_scores.items():
+            for player_pk, value in iteritems(round_scores):
                 scores[player_pk] += value
 
-        for details in self.details_dict.values():
+        for details in itervalues(self.details_dict):
             details.score = scores[details.player]
 
         return scores
+
+    def send_notifications(self):
+        if self.status == Match.WAITING:
+            player_pks = [player_pk for player_pk, details in iteritems(self.details_dict)
+                          if not details.notification_sent]
+            if player_pks:
+                data = {
+                    'player_pks': player_pks,
+                    'title': 'New invitation',
+                    'message': ('You got an invitation from {}. Do you want to accept it?'
+                                .format(self.inviting_player.user.username)),
+                }
+                response = PUBSUB_SENDER.send_message(data=data)
+
+                if response:
+                    for player_pk in player_pks:
+                        self.details_dict[player_pk].notification_sent = timezone.now()
+
+        else:
+            for round_ in self.rounds_list:
+                round_.send_notifications(match=self)
 
     def save(self, *args, **kwargs):
         if self.status == Match.DELETE:
@@ -481,15 +590,17 @@ class Match(models.Model):
             LOGGER.info(self.delete())
             return
 
+        self.send_notifications()
+
         if self._details_dict is not None:
             self.details = {player_pk: MatchDetailsSerializer(instance=details).data
-                            for player_pk, details in self._details_dict.items()}
+                            for player_pk, details in iteritems(self._details_dict)}
 
         if self._rounds_list is not None:
             for round_ in self._rounds_list:
                 if round_._details_dict is not None:
                     round_.details = {player_pk: RoundDetailsSerializer(instance=details).data
-                                      for player_pk, details in round_._details_dict.items()}
+                                      for player_pk, details in iteritems(round_._details_dict)}
             self.rounds = RoundSerializer(instance=self._rounds_list, many=True).data
 
         super(Match, self).save(*args, **kwargs)
