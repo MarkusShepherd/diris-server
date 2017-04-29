@@ -186,3 +186,4 @@ GCM_API_KEY = ('AAAAojYqaeI:APA91bGcwqIczB4M7HiZgBxMP2iB7k4A2i2OKnCbjJBRDDPtc2Fn
                'tKCM1kVvqH8KE0t31VRZVVJv-xWK2Sho-2FOD9PfSJindz10uIN4ZUP-7Ksh_4ivf0awTReEl43k')
 GCM_SERVER_KEY = ('LIyP4xWLqrT7tGjPdofdskVTgkH0pwsN559gJNg249kSCN26rT'
                   'n3pZkd6Y6Ka5kaEp16fpyE3coqneZKaL8bH0lsbShlx3HkrmNc')
+PUBSUB_NOTIFICATIONS_TOPIC = 'notifications'

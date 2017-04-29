@@ -1,0 +1,54 @@
+# -*- coding: utf-8 -*-
+
+'''
+utility module for Pub/Sub, based on
+https://github.com/GoogleCloudPlatform/cloud-pubsub-samples-python/
+    blob/master/appengine-push/pubsub_utils.py
+'''
+
+from __future__ import absolute_import, unicode_literals
+
+from base64 import b64encode
+
+from django.conf import settings
+from google.appengine.api import app_identity
+from google.appengine.api import memcache
+
+from apiclient import discovery
+import httplib2
+from oauth2client.client import GoogleCredentials
+
+PUBSUB_SCOPES = ['https://www.googleapis.com/auth/pubsub']
+
+def get_client_from_credentials(credentials):
+    if credentials.create_scoped_required():
+        credentials = credentials.create_scoped(PUBSUB_SCOPES)
+
+    http = httplib2.Http(memcache)
+    credentials.authorize(http)
+
+    return discovery.build('pubsub', 'v1', http=http)
+
+class PubSubSender(object):
+    def __init__(self, project_id=None, topic_name=None):
+        self.client = get_client_from_credentials(GoogleCredentials.get_application_default())
+
+        project_id = project_id or app_identity.get_application_id()
+        topic_name = topic_name or settings.PUBSUB_NOTIFICATIONS_TOPIC
+        self.full_topic_name = 'projects/{}/topics/{}'.format(project_id, topic_name)
+
+    def send_message(self, data=None, attributes=None):
+        data = data or ''
+        attributes = attributes or {}
+
+        body = {
+            'messages': [{
+                'data': b64encode(data.encode('utf-8')),
+                'attributes': attributes,
+            }]
+        }
+
+        return self.client.projects().topics().publish(
+            topic=self.full_topic_name,
+            body=body,
+        ).execute()

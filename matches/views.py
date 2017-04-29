@@ -274,8 +274,18 @@ class PlayerViewSet(viewsets.ModelViewSet):
 class ImageViewSet(viewsets.ModelViewSet):
     queryset = Image.objects.all()
     serializer_class = ImageSerializer
+    parser_classes = (MultiPartParser, FileUploadParser)
 
     default_random_size = 5
+
+    # def create(self, request, *args, **kwargs):
+    #     if not request.data.get('owner'):
+    #         try:
+    #             request.data['owner'] = request.user.player
+    #         except AttributeError:
+    #             request.data['owner'] = None
+
+    #     return super(ImageViewSet, self).create(request, *args, **kwargs)
 
     @list_route()
     def random(self, request, *args, **kwargs):
