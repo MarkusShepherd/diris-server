@@ -45,6 +45,14 @@ COPY_DIR = {
     os.path.join(APPENGINE_TARGET_DIR, 'lib', 'oauth2client', 'oauth2client'):
         os.path.join(PROD_TARGET_DIR, 'oauth2client'),
 }
+RM_FILES = (
+    os.path.join(PROD_TARGET_DIR, 'django'),
+    os.path.join(PROD_TARGET_DIR, 'Django-1.11.dist-info'),
+    os.path.join(PROD_TARGET_DIR, 'jinja2'),
+    os.path.join(PROD_TARGET_DIR, 'Jinja2-2.9.6.dist-info'),
+    os.path.join(PROD_TARGET_DIR, 'markupsafe'),
+    os.path.join(PROD_TARGET_DIR, 'MarkupSafe-1.0.dist-info'),
+)
 
 
 def check_commands_installed():
@@ -122,6 +130,13 @@ def install_requirements():
         args = ["pip", "install", "-r", requirements, "-t", target, "-I"]
         process = subprocess.Popen(args)
         process.wait()
+
+    for path in RM_FILES:
+        print('removing "{}"'.format(path))
+        if os.path.isdir(path) and not os.path.islink(path):
+            shutil.rmtree(path, ignore_errors=True)
+        elif os.path.isfile(path):
+            os.remove(path)
 
     for src, dst in iteritems(COPY_DIR):
         if not os.path.exists(dst):

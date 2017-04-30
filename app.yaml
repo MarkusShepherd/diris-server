@@ -42,8 +42,14 @@ handlers:
   secure: always
 
 libraries:
-# - name: django
-#   version: '1.9'
+- name: django
+  version: '1.9'
+- name: jinja2
+  version: '2.6'
+- name: markupsafe
+  version: '0.15'
+- name: PIL
+  version: '1.1.7'
 - name: ssl
   version: '2.7'
 
