@@ -36,13 +36,21 @@ def get_client_from_credentials(credentials):
 
 class PubSubSender(object):
     def __init__(self, project_id=None, topic_name=None):
-        self.client = get_client_from_credentials(GoogleCredentials.get_application_default())
+        try:
+            self.client = get_client_from_credentials(GoogleCredentials.get_application_default())
 
-        project_id = project_id or app_identity.get_application_id()
-        topic_name = topic_name or settings.PUBSUB_NOTIFICATIONS_TOPIC
-        self.full_topic_name = 'projects/{}/topics/{}'.format(project_id, topic_name)
+            project_id = project_id or app_identity.get_application_id()
+            topic_name = topic_name or settings.PUBSUB_NOTIFICATIONS_TOPIC
+            self.full_topic_name = 'projects/{}/topics/{}'.format(project_id, topic_name)
+        except Exception as exc:
+            LOGGER.warning(exc)
+            self.client = None
+            self.full_topic_name = None
 
     def send_message(self, data=None, attributes=None):
+        if not (self.client and self.full_topic_name):
+            return
+
         data = data or ''
         if not isinstance(data, six.string_types):
             data = json.dumps(data)
@@ -59,7 +67,13 @@ class PubSubSender(object):
         LOGGER.info('publish message; topic: %s; data: %s; attributes: %s',
                     self.full_topic_name, data, attributes)
 
-        return self.client.projects().topics().publish(
-            topic=self.full_topic_name,
-            body=body,
-        ).execute()
+        try:
+            response = self.client.projects().topics().publish(
+                topic=self.full_topic_name,
+                body=body,
+            ).execute()
+        except Exception as exc:
+            LOGGER.warning(exc)
+            response = None
+
+        return response

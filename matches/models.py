@@ -632,8 +632,12 @@ class Player(models.Model):
     def send_message(self, **data):
         if self.gcm_registration_id:
             stt = time.time()
-            response = GCM_SENDER.plaintext_request(registration_id=self.gcm_registration_id,
-                                                    data=data)
+            try:
+                response = GCM_SENDER.plaintext_request(registration_id=self.gcm_registration_id,
+                                                        data=data)
+            except Exception as exc:
+                LOGGER.warning(exc)
+                response = None
             LOGGER.info('sending GCM messages took %.3f seconds', time.time() - stt)
             return response
 
