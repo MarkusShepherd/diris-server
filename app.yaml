@@ -1,5 +1,5 @@
 application: diris-app
-version: 0-2-0
+version: 0-2-1
 runtime: python27
 api_version: 1
 threadsafe: true
@@ -42,8 +42,10 @@ handlers:
   secure: always
 
 libraries:
+# - name: django
+#   version: '1.9'
 - name: ssl
-  version: latest
+  version: '2.7'
 
 skip_files:
   - ^(.*/)?#.*#$

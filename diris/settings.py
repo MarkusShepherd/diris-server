@@ -36,7 +36,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'csp',
     'cspreports',
-    'djangae.contrib.gauth.datastore',
+    'djangae.contrib.gauth_datastore',
     'djangae.contrib.security',
     'djangae.contrib.consistency',
     'diris',
@@ -161,11 +161,11 @@ REST_FRAMEWORK = {
 }
 
 # AUTH_USER_MODEL = 'djangae.contrib.gauth.datastore.models.GaeDatastoreUser'
-AUTH_USER_MODEL = 'djangae.GaeDatastoreUser'
+AUTH_USER_MODEL = 'gauth_datastore.GaeDatastoreUser'
 # DJANGAE_CREATE_UNKNOWN_USER = True
 
 AUTHENTICATION_BACKENDS = (
-    'djangae.contrib.gauth.datastore.backends.AppEngineUserAPIBackend',
+    'djangae.contrib.gauth_datastore.backends.AppEngineUserAPIBackend',
     'django.contrib.auth.backends.ModelBackend',
 )
 

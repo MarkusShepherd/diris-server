@@ -14,7 +14,7 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from djangae import fields, storage
-from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
+from djangae.contrib.gauth_datastore.models import GaeDatastoreUser
 # from djangae.contrib.pagination import paginated_model
 # from djangae.db.consistency import ensure_instances_consistent
 from gcm import GCM
@@ -326,7 +326,7 @@ class Round(object):
                 data = {
                     'player_pks': player_pks,
                     'title': 'Submit your image!',
-                    'message': ("Player {} has told their story, now it's find an image that fits"
+                    'message': ('Player {} has told their story, now find an image that fits'
                                 .format(storyteller)),
                 }
                 response = PUBSUB_SENDER.send_message(data=data)

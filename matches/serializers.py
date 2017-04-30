@@ -8,7 +8,7 @@ import logging
 import random
 
 from rest_framework import serializers
-from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
+from djangae.contrib.gauth_datastore.models import GaeDatastoreUser
 
 from .models import Match, Player, Image, MatchDetailsSerializer, RoundSerializer
 

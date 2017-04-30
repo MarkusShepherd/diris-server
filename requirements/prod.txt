@@ -1,13 +1,13 @@
 #djangae==0.9.6
-git+https://github.com/MarkusShepherd/djangae@116a97c5d950d2470bf06b1dd3adf3d9d1cb4b2d#egg=djangae
+git+https://github.com/MarkusShepherd/djangae#egg=djangae
 django>=1.8,<1.10
 git+https://github.com/mozilla/django-csp.git#egg=djangocsp
 git+https://github.com/adamalton/django-csp-reports.git#egg=cspreports
 django-session-csrf
 six
-PyJWT==1.4.2
-python-gcm==0.4
-djangorestframework-jwt==1.9.0
+PyJWT
+python-gcm
+djangorestframework-jwt
 
 coreapi
 djangorestframework

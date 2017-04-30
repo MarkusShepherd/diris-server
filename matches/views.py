@@ -16,7 +16,7 @@ import six
 from django.conf import settings
 from django.contrib.auth import login
 from django.db.models import Q
-from djangae.contrib.gauth.datastore.models import GaeDatastoreUser
+from djangae.contrib.gauth_datastore.models import GaeDatastoreUser
 from rest_framework import mixins, permissions, views, viewsets
 from rest_framework.decorators import detail_route, list_route
 from rest_framework.exceptions import NotAuthenticated
