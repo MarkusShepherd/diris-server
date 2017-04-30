@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import absolute_import, print_function, unicode_literals
+
 import os
 import subprocess
 import shutil
@@ -9,6 +11,8 @@ import platform
 from StringIO import StringIO
 from zipfile import ZipFile
 from urllib import urlopen
+
+from six import iteritems
 
 REQUIREMENTS = ["pip", "git"]
 
@@ -34,6 +38,13 @@ FEATURED_SDK_REPO = "https://storage.googleapis.com/appengine-sdks/featured/"
 DEPRECATED_SDK_REPO = "https://storage.googleapis.com/appengine-sdks/deprecated/{}/".format(
     APPENGINE_SDK_VERSION.replace('.', '')
 )
+
+COPY_DIR = {
+    os.path.join(APPENGINE_TARGET_DIR, 'lib', 'apiclient', 'apiclient'):
+        os.path.join(PROD_TARGET_DIR, 'apiclient'),
+    os.path.join(APPENGINE_TARGET_DIR, 'lib', 'oauth2client', 'oauth2client'):
+        os.path.join(PROD_TARGET_DIR, 'oauth2client'),
+}
 
 
 def check_commands_installed():
@@ -73,8 +84,8 @@ def install_app_engine_sdk():
         # Make sure the dev_appserver and appcfg are executable
         for module in ("dev_appserver.py", "appcfg.py"):
             app = os.path.join(APPENGINE_TARGET_DIR, module)
-            st = os.stat(app)
-            os.chmod(app, st.st_mode | stat.S_IEXEC)
+            stat_ = os.stat(app)
+            os.chmod(app, stat_.st_mode | stat.S_IEXEC)
 
     else:
         print(
@@ -109,8 +120,13 @@ def install_requirements():
         # install all the required third party libs into the target directory
         print(pip_msg.format(filename=os.path.basename(requirements), target=target))
         args = ["pip", "install", "-r", requirements, "-t", target, "-I"]
-        p = subprocess.Popen(args)
-        p.wait()
+        process = subprocess.Popen(args)
+        process.wait()
+
+    for src, dst in iteritems(COPY_DIR):
+        if not os.path.exists(dst):
+            print('copying from "{}" to "{}"'.format(src, dst))
+            shutil.copytree(src, dst)
 
 
 if __name__ == "__main__":

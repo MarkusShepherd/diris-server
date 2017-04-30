@@ -6,6 +6,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import logging
 import random
+import time
 
 from collections import defaultdict
 
@@ -40,7 +41,7 @@ class MatchDetails(object):
     )
 
     def __init__(self, player, match=None, is_inviting_player=False, date_invited=None,
-                 invitation_status=INVITED, date_responded=None, score=0):
+                 invitation_status=INVITED, date_responded=None, score=0, notification_sent=None):
         self.match = match
         self.player = player
         self.is_inviting_player = is_inviting_player
@@ -50,9 +51,10 @@ class MatchDetails(object):
                                   else invitation_status or MatchDetails.INVITED)
         self.date_responded = date_responded or timezone.now() if is_inviting_player else None
         self.score = score
-        self.notification_sent = (timezone.now()
-                                  if self.invitation_status == MatchDetails.ACCEPTED
-                                  else None)
+        self.notification_sent = (notification_sent
+                                  or (timezone.now()
+                                      if self.invitation_status == MatchDetails.ACCEPTED
+                                      else None))
 
 
 class MatchDetailsSerializer(serializers.Serializer):
@@ -71,7 +73,8 @@ class MatchDetailsSerializer(serializers.Serializer):
 
 class RoundDetails(object):
     def __init__(self, player, match_round=None, is_storyteller=False, image=None,
-                 score=0, vote=None, vote_player=None):
+                 score=0, vote=None, vote_player=None, notification_image_sent=None,
+                 notification_vote_sent=None, notification_finished_sent=None):
         self.match_round = match_round
         self.player = player
         self.is_storyteller = is_storyteller
@@ -79,9 +82,10 @@ class RoundDetails(object):
         self.score = score
         self.vote = vote
         self.vote_player = vote_player
-        self.notification_image_sent = None
-        self.notification_vote_sent = timezone.now() if self.is_storyteller else None
-        self.notification_finished_sent = None
+        self.notification_image_sent = notification_image_sent or None
+        self.notification_vote_sent = (notification_vote_sent
+                                       or (timezone.now() if self.is_storyteller else None))
+        self.notification_finished_sent = notification_finished_sent or None
 
     def display_vote_to(self, match_round=None, player_pk=None):
         match_round = match_round or self.match_round
@@ -590,7 +594,9 @@ class Match(models.Model):
             LOGGER.info(self.delete())
             return
 
+        stt = time.time()
         self.send_notifications()
+        LOGGER.info('sending PubSub messages took %.3f seconds', time.time() - stt)
 
         if self._details_dict is not None:
             self.details = {player_pk: MatchDetailsSerializer(instance=details).data
@@ -625,8 +631,11 @@ class Player(models.Model):
 
     def send_message(self, **data):
         if self.gcm_registration_id:
-            return GCM_SENDER.plaintext_request(registration_id=self.gcm_registration_id,
-                                                data=data)
+            stt = time.time()
+            response = GCM_SENDER.plaintext_request(registration_id=self.gcm_registration_id,
+                                                    data=data)
+            LOGGER.info('sending GCM messages took %.3f seconds', time.time() - stt)
+            return response
 
 
 class ImageManager(models.Manager):

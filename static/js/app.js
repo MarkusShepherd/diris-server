@@ -3,8 +3,9 @@
 /*jslint browser: true, stupid: true, todo: true */
 /*global angular, PushNotification */
 
-var testUrl = 'http://localhost:8000';
-var liveUrl = 'https://diris-app.appspot.com';
+var testUrl = 'http://localhost:8000',
+    stagingUrl = 'https://0-2-0-dot-diris-app.appspot.com',
+    liveUrl = 'https://diris-app.appspot.com';
 
 var dirisApp = angular.module('dirisApp', [
     'angular-jwt',
