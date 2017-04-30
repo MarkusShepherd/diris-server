@@ -114,7 +114,7 @@ function processMatch(match, player) {
 
 function isBrowser() {
     try {
-        return !!(device && device.platform === 'browser');
+        return !device || device.platform === 'browser';
     } catch (err) {
         return true;
     }

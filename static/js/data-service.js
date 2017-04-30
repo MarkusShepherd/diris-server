@@ -84,7 +84,7 @@ dirisApp.factory('dataService', function dataService(
 
         loggedInPlayer = loggedInPlayer || $localStorage.loggedInPlayer;
 
-        if (loggedInPlayer && gcmRegistrationID &&
+        if (!utils.isBrowser() && loggedInPlayer && gcmRegistrationID &&
                 gcmRegistrationID !== loggedInPlayer.gcm_registration_id) {
             var gri = gcmRegistrationID;
             gcmRegistrationID = null;
