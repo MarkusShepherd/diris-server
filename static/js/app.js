@@ -4,7 +4,7 @@
 /*global angular, PushNotification */
 
 var testUrl = 'http://localhost:8000',
-    stagingUrl = 'https://0-2-0-dot-diris-app.appspot.com',
+    stagingUrl = 'https://0-2-1-dot-diris-app.appspot.com',
     liveUrl = 'https://diris-app.appspot.com';
 
 var dirisApp = angular.module('dirisApp', [
