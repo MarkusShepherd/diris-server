@@ -17,7 +17,7 @@ from django.conf import settings
 from django.contrib.auth import login
 from django.db.models import Q
 from djangae.contrib.gauth_datastore.models import GaeDatastoreUser
-from rest_framework import mixins, permissions, views, viewsets
+from rest_framework import mixins, permissions, status, views, viewsets
 from rest_framework.decorators import detail_route, list_route
 from rest_framework.exceptions import NotAuthenticated
 from rest_framework.response import Response
@@ -115,10 +115,10 @@ class MatchViewSet(
                 return Response(serializer.data)
 
             else:
-                return Response('ok')
+                return Response(status=status.HTTP_204_NO_CONTENT)
 
         except AttributeError:
-            return Response('ok')
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
     @detail_route(methods=['post'])
     def accept(self, request, pk, *args, **kwargs):
@@ -268,7 +268,7 @@ class PlayerViewSet(viewsets.ModelViewSet):
             LOGGER.info(player.pk)
             LOGGER.info(player.send_message(**data))
 
-        return Response('ok')
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class ImageViewSet(viewsets.ModelViewSet):
@@ -277,6 +277,7 @@ class ImageViewSet(viewsets.ModelViewSet):
     parser_classes = (MultiPartParser, FileUploadParser)
 
     default_random_size = 5
+    default_shuffle_size = 100
 
     # def create(self, request, *args, **kwargs):
     #     if not request.data.get('owner'):
@@ -286,6 +287,20 @@ class ImageViewSet(viewsets.ModelViewSet):
     #             request.data['owner'] = None
 
     #     return super(ImageViewSet, self).create(request, *args, **kwargs)
+
+    @list_route(methods=['post'])
+    def shuffle(self, request, *args, **kwargs):
+        try:
+            size = int(request.query_params.get('size'))
+            size = size if size > 0 else self.default_shuffle_size
+        except (TypeError, ValueError):
+            size = self.default_shuffle_size
+
+        images = self.get_queryset().order_by('last_modified')
+        for image in images[:size]:
+            image.save()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @list_route()
     def random(self, request, *args, **kwargs):
