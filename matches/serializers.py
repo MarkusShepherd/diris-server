@@ -146,6 +146,7 @@ class PlayerSerializer(serializers.ModelSerializer):
             'user',
             'avatar',
             'gcm_registration_id',
+            'total_matches',
             'created',
             'last_modified',
         )

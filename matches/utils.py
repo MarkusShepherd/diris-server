@@ -5,13 +5,14 @@
 from __future__ import absolute_import, division, print_function, unicode_literals, with_statement
 
 import logging
-import random
+# import random
 import string
 
 from collections import OrderedDict
 
 import six
 
+from django.utils.crypto import get_random_string
 from rest_framework_jwt.utils import jwt_payload_handler
 
 try:
@@ -30,7 +31,8 @@ LOGGER = logging.getLogger(__name__)
 def random_string(length=20, choices=string.digits + string.ascii_letters):
     '''random string of given length sample from choices'''
 
-    return ''.join(random.choice(choices) for _ in range(length))
+    # return ''.join(random.choice(choices) for _ in range(length))
+    return get_random_string(length=length, allowed_chars=choices)
 
 
 def clear_list(items):

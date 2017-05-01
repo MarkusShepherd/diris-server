@@ -16,7 +16,7 @@ from django.utils import timezone
 from djangae import fields, storage
 from djangae.contrib.gauth_datastore.models import GaeDatastoreUser
 # from djangae.contrib.pagination import paginated_model
-# from djangae.db.consistency import ensure_instances_consistent
+from djangae.db.consistency import ensure_instance_consistent
 from gcm import GCM
 from rest_framework import serializers
 from six import iteritems, itervalues
@@ -447,7 +447,13 @@ class MatchManager(models.Manager):
         if timeout:
             data['timeout'] = timeout
 
-        return self.create(**data)
+        match = self.create(**data)
+
+        for player in players:
+            player.total_matches += 1
+            player.save(new_match=match)
+
+        return match
 
 
 # @paginated_model(orderings=('last_modified', 'created', 'status', ('status', 'last_modified')))
@@ -592,6 +598,11 @@ class Match(models.Model):
         if self.status == Match.DELETE:
             LOGGER.info('match %d marked for deletion', self.pk)
             LOGGER.info(self.delete())
+
+            for player in self.players:
+                player.total_matches -= 1
+                player.save(new_match=self)
+
             return
 
         stt = time.time()
@@ -623,6 +634,7 @@ class Player(models.Model):
                                blank=True, null=True,
                                on_delete=models.SET_NULL)
     gcm_registration_id = fields.CharField(blank=True, null=True)
+    total_matches = models.PositiveSmallIntegerField(default=0)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 
@@ -640,6 +652,20 @@ class Player(models.Model):
                 response = None
             LOGGER.info('sending GCM messages took %.3f seconds', time.time() - stt)
             return response
+
+    def save(self, new_match=None, *args, **kwargs):
+        try:
+            if not hasattr(self, 'matches') or self.matches is None:
+                self.total_matches = 0
+            elif new_match:
+                self.total_matches = ensure_instance_consistent(self.matches, new_match).count()
+            else:
+                self.total_matches = self.matches.count()
+        except Exception as exc:
+            LOGGER.warning(exc)
+            self.total_matches = 0
+
+        super(Player, self).save(*args, **kwargs)
 
 
 class ImageManager(models.Manager):
