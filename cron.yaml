@@ -1,0 +1,4 @@
+cron:
+- description: shuffle images
+  url: /images/shuffle/?size=100
+  schedule: every 12 hours

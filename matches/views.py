@@ -288,7 +288,7 @@ class ImageViewSet(viewsets.ModelViewSet):
 
     #     return super(ImageViewSet, self).create(request, *args, **kwargs)
 
-    @list_route(methods=['post'])
+    @list_route(methods=['get', 'post'])
     def shuffle(self, request, *args, **kwargs):
         try:
             size = int(request.query_params.get('size'))
