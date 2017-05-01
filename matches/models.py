@@ -600,7 +600,7 @@ class Match(models.Model):
             LOGGER.info('match %d marked for deletion', self.pk)
             LOGGER.info(self.delete())
 
-            for player in self.players:
+            for player in self.players.all():
                 player.total_matches -= 1
                 player.save(new_match=self)
 
