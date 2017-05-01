@@ -76,6 +76,12 @@ indexes:
   - name: last_modified
     direction: desc
 
+- kind: matches_image
+  properties:
+  - name: random_order
+  - name: last_modified
+    direction: desc
+
 - kind: matches_match
   properties:
   - name: last_modified

@@ -12,7 +12,7 @@ from collections import OrderedDict
 
 import six
 
-from django.utils.crypto import get_random_string
+from django.utils.crypto import get_random_string, random
 from rest_framework_jwt.utils import jwt_payload_handler
 
 try:
@@ -27,6 +27,9 @@ except NameError:
 
 LOGGER = logging.getLogger(__name__)
 
+
+def random_integer(*args, **kwargs):
+    return random.randint(-2147483648, 2147483647)
 
 def random_string(length=20, choices=string.digits + string.ascii_letters):
     '''random string of given length sample from choices'''

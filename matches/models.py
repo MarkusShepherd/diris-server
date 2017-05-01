@@ -5,7 +5,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals, with_statement
 
 import logging
-import random
+# import random
 import time
 
 from collections import defaultdict
@@ -13,6 +13,7 @@ from collections import defaultdict
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+from django.utils.crypto import random
 from djangae import fields, storage
 from djangae.contrib.gauth_datastore.models import GaeDatastoreUser
 # from djangae.contrib.pagination import paginated_model
@@ -22,7 +23,7 @@ from rest_framework import serializers
 from six import iteritems, itervalues
 
 from .pubsub_utils import PubSubSender
-from .utils import clear_list
+from .utils import clear_list, random_integer
 
 GCM_SENDER = GCM(settings.GCM_API_KEY, debug=settings.DEBUG)
 LOGGER = logging.getLogger(__name__)
@@ -753,6 +754,7 @@ class Image(models.Model):
         func=lambda image: image.copyright in (image.DIRIS, image.PUBLIC),
         default=False,
     )
+    random_order = fields.ComputedIntegerField(func=random_integer, default=random_integer)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 
@@ -760,4 +762,4 @@ class Image(models.Model):
         return self.is_available_publically or (player and player == self.owner)
 
     class Meta(object):
-        ordering = ('-last_modified',)
+        ordering = ('random_order', '-last_modified')
