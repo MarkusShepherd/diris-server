@@ -742,7 +742,6 @@ class Image(models.Model):
     )
     url = fields.ComputedCharField(func=lambda image: image.file.url, max_length=1500,
                                    blank=True, null=True, default=None)
-    # TODO computed fields?
     width = models.PositiveSmallIntegerField(blank=True, null=True)
     height = models.PositiveSmallIntegerField(blank=True, null=True)
     size = models.PositiveIntegerField(blank=True, null=True)

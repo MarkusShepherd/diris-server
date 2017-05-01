@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import json
 import logging
 import os.path
-import random
+# import random
 
 from base64 import b64decode
 
@@ -16,6 +16,7 @@ import six
 from django.conf import settings
 from django.contrib.auth import login
 from django.db.models import Q
+from django.utils.crypto import random
 from djangae.contrib.gauth_datastore.models import GaeDatastoreUser
 from rest_framework import mixins, permissions, status, views, viewsets
 from rest_framework.decorators import detail_route, list_route
@@ -147,7 +148,6 @@ class MatchViewSet(
         match = self.get_object()
         serializer = PlayerSerializer(instance=match.players, many=True)
         return Response(serializer.data)
-
 
     @detail_route()
     def images(self, request, pk=None, *args, **kwargs):
@@ -312,16 +312,21 @@ class ImageViewSet(viewsets.ModelViewSet):
         query = Q(is_available_publically=True)
         if player:
             query |= Q(owner=player)
-        images = self.get_queryset().filter(query)
+
+        images = self.get_queryset().filter(query).order_by('random_order')
+        images = images.reverse() if random.random() < .5 else images
+        total = images.count()
 
         try:
             size = int(request.query_params.get('size'))
             size = size if size > 0 else self.default_random_size
         except (TypeError, ValueError):
             size = self.default_random_size
-        size = min(size, len(images))
+        size = min(size, total)
 
-        serializer = self.get_serializer(instance=random.sample(images, size), many=True)
+        start = random.randint(0, total - size)
+
+        serializer = self.get_serializer(instance=images[start:start + size], many=True)
         return Response(serializer.data)
 
 

@@ -69,7 +69,18 @@ indexes:
   properties:
   - name: is_available_publically
   - name: random_order
+
+- kind: matches_image
+  properties:
+  - name: is_available_publically
+  - name: random_order
   - name: last_modified
+    direction: desc
+
+- kind: matches_image
+  properties:
+  - name: is_available_publically
+  - name: random_order
     direction: desc
 
 - kind: matches_image
@@ -87,7 +98,18 @@ indexes:
   properties:
   - name: owner_id
   - name: random_order
+
+- kind: matches_image
+  properties:
+  - name: owner_id
+  - name: random_order
   - name: last_modified
+    direction: desc
+
+- kind: matches_image
+  properties:
+  - name: owner_id
+  - name: random_order
     direction: desc
 
 - kind: matches_image
