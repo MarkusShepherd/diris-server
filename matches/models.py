@@ -16,7 +16,7 @@ from django.utils import timezone
 from django.utils.crypto import random
 from djangae import fields, storage
 from djangae.contrib.gauth_datastore.models import GaeDatastoreUser
-# from djangae.contrib.pagination import paginated_model
+from djangae.contrib.pagination import paginated_model
 from djangae.db.consistency import ensure_instance_consistent
 from gcm import GCM
 from rest_framework import serializers
@@ -457,7 +457,7 @@ class MatchManager(models.Manager):
         return match
 
 
-# @paginated_model(orderings=('last_modified', 'created', 'status', ('status', 'last_modified')))
+@paginated_model(orderings=('last_modified', 'created', 'status', ('status', 'last_modified')))
 class Match(models.Model):
     WAITING = 'w'
     IN_PROGESS = 'p'
@@ -628,6 +628,7 @@ class Match(models.Model):
         verbose_name_plural = 'matches'
 
 
+@paginated_model(orderings=('last_modified', 'created'))
 class Player(models.Model):
     user = models.OneToOneField(GaeDatastoreUser, on_delete=models.CASCADE)
     avatar = models.ForeignKey('Image',
@@ -722,6 +723,9 @@ class ImageManager(models.Manager):
         return image
 
 
+@paginated_model(orderings=('last_modified', 'created', 'is_available_publically', 'copyright',
+                            'random_order', ('random_order', '-last_modified'),
+                            ('-random_order', '-last_modified')))
 class Image(models.Model):
     OWNER = 'o'
     RESTRICTED = 'r'

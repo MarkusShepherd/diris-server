@@ -144,6 +144,13 @@ indexes:
 
 - kind: matches_player
   properties:
+  - name: last_modified
+    direction: desc
+  - name: __key__
+    direction: desc
+
+- kind: matches_player
+  properties:
   - name: user_id
   - name: __key__
     direction: desc
