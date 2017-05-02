@@ -37,6 +37,10 @@ handlers:
   secure: always
   login: admin
 
+- url: /images/shuffle.*
+  script: diris.wsgi.application
+  secure: optional
+
 - url: /.*
   script: diris.wsgi.application
   secure: always
