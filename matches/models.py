@@ -752,7 +752,7 @@ class Image(models.Model):
                               blank=True, null=True, on_delete=models.SET_NULL)
     copyright = fields.CharField(max_length=1, choices=COPYRIGHTS, default=OWNER)
     info = fields.JSONField(blank=True, null=True)
-    is_available_publically = fields.ComputedBooleanField(
+    is_available_publicly = fields.ComputedBooleanField(
         func=lambda image: image.copyright in (image.DIRIS, image.PUBLIC),
         default=False,
     )
@@ -764,4 +764,4 @@ class Image(models.Model):
         ordering = ('last_modified',)
 
     def is_available_to(self, player=None):
-        return self.is_available_publically or (player and player == self.owner)
+        return self.is_available_publicly or (player and player == self.owner)

@@ -30,7 +30,7 @@ class ImageSerializer(serializers.ModelSerializer):
             'owner',
             'copyright',
             'info',
-            'is_available_publically',
+            'is_available_publicly',
             'created',
             'last_modified',
         )
@@ -39,7 +39,7 @@ class ImageSerializer(serializers.ModelSerializer):
             'width',
             'height',
             'size',
-            'is_available_publically',
+            'is_available_publicly',
             'created',
             'last_modified',
         )

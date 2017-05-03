@@ -69,7 +69,9 @@ function processMatch(match, player) {
     match.rounds = _.map(match.rounds, function (round) {
         return processRound(round, player);
     });
-    match.currentRoundObj = match.rounds[(match.current_round || 1) - 1];
+
+    match.current_round = _.min([_.max([match.current_round || 1, 1]), _.size(match.rounds)]);
+    match.currentRoundObj = match.rounds[match.current_round - 1];
 
     match.actionStatus = match.currentRoundObj.hasAction ? 'a' : match.status;
 

@@ -60,6 +60,7 @@ class MatchViewSet(
     serializer_class = MatchSerializer
     permission_classes = (permissions.IsAuthenticated,)
     ordering = ('-last_modified',)
+    filter_fields = ('inviting_player', 'status')
 
     def get_queryset(self):
         return self.request.user.player.matches.all()
@@ -79,9 +80,6 @@ class MatchViewSet(
         player = request.user.player
 
         matches = self.filter_queryset(self.get_queryset()).order_by('-last_modified')
-
-        if request.query_params.get('status'):
-            matches = matches.filter(status=request.query_params['status'])
 
         page = self.paginate_queryset(matches)
         if page is not None:
@@ -277,6 +275,7 @@ class ImageViewSet(viewsets.ModelViewSet):
     serializer_class = ImageSerializer
     parser_classes = (MultiPartParser, FileUploadParser)
     ordering = ('random_order',)
+    filter_fields = ('copyright', 'is_available_publicly', 'owner')
 
     default_random_size = 5
     default_shuffle_size = 100
@@ -311,7 +310,7 @@ class ImageViewSet(viewsets.ModelViewSet):
         except AttributeError:
             player = None
 
-        query = Q(is_available_publically=True)
+        query = Q(is_available_publicly=True)
         if player:
             query |= Q(owner=player)
 
