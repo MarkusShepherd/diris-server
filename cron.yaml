@@ -1,4 +1,4 @@
 cron:
 - description: shuffle images
   url: /images/shuffle/?size=100
-  schedule: every 6 hours
+  schedule: every 60 minutes
