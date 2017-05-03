@@ -23,7 +23,7 @@ from rest_framework import serializers
 from six import iteritems, itervalues
 
 from .pubsub_utils import PubSubSender
-from .utils import clear_list, random_integer
+from .utils import clear_list, find_current_round, random_integer
 
 GCM_SENDER = GCM(settings.GCM_API_KEY, debug=settings.DEBUG)
 LOGGER = logging.getLogger(__name__)
@@ -457,7 +457,7 @@ class MatchManager(models.Manager):
         return match
 
 
-@paginated_model(orderings=('last_modified', 'created', 'status', ('status', 'last_modified')))
+@paginated_model(orderings=('created', 'last_modified'))
 class Match(models.Model):
     WAITING = 'w'
     IN_PROGESS = 'p'
@@ -469,7 +469,7 @@ class Match(models.Model):
         (FINISHED, 'finished'),
         (DELETE, 'delete'),
     )
-    STANDARD_TIMEOUT = 60 * 60 * 36  # 36
+    STANDARD_TIMEOUT = 60 * 60 * 36  # 36 hours
     MINIMUM_PLAYER = 4
     MAXIMUM_PLAYER = 10
 
@@ -485,14 +485,17 @@ class Match(models.Model):
     _rounds_list = None
 
     total_rounds = fields.ComputedIntegerField(func=lambda match: len(match.rounds))
-    # TODO could be a computed field
-    current_round = models.PositiveSmallIntegerField(default=1)
+    current_round = fields.ComputedIntegerField(func=find_current_round, default=-1)
     images = fields.RelatedSetField('Image', related_name='matches')
 
     status = fields.CharField(max_length=1, choices=MATCH_STATUSES, default=WAITING)
     timeout = models.PositiveIntegerField(default=STANDARD_TIMEOUT)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
+
+    class Meta(object):
+        ordering = ('-last_modified',)
+        verbose_name_plural = 'matches'
 
     @property
     def details_dict(self):
@@ -623,12 +626,9 @@ class Match(models.Model):
 
         super(Match, self).save(*args, **kwargs)
 
-    class Meta(object):
-        ordering = ('-last_modified',)
-        verbose_name_plural = 'matches'
 
-
-@paginated_model(orderings=('last_modified', 'created'))
+@paginated_model(orderings=('total_matches', 'created', 'last_modified',
+                            ('-total_matches', '-last_modified')))
 class Player(models.Model):
     user = models.OneToOneField(GaeDatastoreUser, on_delete=models.CASCADE)
     avatar = models.ForeignKey('Image',
@@ -656,6 +656,7 @@ class Player(models.Model):
             return response
 
     def save(self, new_match=None, *args, **kwargs):
+        # TODO inefficient - just have a counter and add sanity check method
         try:
             if not hasattr(self, 'matches') or self.matches is None:
                 self.total_matches = 0
@@ -723,9 +724,7 @@ class ImageManager(models.Manager):
         return image
 
 
-@paginated_model(orderings=('last_modified', 'created', 'is_available_publically', 'copyright',
-                            'random_order', ('random_order', '-last_modified'),
-                            ('-random_order', '-last_modified')))
+@paginated_model(orderings=('random_order', 'created', 'last_modified'))
 class Image(models.Model):
     OWNER = 'o'
     RESTRICTED = 'r'
@@ -761,8 +760,8 @@ class Image(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 
+    class Meta(object):
+        ordering = ('last_modified',)
+
     def is_available_to(self, player=None):
         return self.is_available_publically or (player and player == self.owner)
-
-    class Meta(object):
-        ordering = ('random_order', '-last_modified')

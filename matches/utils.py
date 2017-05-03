@@ -31,6 +31,7 @@ LOGGER = logging.getLogger(__name__)
 def random_integer(*args, **kwargs):
     return random.randint(-2147483648, 2147483647)
 
+
 def random_string(length=20, choices=string.digits + string.ascii_letters):
     '''random string of given length sample from choices'''
 
@@ -82,3 +83,11 @@ def jwt_payload(user):
     payload['pk'] = user.player.pk
     LOGGER.info(payload)
     return payload
+
+
+def find_current_round(match):
+    for round_ in match.rounds_list:
+        if round_.is_current_round:
+            return round_.number
+
+    return -1

@@ -78,10 +78,10 @@ class MatchViewSet(
     def list(self, request, *args, **kwargs):
         player = request.user.player
 
-        matches = self.filter_queryset(self.get_queryset())
+        matches = self.filter_queryset(self.get_queryset()).order_by('-last_modified')
+
         if request.query_params.get('status'):
             matches = matches.filter(status=request.query_params['status'])
-        matches = matches.order_by('-last_modified')
 
         page = self.paginate_queryset(matches)
         if page is not None:
@@ -210,6 +210,7 @@ class MatchVoteView(views.APIView):
 class PlayerViewSet(viewsets.ModelViewSet):
     queryset = Player.objects.all()
     serializer_class = PlayerSerializer
+    ordering = ('-last_modified',)
 
     def create(self, request, *args, **kwargs):
         response = super(PlayerViewSet, self).create(request, *args, **kwargs)
@@ -275,6 +276,7 @@ class ImageViewSet(viewsets.ModelViewSet):
     queryset = Image.objects.all()
     serializer_class = ImageSerializer
     parser_classes = (MultiPartParser, FileUploadParser)
+    ordering = ('random_order',)
 
     default_random_size = 5
     default_shuffle_size = 100
