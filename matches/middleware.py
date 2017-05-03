@@ -16,6 +16,7 @@ import StringIO
 
 class ProfileMiddleware(object):
     logger = logging.getLogger(__name__ + '.ProfileMiddleware')
+    prof = None
 
     def process_request(self, request):
         if 'prof' in request.GET:

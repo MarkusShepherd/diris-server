@@ -48,9 +48,10 @@ def clear_list(items):
 def merge(*dicts):
     '''merge a list of dictionaries'''
 
-    if len(dicts) == 0:
+    if not dicts:
         return {}
-    elif len(dicts) == 1:
+
+    if len(dicts) == 1:
         return dicts[0]
 
     result = {}
@@ -64,6 +65,7 @@ def merge(*dicts):
             elif isinstance(old_value, (set, frozenset)) and isinstance(value, (set, frozenset)):
                 value = old_value | type(old_value)(value)
             result[key] = value
+
     return result
 
 
@@ -72,10 +74,11 @@ def normalize_space(item, preserve_linebreaks=False):
 
     if not item:
         return None
-    elif preserve_linebreaks:
+
+    if preserve_linebreaks:
         return '\n'.join(normalize_space(s) or '' for s in str(item).splitlines()).strip()
-    else:
-        return ' '.join(str(item).split())
+
+    return ' '.join(str(item).split())
 
 
 def jwt_payload(user):

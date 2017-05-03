@@ -20,7 +20,7 @@ from django.utils.crypto import random
 from djangae.contrib.gauth_datastore.models import GaeDatastoreUser
 from rest_framework import mixins, permissions, status, views, viewsets
 from rest_framework.decorators import detail_route, list_route
-from rest_framework.exceptions import NotAuthenticated
+from rest_framework.exceptions import ValidationError, NotAuthenticated
 from rest_framework.response import Response
 from rest_framework.parsers import FileUploadParser, MultiPartParser
 from rest_framework_jwt.settings import api_settings
@@ -68,7 +68,10 @@ class MatchViewSet(
     def create(self, request, *args, **kwargs):
         player = request.user.player
         request.data['inviting_player'] = player.pk
-        return super(MatchViewSet, self).create(request, *args, **kwargs)
+        try:
+            return super(MatchViewSet, self).create(request, *args, **kwargs)
+        except ValueError as exc:
+            raise ValidationError(str(exc))
 
     def retrieve(self, request, *args, **kwargs):
         player = request.user.player
@@ -113,8 +116,7 @@ class MatchViewSet(
                 serializer = self.get_serializer(instance=match, player=player)
                 return Response(serializer.data)
 
-            else:
-                return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
         except AttributeError:
             return Response(status=status.HTTP_204_NO_CONTENT)
@@ -124,7 +126,12 @@ class MatchViewSet(
         player = request.user.player
 
         match = self.get_object()
-        match.respond(player.pk, accept=True)
+
+        try:
+            match.respond(player.pk, accept=True)
+        except ValueError as exc:
+            raise ValidationError(str(exc))
+
         match.save()
 
         serializer = self.get_serializer(instance=match, player=player)
@@ -135,7 +142,12 @@ class MatchViewSet(
         player = request.user.player
 
         match = self.get_object()
-        match.respond(player.pk, accept=False)
+
+        try:
+            match.respond(player.pk, accept=False)
+        except ValueError as exc:
+            raise ValidationError(str(exc))
+
         match.save()
 
         serializer = self.get_serializer(instance=match, player=player)
@@ -152,8 +164,11 @@ class MatchViewSet(
         player = request.user.player
         match = self.get_object()
 
-        rounds = ([match.rounds_list[int(request.query_params['round'])]]
-                  if request.query_params.get('round') else match.rounds_list)
+        try:
+            rounds = ([match.rounds_list[int(request.query_params['round']) - 1]]
+                      if request.query_params.get('round') else match.rounds_list)
+        except Exception as exc:
+            raise ValidationError(str(exc))
 
         image_pks = {details.image
                      for round_ in rounds
@@ -182,7 +197,11 @@ class MatchImageView(views.APIView):
         story = (normalize_space(request.data.get('story'))
                  or normalize_space(request.query_params.get('story')))
 
-        round_.submit_image(player_pk=player.pk, image_pk=image.pk, story=story)
+        try:
+            round_.submit_image(player_pk=player.pk, image_pk=image.pk, story=story)
+        except ValueError as exc:
+            raise ValidationError(detail=str(exc))
+
         match.save()
 
         serializer = MatchSerializer(instance=match, player=player)
@@ -198,7 +217,11 @@ class MatchVoteView(views.APIView):
         match = player.matches.get(pk=match_pk)
         round_ = match.rounds_list[int(round_number) - 1]
 
-        round_.submit_vote(player_pk=player.pk, image_pk=int(image_pk))
+        try:
+            round_.submit_vote(player_pk=player.pk, image_pk=int(image_pk))
+        except ValueError as exc:
+            raise ValidationError(detail=str(exc))
+
         match.save()
 
         serializer = MatchSerializer(instance=match, player=player)
