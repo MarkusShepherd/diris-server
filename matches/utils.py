@@ -83,4 +83,4 @@ def find_current_round(match):
         if round_.is_current_round:
             return round_.number
 
-    return -1
+    return 1
