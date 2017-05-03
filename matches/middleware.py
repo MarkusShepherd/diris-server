@@ -11,7 +11,7 @@
 import cProfile
 import logging
 import pstats
-import StringIO
+from io import StringIO
 
 
 class ProfileMiddleware(object):

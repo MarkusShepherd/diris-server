@@ -5,11 +5,11 @@
 from __future__ import absolute_import, division, print_function, unicode_literals, with_statement
 
 import logging
-# import random
 import time
 
 from collections import defaultdict
 
+from builtins import int, map, range, str
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
@@ -18,6 +18,7 @@ from djangae import fields, storage
 from djangae.contrib.gauth_datastore.models import GaeDatastoreUser
 from djangae.contrib.pagination import paginated_model
 from djangae.db.consistency import ensure_instance_consistent
+from future.utils import python_2_unicode_compatible
 from gcm import GCM
 from rest_framework import serializers
 from six import iteritems, itervalues
@@ -458,6 +459,7 @@ class MatchManager(models.Manager):
 
 
 @paginated_model(orderings=('created', 'last_modified'))
+@python_2_unicode_compatible
 class Match(models.Model):
     WAITING = 'w'
     IN_PROGESS = 'p'
@@ -626,9 +628,15 @@ class Match(models.Model):
 
         super(Match, self).save(*args, **kwargs)
 
+    def __str__(self):
+        return ('match {match_pk} started on {created} (players: {player_pks})'
+                .format(match_pk=self.pk, created=self.created,
+                        player_pks=', '.join(map(str, self.players_ids))))
+
 
 @paginated_model(orderings=('total_matches', 'created', 'last_modified',
                             ('-total_matches', '-last_modified')))
+@python_2_unicode_compatible
 class Player(models.Model):
     user = models.OneToOneField(GaeDatastoreUser, on_delete=models.CASCADE)
     avatar = models.ForeignKey('Image',
@@ -669,6 +677,9 @@ class Player(models.Model):
             self.total_matches = 0
 
         super(Player, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return str(self.user)
 
 
 class ImageManager(models.Manager):
@@ -725,6 +736,7 @@ class ImageManager(models.Manager):
 
 
 @paginated_model(orderings=('random_order', 'created', 'last_modified'))
+@python_2_unicode_compatible
 class Image(models.Model):
     OWNER = 'o'
     RESTRICTED = 'r'
@@ -765,3 +777,6 @@ class Image(models.Model):
 
     def is_available_to(self, player=None):
         return self.is_available_publicly or (player and player == self.owner)
+
+    def __str__(self):
+        return self.url

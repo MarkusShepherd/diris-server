@@ -7,12 +7,10 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import json
 import logging
 import os.path
-# import random
 
 from base64 import b64decode
 
-import six
-
+from builtins import filter, int, str
 from django.conf import settings
 from django.contrib.auth import login
 from django.db.models import Q
@@ -24,6 +22,7 @@ from rest_framework.exceptions import ValidationError, NotAuthenticated
 from rest_framework.response import Response
 from rest_framework.parsers import FileUploadParser, MultiPartParser
 from rest_framework_jwt.settings import api_settings
+from six import itervalues, raise_from, string_types
 
 from .models import Player, Image
 from .serializers import MatchSerializer, PlayerSerializer, ImageSerializer
@@ -35,7 +34,7 @@ LOGGER = logging.getLogger(__name__)
 def upload_image(request, owner=None, file_extension=None):
     image = request.data['file']
     orig_extension = (os.path.splitext(image.name)[1]
-                      if hasattr(image, 'name') and isinstance(image.name, six.string_types)
+                      if hasattr(image, 'name') and isinstance(image.name, string_types)
                       else None)
     file_extension = file_extension or orig_extension or '.jpeg'
     image.name = random_string() + file_extension
@@ -71,7 +70,7 @@ class MatchViewSet(
         try:
             return super(MatchViewSet, self).create(request, *args, **kwargs)
         except ValueError as exc:
-            raise ValidationError(str(exc))
+            raise_from(ValidationError(detail=str(exc)), exc)
 
     def retrieve(self, request, *args, **kwargs):
         player = request.user.player
@@ -130,7 +129,7 @@ class MatchViewSet(
         try:
             match.respond(player.pk, accept=True)
         except ValueError as exc:
-            raise ValidationError(str(exc))
+            raise_from(ValidationError(detail=str(exc)), exc)
 
         match.save()
 
@@ -146,7 +145,7 @@ class MatchViewSet(
         try:
             match.respond(player.pk, accept=False)
         except ValueError as exc:
-            raise ValidationError(str(exc))
+            raise_from(ValidationError(detail=str(exc)), exc)
 
         match.save()
 
@@ -168,12 +167,12 @@ class MatchViewSet(
             rounds = ([match.rounds_list[int(request.query_params['round']) - 1]]
                       if request.query_params.get('round') else match.rounds_list)
         except Exception as exc:
-            raise ValidationError(str(exc))
+            raise_from(ValidationError(detail=str(exc)), exc)
 
         image_pks = {details.image
                      for round_ in rounds
                      if round_.display_images_to(player.pk)
-                     for details in round_.details_dict.values()
+                     for details in itervalues(round_.details_dict)
                      if details.image}
 
         serializer = ImageSerializer(instance=Image.objects.filter(pk__in=image_pks), many=True)
@@ -190,7 +189,7 @@ class MatchImageView(views.APIView):
         match = player.matches.get(pk=match_pk)
         round_ = match.rounds_list[int(round_number) - 1]
 
-        file_extension = (os.path.splitext(filename)[1] if isinstance(filename, six.string_types)
+        file_extension = (os.path.splitext(filename)[1] if isinstance(filename, string_types)
                           else None)
         image = upload_image(request, player, file_extension)
 
@@ -200,7 +199,7 @@ class MatchImageView(views.APIView):
         try:
             round_.submit_image(player_pk=player.pk, image_pk=image.pk, story=story)
         except ValueError as exc:
-            raise ValidationError(detail=str(exc))
+            raise_from(ValidationError(detail=str(exc)), exc)
 
         match.save()
 
@@ -220,7 +219,7 @@ class MatchVoteView(views.APIView):
         try:
             round_.submit_vote(player_pk=player.pk, image_pk=int(image_pk))
         except ValueError as exc:
-            raise ValidationError(detail=str(exc))
+            raise_from(ValidationError(detail=str(exc)), exc)
 
         match.save()
 
@@ -253,7 +252,7 @@ class PlayerViewSet(viewsets.ModelViewSet):
     @list_route(methods=['post'], permission_classes=())
     def send(self, request, *args, **kwargs):
         if request.query_params.get('key') != settings.GCM_SERVER_KEY:
-            raise NotAuthenticated('the supplied key "{}" is not valid'
+            raise NotAuthenticated(detail='the supplied key "{}" is not valid'
                                    .format(request.query_params.get('key')))
 
         if request.data.get('message') and request.data.get('subscription'):
@@ -363,7 +362,7 @@ class ImageUploadView(views.APIView):
         except AttributeError:
             owner = None
 
-        file_extension = (os.path.splitext(filename)[1] if isinstance(filename, six.string_types)
+        file_extension = (os.path.splitext(filename)[1] if isinstance(filename, string_types)
                           else None)
         image = upload_image(request, owner, file_extension)
         serializer = ImageSerializer(instance=image)

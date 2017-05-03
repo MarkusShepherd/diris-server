@@ -5,9 +5,10 @@
 from __future__ import absolute_import, division, print_function, unicode_literals, with_statement
 
 import logging
-import random
 
+from builtins import str, zip
 from rest_framework import serializers
+from django.utils.crypto import random
 from djangae.contrib.gauth_datastore.models import GaeDatastoreUser
 
 from .models import Match, Player, Image, MatchDetailsSerializer, RoundSerializer

@@ -13,5 +13,6 @@ python-gcm
 GoogleAppEngineCloudStorageClient
 
 coreapi
+future
 httplib2
 six

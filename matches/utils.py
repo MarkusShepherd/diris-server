@@ -5,25 +5,15 @@
 from __future__ import absolute_import, division, print_function, unicode_literals, with_statement
 
 import logging
-# import random
 import string
 
 from collections import OrderedDict
 
 import six
 
+from builtins import filter, range, str
 from django.utils.crypto import get_random_string, random
 from rest_framework_jwt.utils import jwt_payload_handler
-
-try:
-    str = unicode
-except NameError:
-    pass  # Forward compatibility with Py3k
-
-try:
-    long
-except NameError:
-    long = int
 
 LOGGER = logging.getLogger(__name__)
 
