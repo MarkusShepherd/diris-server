@@ -390,7 +390,6 @@ class Round(object):
 
 
 def validate_story(story):
-    LOGGER.info('validating %s', story)
     story_lower = story.lower()
 
     # TODO add validations like filter words etc. (#20)

@@ -136,19 +136,30 @@ indexes:
 - kind: matches_image
   properties:
   - name: owner_id
-  - name: random_order
+  - name: pagination_random_order
 
 - kind: matches_image
   properties:
   - name: owner_id
-  - name: random_order
-  - name: last_modified
+  - name: pagination_random_order
     direction: desc
 
 - kind: matches_image
   properties:
   - name: owner_id
   - name: random_order
+
+- kind: matches_image
+  properties:
+  - name: owner_id
+  - name: random_order
+    direction: desc
+
+- kind: matches_image
+  properties:
+  - name: owner_id
+  - name: random_order
+  - name: last_modified
     direction: desc
 
 - kind: matches_image
