@@ -395,7 +395,7 @@ def validate_story(story):
 
     # TODO add validations like filter words etc. (#20)
     if 'fuck' in story_lower:
-        raise ValidationError('story contains blocked word')
+        raise ValidationError('story contains blocked word(s)')
 
 
 class RoundSerializer(serializers.Serializer):

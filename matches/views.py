@@ -16,6 +16,7 @@ from django.contrib.auth import login
 from django.db.models import Q
 from django.utils.crypto import random
 from djangae.contrib.gauth_datastore.models import GaeDatastoreUser
+from djangae.contrib.pagination import Paginator
 from rest_framework import mixins, permissions, status, views, viewsets
 from rest_framework.decorators import detail_route, list_route
 from rest_framework.exceptions import ValidationError, NotAuthenticated
@@ -341,20 +342,31 @@ class ImageViewSet(viewsets.ModelViewSet):
         if player:
             query |= Q(owner=player)
 
-        images = self.get_queryset().filter(query).order_by('random_order')
+        images = self.get_queryset().order_by('random_order').filter(query)
         images = images.reverse() if random.random() < .5 else images
-        total = images.count()
 
         try:
             size = int(request.query_params.get('size'))
             size = size if size > 0 else self.default_random_size
         except (TypeError, ValueError):
             size = self.default_random_size
-        size = min(size, total)
 
-        start = random.randint(0, total - size)
+        paginator = Paginator(images, size * 2, readahead=100)
+        # need to access first page before page_range works
+        paginator.page(1)
+        page_range = list(paginator.page_range)
+        random.shuffle(page_range)
 
-        serializer = self.get_serializer(instance=images[start:start + size], many=True)
+        image_list = []
+
+        for page_num in page_range:
+            image_list.extend(paginator.page(page_num))
+            if len(image_list) >= size:
+                break
+
+        random.shuffle(image_list)
+
+        serializer = self.get_serializer(instance=image_list[:size], many=True)
         return Response(serializer.data)
 
 

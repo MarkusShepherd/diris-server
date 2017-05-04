@@ -73,7 +73,31 @@ indexes:
 - kind: matches_image
   properties:
   - name: is_available_publicly
+  - name: owner_id
+  - name: pagination_random_order
+
+- kind: matches_image
+  properties:
+  - name: is_available_publicly
+  - name: owner_id
+  - name: pagination_random_order
+    direction: desc
+
+- kind: matches_image
+  properties:
+  - name: is_available_publicly
   - name: pagination_last_modified
+
+- kind: matches_image
+  properties:
+  - name: is_available_publicly
+  - name: pagination_random_order
+
+- kind: matches_image
+  properties:
+  - name: is_available_publicly
+  - name: pagination_random_order
+    direction: desc
 
 - kind: matches_image
   properties:
