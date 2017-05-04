@@ -22,6 +22,7 @@ from future.utils import python_2_unicode_compatible
 from gcm import GCM
 from rest_framework import serializers
 from six import iteritems, itervalues
+from rest_framework.exceptions import ValidationError
 
 from .pubsub_utils import PubSubSender
 from .utils import clear_list, find_current_round, random_integer
@@ -169,9 +170,8 @@ class Round(object):
         self._details_dict = result
         return self._details_dict
 
-    def submit_image(self, player_pk, image_pk, story=None):
-        if not player_pk or not image_pk:
-            # TODO other validations
+    def submit_image(self, player_pk, image_pk, story=None, match=None):
+        if not (player_pk and image_pk and Image.objects.filter(pk=image_pk).exists()):
             raise ValueError('player and image are required')
 
         self.check_status()
@@ -182,13 +182,14 @@ class Round(object):
             if self.status != Round.SUBMIT_STORY:
                 raise ValueError('not ready for submission')
 
-            if not story or len(story) < Round.MINIMUM_STORY_LENGTH:
-                # TODO validate story further
-                raise ValueError('story is required and needs to be at least {} characters long'
-                                 .format(Round.MINIMUM_STORY_LENGTH))
-
             if details.image and self.story:
                 raise ValueError('image and story already exists')
+
+            if not story:
+                raise ValueError('story is required for the storyteller')
+
+            serializer = RoundSerializer()
+            story = serializer.fields['story'].run_validation(story)
 
             self.story = story
             self.status = Round.SUBMIT_OTHERS
@@ -202,14 +203,15 @@ class Round(object):
 
         details.image = image_pk
 
-        if self.match:
-            self.match.images_ids.add(image_pk)
+        match = match or self.match
+
+        if match:
+            match.images_ids.add(image_pk)
 
         self.check_status()
 
-    def submit_vote(self, player_pk, image_pk):
+    def submit_vote(self, player_pk, image_pk, match=None):
         if not player_pk or not image_pk:
-            # TODO other validations
             raise ValueError('player and image are required')
 
         self.check_status()
@@ -238,9 +240,11 @@ class Round(object):
         details.vote = image_pk
         details.vote_player = vote_player
 
-        if self.match:
-            self.match.check_status()
-            self.match.score()
+        match = match or self.match
+
+        if match:
+            match.check_status()
+            match.score()
         else:
             self.check_status()
             self.score()
@@ -385,6 +389,15 @@ class Round(object):
                     or (player_pk and player_pk == self.storyteller))
 
 
+def validate_story(story):
+    LOGGER.info('validating %s', story)
+    story_lower = story.lower()
+
+    # TODO add validations like filter words etc. (#20)
+    if 'fuck' in story_lower:
+        raise ValidationError('story contains blocked word')
+
+
 class RoundSerializer(serializers.Serializer):
     number = serializers.IntegerField(min_value=1)
     storyteller = serializers.IntegerField()
@@ -394,7 +407,8 @@ class RoundSerializer(serializers.Serializer):
                                      default=Round.WAITING)
     story = serializers.CharField(required=False, allow_null=True,
                                   min_length=Round.MINIMUM_STORY_LENGTH,
-                                  allow_blank=False, trim_whitespace=True)
+                                  allow_blank=False, trim_whitespace=True,
+                                  validators=[validate_story])
 
     def create(self, validated_data):
         return Round(**validated_data)

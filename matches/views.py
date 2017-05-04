@@ -44,8 +44,13 @@ def upload_image(request, owner=None, file_extension=None):
     if copyright not in {c[0] for c in Image.COPYRIGHTS}:
         copyright = Image.OWNER if owner else Image.RESTRICTED
 
-    # TODO catch errors
-    info = merge(request.query_params or {}, json.loads(request.data.get('info') or '{}'))
+    try:
+        body_info = json.loads(request.data.get('info') or '{}')
+    except ValueError as exc:
+        LOGGER.warning(exc)
+        body_info = {}
+
+    info = merge(request.query_params or {}, body_info)
 
     return Image.objects.create_image(file=image, owner=owner, copyright=copyright, info=info)
 
