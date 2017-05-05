@@ -157,6 +157,14 @@ dirisApp.factory('dataService', function dataService(
 
     factory.getMatches = function getMatches(forceRefresh, fallback) {
         if (!forceRefresh) {
+            if (!_.size(matches)) {
+                _.forEach($localStorage, function (match, key) {
+                    if (_.startsWith(key, 'match_') && !matches[match.pk]) {
+                        setMatch(match);
+                    }
+                });
+            }
+
             return $q.resolve(matches);
         }
 
@@ -172,7 +180,7 @@ dirisApp.factory('dataService', function dataService(
                 if (forceRefresh && fallback) {
                     // TODO add message
                     _.forEach($localStorage, function (match, key) {
-                        if (key.substr(0, 6) === 'match_') {
+                        if (_.startsWith(key, 'match_')) {
                             setMatch(match);
                         }
                     });
@@ -267,6 +275,14 @@ dirisApp.factory('dataService', function dataService(
 
     factory.getPlayers = function getPlayers(forceRefresh, fallback) {
         if (!forceRefresh) {
+            if (!_.size(players)) {
+                _.forEach($localStorage, function (player, key) {
+                    if (_.startsWith(key, 'player_') && !players[player.pk]) {
+                        setPlayer(player);
+                    }
+                });
+            }
+
             return $q.resolve(players);
         }
 
@@ -283,8 +299,8 @@ dirisApp.factory('dataService', function dataService(
                 if (forceRefresh && fallback) {
                     // TODO add message
                     _.forEach($localStorage, function (player, key) {
-                        if (key.substr(0, 7) === 'player_') {
-                            players[key.substr(7)] = player;
+                        if (_.startsWith(key, 'player_')) {
+                            players[player.pk] = player;
                         }
                     });
                     return players;
@@ -354,6 +370,14 @@ dirisApp.factory('dataService', function dataService(
         }
 
         if (!forceRefresh) {
+            if (!_.size(images)) {
+                _.forEach($localStorage, function (image, key) {
+                    if (_.startsWith(key, 'image_') && !images[image.pk]) {
+                        setImage(image);
+                    }
+                });
+            }
+
             return $q.resolve(images);
         }
 
@@ -368,8 +392,8 @@ dirisApp.factory('dataService', function dataService(
                 if (forceRefresh && fallback) {
                     // TODO add message
                     _.forEach($localStorage, function (image, key) {
-                        if (key.substr(0, 6) === 'image_') {
-                            images[key.substr(6)] = image;
+                        if (_.startsWith(key, 'image_')) {
+                            images[image.pk] = image;
                         }
                     });
                     return images;

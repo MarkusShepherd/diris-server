@@ -105,8 +105,7 @@ dirisApp.config(function (
 
     blockUIConfig.autoBlock = false;
 
-    // TODO replace with _ function
-    angular.extend(toastrConfig, {
+    _.assign(toastrConfig, {
         autoDismiss: false,
         newestOnTop: false,
         positionClass: 'toast-bottom-right',
@@ -114,7 +113,6 @@ dirisApp.config(function (
         preventOpenDuplicates: true,
         extendedTimeOut: 1000,
         timeOut: 10000
-        // TODO force refresh on click
     });
 });
 
@@ -163,16 +161,22 @@ dirisApp.run(function (
     });
 
     push.on('notification', function (data) {
-        var promise = $q.resolve();
+        var promise = $q.resolve(),
+            options = {};
 
         $log.debug('received notification:', data);
         $log.debug(data.additionalData.match_pk);
-        toastr.info(data.message, data.title);
 
         if (data.additionalData.match_pk === '_new') {
             promise = dataService.getMatches(true, true);
+            options.onTap = function () {
+                $location.path('/overview');
+            };
         } else if (data.additionalData.match_pk) {
             promise = dataService.getMatch(data.additionalData.match_pk, true);
+            options.onTap = function () {
+                $location.path('/match/' + data.additionalData.match_pk);
+            };
         }
 
         promise.then(function () {
@@ -181,7 +185,10 @@ dirisApp.run(function (
                     _.startsWith($location.path(), '/review')) {
                 $route.reload();
             }
-        }).catch($log.debug);
+        }).catch($log.debug)
+        .then(function () {
+            toastr.info(data.message, data.title, options);
+        });
     });
 
     push.on('error', function (e) {
