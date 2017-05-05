@@ -311,10 +311,14 @@ class Round(object):
         return scores
 
     def send_notifications(self, match=None):
+        match = match or self.match
+        match_pk = match.pk if match else None
+
         if (self.status == Round.SUBMIT_STORY
                 and not self.details_dict[self.storyteller].notification_image_sent):
             data = {
                 'player_pk': self.storyteller,
+                'match_pk': match_pk,
                 'title': 'Tell your story!',
                 'message': 'A new round has started - tell us your story',
             }
@@ -331,6 +335,7 @@ class Round(object):
                 storyteller = Player.objects.get(pk=self.storyteller).user.username
                 data = {
                     'player_pks': player_pks,
+                    'match_pk': match_pk,
                     'title': 'Submit your image!',
                     'message': ('Player {} has told their story, now find an image that fits'
                                 .format(storyteller)),
@@ -348,6 +353,7 @@ class Round(object):
             if player_pks:
                 data = {
                     'player_pks': player_pks,
+                    'match_pk': match_pk,
                     'title': 'Vote for the right image!',
                     'message': ('Everybody has submitted their image, '
                                 'now find the one that fits the story'),
@@ -363,8 +369,6 @@ class Round(object):
                           if not details.notification_finished_sent]
 
             if player_pks:
-                match = match or self.match
-
                 if match and match.status == Match.FINISHED:
                     title = 'The match has finished'
                     message = ('The last round has finished - '
@@ -375,6 +379,7 @@ class Round(object):
 
                 data = {
                     'player_pks': player_pks,
+                    'match_pk': match_pk,
                     'title': title,
                     'message': message,
                 }
@@ -599,6 +604,7 @@ class Match(models.Model):
             if player_pks:
                 data = {
                     'player_pks': player_pks,
+                    'match_pk': self.pk or '_new',
                     'title': 'New invitation',
                     'message': ('You got an invitation from {}. Do you want to accept it?'
                                 .format(self.inviting_player.user.username)),
