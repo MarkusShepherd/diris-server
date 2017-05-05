@@ -27,10 +27,10 @@ dirisApp.controller('ReviewRoundController', function ReviewRoundController(
         blockUI.start();
     }
 
+    $scope.currentPlayer = player;
     $scope.mPk = mPk;
     $scope.rNo = rNo;
 
-    $scope.currentPlayer = player;
     $rootScope.menuItems = [{
         link: '#/overview',
         label: 'Overview',
@@ -40,8 +40,7 @@ dirisApp.controller('ReviewRoundController', function ReviewRoundController(
         label: 'Match',
         glyphicon: 'knight'
     }];
-    $rootScope.refreshPath = null;
-    $rootScope.refreshReload = false;
+    $rootScope.refreshButton = false;
 
     dataService.getMatch(mPk)
         .then(function (match) {

@@ -27,15 +27,14 @@ dirisApp.controller('AcceptController', function AcceptController(
     }
 
     $scope.currentPlayer = player;
+    $scope.mPk = mPk;
+
     $rootScope.menuItems = [{
         link: '#/overview',
         label: 'Overview',
         glyphicon: 'home'
     }];
-    $rootScope.refreshPath = null;
-    $rootScope.refreshReload = false;
-
-    $scope.mPk = mPk;
+    $rootScope.refreshButton = false;
 
     dataService.getMatch(mPk)
         .then(function (match) {
@@ -82,10 +81,11 @@ dirisApp.controller('AcceptController', function AcceptController(
             if (!response) {
                 $log.debug('canceled declining invitation');
                 blockUI.stop();
-            } else if (accept) {
-                $location.path('/overview');
             } else {
-                $location.path('/overview/refresh');
+                if (!accept) {
+                    dataService.removeMatch(mPk);
+                }
+                $location.path('/overview');
             }
         }).catch(function (response) {
             $log.debug('error');

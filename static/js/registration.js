@@ -6,6 +6,7 @@
 dirisApp.controller('RegistrationController', function RegistrationController(
     $location,
     $log,
+    $rootScope,
     $scope,
     blockUI,
     dataService
@@ -13,6 +14,8 @@ dirisApp.controller('RegistrationController', function RegistrationController(
     dataService.logout();
 
     blockUI.stop();
+
+    $rootScope.refreshButton = false;
 
     $scope.register = function register() {
         if (!blockUI.state().blocking) {
@@ -23,7 +26,8 @@ dirisApp.controller('RegistrationController', function RegistrationController(
 
         dataService.createPlayer($scope.player)
             .then(function () {
-                $location.path('/overview/refresh');
+                dataService.setNextUpdate();
+                $location.path('/overview');
             }).catch(function () {
                 blockUI.stop();
                 $scope.message = 'There was an error - player "' +

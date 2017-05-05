@@ -22,11 +22,13 @@ dirisApp.controller('ProfileController', function ProfileController(
     }
 
     $scope.currentPlayer = player;
+
     $rootScope.menuItems = [{
         link: '#/overview',
         label: 'Overview',
         glyphicon: 'home'
     }];
+    $rootScope.refreshButton = false;
 
     if (!blockUI.state().blocking) {
         blockUI.start();

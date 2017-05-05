@@ -16,7 +16,7 @@ dirisApp.controller('MatchController', function MatchController(
 ) {
     var player = dataService.getLoggedInPlayer(),
         mPk = $routeParams.mPk,
-        action = $routeParams.action;
+        forceRefresh = _.now() >= dataService.getNextUpdate();
 
     if (!player) {
         $location.path('/login');
@@ -28,18 +28,16 @@ dirisApp.controller('MatchController', function MatchController(
     }
 
     $scope.currentPlayer = player;
+    $scope.mPk = mPk;
+
     $rootScope.menuItems = [{
         link: '#/overview',
         label: 'Overview',
         glyphicon: 'home'
     }];
+    $rootScope.refreshButton = true;
 
-    $rootScope.refreshPath = '/match/' + mPk + '/refresh';
-    $rootScope.refreshReload = action === 'refresh';
-
-    $scope.mPk = mPk;
-
-    dataService.getMatch(mPk, action === 'refresh')
+    dataService.getMatch(mPk, forceRefresh)
         .then(function (match) {
             $log.debug('Match:', match);
             $scope.match = match;
@@ -53,13 +51,14 @@ dirisApp.controller('MatchController', function MatchController(
             _.forEach(players, function (player) {
                 $scope.players[player.pk.toString()] = player;
             });
+            dataService.setNextUpdate('_renew');
         }).catch(function (response) {
             $log.debug('error');
             $log.debug(response);
-            toastr.error("There was an error fetching the data - please try again later...");
+            toastr.error('There was an error fetching the data - please try again later...');
         }).then(blockUI.stop);
 
-    dataService.getImages(mPk, action === 'refresh', true)
+    dataService.getImages(mPk, forceRefresh, true)
         .then(function (images) {
             $scope.images = {};
             _.forEach(images, function (img) {
@@ -69,7 +68,7 @@ dirisApp.controller('MatchController', function MatchController(
         }).catch(function (response) {
             $log.debug('error');
             $log.debug(response);
-            toastr.error("There was an error fetching the data - please try again later...");
+            toastr.error('There was an error fetching the data - please try again later...');
         });
 
     $scope.action = utils.roundAction;

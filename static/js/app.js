@@ -1,7 +1,7 @@
 'use strict';
 
-/*jslint browser: true, stupid: true, todo: true */
-/*global angular, PushNotification */
+/*jslint browser: true, nomen: true, stupid: true, todo: true */
+/*global _, angular, PushNotification */
 
 var testUrl = 'http://localhost:8000',
     stagingUrl = 'https://0-2-1-dot-diris-app.appspot.com',
@@ -17,12 +17,13 @@ var dirisApp = angular.module('dirisApp', [
 ]);
 
 dirisApp.constant('BACKEND_URL', liveUrl)
+    .constant('DEVELOPER_MODE', false)
     .constant('MINIMUM_STORY_LENGTH', 3)
     .constant('MINIMUM_PLAYER', 4)
     .constant('MAXIMUM_PLAYER', 10)
     .constant('STANDARD_TIMEOUT', 60 * 60 * 36)
-    .constant('GCM_SENDER_ID', 696693451234)
-    .constant('DEVELOPER_MODE', false);
+    .constant('CACHE_TIMEOUT', 60 * 60 * 1000)
+    .constant('GCM_SENDER_ID', 696693451234);
 
 dirisApp.config(function (
     $httpProvider,
@@ -56,10 +57,6 @@ dirisApp.config(function (
         templateUrl: 'partials/overview.html',
         controller: 'OverviewController',
         requiresLogin: true
-    }).when('/overview/:action', {
-        templateUrl: 'partials/overview.html',
-        controller: 'OverviewController',
-        requiresLogin: true
     }).when('/newmatch', {
         templateUrl: 'partials/new-match.html',
         controller: 'NewMatchController',
@@ -69,10 +66,6 @@ dirisApp.config(function (
         controller: 'AcceptController',
         requiresLogin: true
     }).when('/match/:mPk', {
-        templateUrl: 'partials/match.html',
-        controller: 'MatchController',
-        requiresLogin: true
-    }).when('/match/:mPk/:action', {
         templateUrl: 'partials/match.html',
         controller: 'MatchController',
         requiresLogin: true
@@ -138,7 +131,16 @@ dirisApp.directive('playerIcon', function () {
     };
 });
 
-dirisApp.run(function ($log, authManager, toastr, dataService, GCM_SENDER_ID) {
+dirisApp.run(function (
+    $location,
+    $log,
+    $q,
+    $route,
+    authManager,
+    toastr,
+    dataService,
+    GCM_SENDER_ID
+) {
     authManager.checkAuthOnRefresh();
 
     var push = PushNotification.init({
@@ -161,20 +163,29 @@ dirisApp.run(function ($log, authManager, toastr, dataService, GCM_SENDER_ID) {
     });
 
     push.on('notification', function (data) {
-        $log.debug("Received notification");
-        $log.debug(data);
-        $log.debug(data.message);
-        $log.debug(data.title);
-        $log.debug(data.count);
-        $log.debug(data.sound);
-        $log.debug(data.image);
-        $log.debug(data.additionalData);
+        var promise = $q.resolve();
+
+        $log.debug('received notification:', data);
+        $log.debug(data.additionalData.match_pk);
         toastr.info(data.message, data.title);
+
+        if (data.additionalData.match_pk === '_new') {
+            promise = dataService.getMatches(true, true);
+        } else if (data.additionalData.match_pk) {
+            promise = dataService.getMatch(data.additionalData.match_pk, true);
+        }
+
+        promise.then(function () {
+            if (_.startsWith($location.path(), '/overview') ||
+                    _.startsWith($location.path(), '/match') ||
+                    _.startsWith($location.path(), '/review')) {
+                $route.reload();
+            }
+        }).catch($log.debug);
     });
 
     push.on('error', function (e) {
-        $log.debug("Error in notifications");
-        $log.debug(e);
+        $log.debug('error in notifications:', e);
         $log.debug(e.message);
         toastr.error(e.message);
     });

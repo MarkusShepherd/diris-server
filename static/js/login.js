@@ -14,15 +14,14 @@ dirisApp.controller('LoginController', function LoginController(
     var player = dataService.getLoggedInPlayer();
 
     if (player) {
-        $location.path('/overview/refresh').replace();
+        $location.path('/overview').replace();
         return;
     }
 
     blockUI.stop();
 
     $rootScope.menuItems = [];
-    $rootScope.refreshPath = null;
-    $rootScope.refreshReload = false;
+    $rootScope.refreshButton = false;
 
     $scope.login = function login() {
         if (!blockUI.state().blocking) {
@@ -35,7 +34,7 @@ dirisApp.controller('LoginController', function LoginController(
                 if (!token) {
                     throw new Error('no token');
                 }
-                $location.path('/overview/refresh').replace();
+                $location.path('/overview').replace();
             }).catch(function (response) {
                 $log.debug(response);
                 $scope.message = response.message || "There was an error...";

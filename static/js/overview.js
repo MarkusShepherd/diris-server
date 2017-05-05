@@ -8,14 +8,13 @@ dirisApp.controller('OverviewController', function OverviewController(
     $log,
     $q,
     $rootScope,
-    $routeParams,
     $scope,
     blockUI,
     toastr,
     dataService
 ) {
     var player = dataService.getLoggedInPlayer(),
-        action = $routeParams.action,
+        forceRefresh = _.now() >= dataService.getNextUpdate(),
         matchPromise,
         playerPromise;
 
@@ -25,16 +24,15 @@ dirisApp.controller('OverviewController', function OverviewController(
     }
 
     $scope.currentPlayer = player;
+
     $rootScope.menuItems = [];
+    $rootScope.refreshButton = true;
 
     if (!blockUI.state().blocking) {
         blockUI.start();
     }
 
-    $rootScope.refreshPath = '/overview/refresh';
-    $rootScope.refreshReload = action === 'refresh';
-
-    matchPromise = dataService.getMatches(action === 'refresh', true)
+    matchPromise = dataService.getMatches(forceRefresh, true)
         .then(function (matches) {
             var status = {};
             _.forEach(matches, function (match) {
@@ -49,7 +47,7 @@ dirisApp.controller('OverviewController', function OverviewController(
             toastr.error("There was an error fetching the data - please try again later...");
         });
 
-    playerPromise = dataService.getPlayers(action === 'refresh', true)
+    playerPromise = dataService.getPlayers(forceRefresh, true)
         .then(function (players) {
             $scope.players = players;
             $log.debug('Players:', $scope.players);

@@ -11,7 +11,8 @@ dirisApp.factory('dataService', function dataService(
     $q,
     authManager,
     jwtHelper,
-    BACKEND_URL
+    BACKEND_URL,
+    CACHE_TIMEOUT
 ) {
     var factory = {},
         matches = {},
@@ -19,14 +20,28 @@ dirisApp.factory('dataService', function dataService(
         images = {},
         token = null,
         loggedInPlayer = null,
-        gcmRegistrationID = null;
+        gcmRegistrationID = null,
+        nextUpdate = null;
 
     factory.logout = function logout() {
         factory.setToken(null);
+        factory.setNextUpdate();
         matches = {};
         players = {};
         images = {};
         $localStorage.$reset();
+    };
+
+    factory.setNextUpdate = function setNextUpdate(nxt) {
+        nextUpdate = nxt === '_renew' ? _.now() + CACHE_TIMEOUT : nxt || _.now() - 1;
+        $localStorage.nextUpdate = nextUpdate;
+        return nextUpdate;
+    };
+
+    factory.getNextUpdate = function getNextUpdate() {
+        nextUpdate = nextUpdate || $localStorage.nextUpdate || _.now() - 1;
+        $localStorage.nextUpdate = nextUpdate;
+        return nextUpdate;
     };
 
     factory.setToken = function setToken(newToken) {
@@ -106,6 +121,11 @@ dirisApp.factory('dataService', function dataService(
         matches[match.pk] = match;
     }
 
+    factory.removeMatch = function removeMatch(matchPk) {
+        delete $localStorage['match_' + matchPk];
+        delete matches[matchPk];
+    };
+
     factory.createMatch = function createMatch(playerPks, totalRounds, timeout) {
         var player = factory.getLoggedInPlayer(),
             options = {
@@ -139,6 +159,8 @@ dirisApp.factory('dataService', function dataService(
         if (!forceRefresh) {
             return $q.resolve(matches);
         }
+
+        factory.setNextUpdate('_renew');
 
         return $http.get(BACKEND_URL + '/matches/')
             .then(function (response) {
@@ -248,6 +270,8 @@ dirisApp.factory('dataService', function dataService(
             return $q.resolve(players);
         }
 
+        factory.setNextUpdate('_renew');
+
         return $http.get(BACKEND_URL + '/players/')
             .then(function (response) {
                 players = {};
@@ -332,6 +356,8 @@ dirisApp.factory('dataService', function dataService(
         if (!forceRefresh) {
             return $q.resolve(images);
         }
+
+        factory.setNextUpdate('_renew');
 
         return $http.get(BACKEND_URL + '/images/')
             .then(function (response) {

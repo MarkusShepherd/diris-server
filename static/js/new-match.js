@@ -27,13 +27,13 @@ dirisApp.controller('NewMatchController', function NewMatchController(
     }
 
     $scope.currentPlayer = player;
+
     $rootScope.menuItems = [{
         link: '#/overview',
         label: 'Overview',
         glyphicon: 'home'
     }];
-    $rootScope.refreshPath = null;
-    $rootScope.refreshReload = false;
+    $rootScope.refreshButton = false;
 
     dataService.getPlayers()
         .then(function (players) {

@@ -29,10 +29,10 @@ dirisApp.controller('VoteImageController', function VoteImageController(
         blockUI.start();
     }
 
+    $scope.currentPlayer = player;
     $scope.mPk = mPk;
     $scope.rNo = rNo;
 
-    $scope.currentPlayer = player;
     $rootScope.menuItems = [{
         link: '#/overview',
         label: 'Overview',
@@ -42,8 +42,7 @@ dirisApp.controller('VoteImageController', function VoteImageController(
         label: 'Match',
         glyphicon: 'knight'
     }];
-    $rootScope.refreshPath = null;
-    $rootScope.refreshReload = false;
+    $rootScope.refreshButton = false;
 
     matchPromise = dataService.getMatch(mPk)
         .then(function (match) {
