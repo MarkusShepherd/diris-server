@@ -21,8 +21,8 @@ from djangae.db.consistency import ensure_instance_consistent
 from future.utils import python_2_unicode_compatible
 from gcm import GCM
 from rest_framework import serializers
-from six import iteritems, itervalues
 from rest_framework.exceptions import ValidationError
+from six import iteritems, itervalues
 
 from .pubsub_utils import PubSubSender
 from .utils import clear_list, find_current_round, random_integer
@@ -792,7 +792,7 @@ class Image(models.Model):
     last_modified = models.DateTimeField(auto_now=True)
 
     class Meta(object):
-        ordering = ('last_modified',)
+        ordering = ('-last_modified',)
 
     def is_available_to(self, player=None):
         return self.is_available_publicly or (player and player == self.owner)

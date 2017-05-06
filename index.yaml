@@ -153,13 +153,13 @@ indexes:
   properties:
   - name: owner_id
   - name: random_order
+  - name: last_modified
     direction: desc
 
 - kind: matches_image
   properties:
   - name: owner_id
   - name: random_order
-  - name: last_modified
     direction: desc
 
 - kind: matches_image

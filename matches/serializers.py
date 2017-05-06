@@ -20,6 +20,10 @@ class ImageSerializer(serializers.ModelSerializer):
     url = serializers.URLField(required=False, read_only=True)
     info = serializers.DictField(required=False)
 
+    def __init__(self, player=None, *args, **kwargs):
+        super(ImageSerializer, self).__init__(*args, **kwargs)
+        self.player = player
+
     class Meta(object):
         model = Image
         fields = (
@@ -44,6 +48,21 @@ class ImageSerializer(serializers.ModelSerializer):
             'created',
             'last_modified',
         )
+
+    def to_representation(self, obj):
+        data = super(ImageSerializer, self).to_representation(obj)
+
+        if self.player and obj.owner_id and self.player.pk == obj.owner_id:
+            return data
+
+        data.pop('owner', None)
+        data.pop('copyright', None)
+        data.pop('info', None)
+        data.pop('is_available_publicly', None)
+        data.pop('created', None)
+        data.pop('last_modified', None)
+
+        return data
 
 
 class MatchSerializer(serializers.ModelSerializer):

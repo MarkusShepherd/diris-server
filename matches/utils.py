@@ -7,12 +7,13 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 import string
 
+from builtins import filter, str
 from collections import OrderedDict
 
 import six
 
-from builtins import filter, range, str
 from django.utils.crypto import get_random_string, random
+from rest_framework.exceptions import NotAuthenticated
 from rest_framework_jwt.utils import jwt_payload_handler
 
 LOGGER = logging.getLogger(__name__)
@@ -84,3 +85,11 @@ def find_current_round(match):
             return round_.number
 
     return match.total_rounds if match.status == 'f' else 1
+
+
+def get_player(request, raise_error=False):
+    try:
+        return request.user.player
+    except AttributeError as exc:
+        if raise_error:
+            six.raise_from(NotAuthenticated(detail='no user'), exc)

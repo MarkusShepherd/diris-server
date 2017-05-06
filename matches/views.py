@@ -10,7 +10,7 @@ import os.path
 
 from base64 import b64decode
 
-from builtins import filter, int, str
+from builtins import int, str
 from django.conf import settings
 from django.contrib.auth import login
 from django.db.models import Q
@@ -25,9 +25,9 @@ from rest_framework.parsers import FileUploadParser, MultiPartParser
 from rest_framework_jwt.settings import api_settings
 from six import itervalues, raise_from, string_types
 
-from .models import Player, Image
+from .models import Image, Match, Player
 from .serializers import MatchSerializer, PlayerSerializer, ImageSerializer
-from .utils import merge, normalize_space, random_string
+from .utils import get_player, merge, normalize_space, random_string
 
 LOGGER = logging.getLogger(__name__)
 
@@ -68,10 +68,12 @@ class MatchViewSet(
     filter_fields = ('inviting_player', 'status')
 
     def get_queryset(self):
-        return self.request.user.player.matches.all()
+        player = get_player(self.request)
+        return player.matches.all() if player else Match.objects.none()
 
     def create(self, request, *args, **kwargs):
-        player = request.user.player
+        player = get_player(request, raise_error=True)
+
         request.data['inviting_player'] = player.pk
         try:
             return super(MatchViewSet, self).create(request, *args, **kwargs)
@@ -79,13 +81,14 @@ class MatchViewSet(
             raise_from(ValidationError(detail=str(exc)), exc)
 
     def retrieve(self, request, *args, **kwargs):
-        player = request.user.player
+        player = get_player(request, raise_error=True)
+
         match = self.get_object()
         serializer = self.get_serializer(instance=match, player=player)
         return Response(serializer.data)
 
     def list(self, request, *args, **kwargs):
-        player = request.user.player
+        player = get_player(request, raise_error=True)
 
         matches = self.filter_queryset(self.get_queryset()).order_by('-last_modified')
 
@@ -114,22 +117,17 @@ class MatchViewSet(
         match.score()
         match.save()
 
-        try:
-            player = request.user.player
+        player = get_player(request)
 
-            if player.pk in match.players_ids:
-                serializer = self.get_serializer(instance=match, player=player)
-                return Response(serializer.data)
+        if player and player.pk in match.players_ids:
+            serializer = self.get_serializer(instance=match, player=player)
+            return Response(serializer.data)
 
-            return Response(status=status.HTTP_204_NO_CONTENT)
-
-        except AttributeError:
-            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @detail_route(methods=['post'])
     def accept(self, request, pk, *args, **kwargs):
-        player = request.user.player
-
+        player = get_player(request, raise_error=True)
         match = self.get_object()
 
         try:
@@ -144,8 +142,7 @@ class MatchViewSet(
 
     @detail_route(methods=['post'])
     def decline(self, request, pk, *args, **kwargs):
-        player = request.user.player
-
+        player = get_player(request, raise_error=True)
         match = self.get_object()
 
         try:
@@ -166,7 +163,7 @@ class MatchViewSet(
 
     @detail_route()
     def images(self, request, pk=None, *args, **kwargs):
-        player = request.user.player
+        player = get_player(request, raise_error=True)
         match = self.get_object()
 
         try:
@@ -181,7 +178,8 @@ class MatchViewSet(
                      for details in itervalues(round_.details_dict)
                      if details.image}
 
-        serializer = ImageSerializer(instance=Image.objects.filter(pk__in=image_pks), many=True)
+        serializer = ImageSerializer(instance=Image.objects.filter(pk__in=image_pks),
+                                     player=player, many=True)
         return Response(serializer.data)
 
 
@@ -190,8 +188,7 @@ class MatchImageView(views.APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def post(self, request, match_pk, round_number, filename):
-        player = request.user.player
-
+        player = get_player(request, raise_error=True)
         match = player.matches.get(pk=match_pk)
         round_ = match.rounds_list[int(round_number) - 1]
 
@@ -217,8 +214,7 @@ class MatchVoteView(views.APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def post(self, request, match_pk, round_number, image_pk):
-        player = request.user.player
-
+        player = get_player(request, raise_error=True)
         match = player.matches.get(pk=match_pk)
         round_ = match.rounds_list[int(round_number) - 1]
 
@@ -308,14 +304,57 @@ class ImageViewSet(viewsets.ModelViewSet):
     default_random_size = 5
     default_shuffle_size = 100
 
-    # def create(self, request, *args, **kwargs):
-    #     if not request.data.get('owner'):
-    #         try:
-    #             request.data['owner'] = request.user.player
-    #         except AttributeError:
-    #             request.data['owner'] = None
+    def create(self, request, *args, **kwargs):
+        if not request.data.get('owner'):
+            request.data['owner'] = get_player(request)
 
-    #     return super(ImageViewSet, self).create(request, *args, **kwargs)
+        return super(ImageViewSet, self).create(request, *args, **kwargs)
+
+    def retrieve(self, request, *args, **kwargs):
+        player = get_player(request)
+        image = self.get_object()
+        serializer = self.get_serializer(instance=image, player=player)
+        return Response(serializer.data)
+
+    def list(self, request, *args, **kwargs):
+        player = get_player(request)
+
+        images = self.filter_queryset(self.get_queryset()).order_by(*self.ordering)
+
+        page = self.paginate_queryset(images)
+        if page is not None:
+            serializer = self.get_serializer(instance=page, player=player, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(instance=images, player=player, many=True)
+        return Response(serializer.data)
+
+    def update(self, request, *args, **kwargs):
+        player = get_player(request, raise_error=True)
+        image = self.get_object()
+
+        if image.owner_id != player.pk:
+            raise NotAuthenticated('cannot change an image you do not own')
+
+        return super(ImageViewSet, self).update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        player = get_player(request, raise_error=True)
+        image = self.get_object()
+
+        if image.owner_id != player.pk:
+            raise NotAuthenticated('cannot change an image you do not own')
+
+        return super(ImageViewSet, self).partial_update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        player = get_player(request, raise_error=True)
+        image = self.get_object()
+
+        if image.owner_id != player.pk:
+            raise NotAuthenticated('cannot change an image you do not own')
+
+        return super(ImageViewSet, self).destroy(request, *args, **kwargs)
 
     @list_route(methods=['get', 'post'])
     def shuffle(self, request, *args, **kwargs):
@@ -333,10 +372,7 @@ class ImageViewSet(viewsets.ModelViewSet):
 
     @list_route()
     def random(self, request, *args, **kwargs):
-        try:
-            player = request.user.player
-        except AttributeError:
-            player = None
+        player = get_player(request)
 
         query = Q(is_available_publicly=True)
         if player:
@@ -374,10 +410,7 @@ class ImageUploadView(views.APIView):
     parser_classes = (MultiPartParser, FileUploadParser)
 
     def put(self, request, filename):
-        try:
-            owner = request.user.player
-        except AttributeError:
-            owner = None
+        owner = get_player(request)
 
         file_extension = (os.path.splitext(filename)[1] if isinstance(filename, string_types)
                           else None)
