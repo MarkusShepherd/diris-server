@@ -62,6 +62,17 @@ indexes:
 - kind: matches_image
   properties:
   - name: is_available_publicly
+  - name: random_order
+    direction: desc
+  - name: height
+  - name: pagination_random_order
+  - name: size
+  - name: url
+  - name: width
+
+- kind: matches_image
+  properties:
+  - name: is_available_publicly
   - name: created
 
 - kind: matches_image
@@ -97,12 +108,30 @@ indexes:
   properties:
   - name: is_available_publicly
   - name: pagination_random_order
+  - name: height
+  - name: size
+  - name: url
+  - name: width
+
+- kind: matches_image
+  properties:
+  - name: is_available_publicly
+  - name: pagination_random_order
     direction: desc
 
 - kind: matches_image
   properties:
   - name: is_available_publicly
   - name: random_order
+
+- kind: matches_image
+  properties:
+  - name: is_available_publicly
+  - name: random_order
+  - name: height
+  - name: size
+  - name: url
+  - name: width
 
 - kind: matches_image
   properties:
@@ -116,6 +145,12 @@ indexes:
   - name: is_available_publicly
   - name: random_order
     direction: desc
+
+- kind: matches_image
+  properties:
+  - name: last_modified
+    direction: desc
+  - name: url
 
 - kind: matches_image
   properties:

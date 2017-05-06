@@ -162,21 +162,34 @@ dirisApp.run(function (
 
     push.on('notification', function (data) {
         var promise = $q.resolve(),
-            options = {};
+            options = {},
+            path = null;
 
         $log.debug('received notification:', data);
         $log.debug(data.additionalData.match_pk);
 
         if (data.additionalData.match_pk === '_new') {
+            path = '/overview';
             promise = dataService.getMatches(true, true);
+
             options.onTap = function () {
-                $location.path('/overview');
+                $location.path(path);
             };
+
+            if (data.additionalData.coldstart) {
+                $location.path(path);
+            }
         } else if (data.additionalData.match_pk) {
+            path = '/match/' + data.additionalData.match_pk;
             promise = dataService.getMatch(data.additionalData.match_pk, true);
+
             options.onTap = function () {
-                $location.path('/match/' + data.additionalData.match_pk);
+                $location.path(path);
             };
+
+            if (data.additionalData.coldstart) {
+                $location.path(path);
+            }
         }
 
         promise.then(function () {
@@ -186,9 +199,9 @@ dirisApp.run(function (
                 $route.reload();
             }
         }).catch($log.debug)
-        .then(function () {
-            toastr.info(data.message, data.title, options);
-        });
+            .then(function () {
+                toastr.info(data.message, data.title, options);
+            });
     });
 
     push.on('error', function (e) {
