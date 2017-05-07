@@ -8,6 +8,13 @@
 		<div class="panel-footer text-right">by <em>{{ players[round.storyteller].user.username }}</em></div>
 	</section>
 
+	<div ng-hide="round.hasSubmittedImage" class="alert alert-info alert-dismissible fade in" role="alert">
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
+		You have <b>{{ round.isStoryTeller ? round.deadlineStoryLeft : round.deadlineOthersLeft }}</b> to submit your image.
+	</div>
+
 	<section>
 		<div ng-show="round.readyForStoryImage || round.readyForOtherImage" class="btn-group btn-group-justified btn-group-lg">
 			<div ng-if="hasCamera" class="btn-group btn-group-lg">

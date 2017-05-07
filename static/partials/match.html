@@ -6,7 +6,7 @@
 		<a ng-repeat="item in match.standingsArray | orderBy:'score':true"
 			ng-href="#/profile/{{ item.playerPk }}"
 			class="list-group-item">
-			<span class="badge">{{ item.score }}</span>
+			<span class="badge badge-score">{{ item.score }}</span>
 			<player-icon player="players[item.playerPk]"
 				class-icon="player-icon-standings"
 				class-btn="btn-primary"></player-icon>
@@ -28,7 +28,18 @@
 				{{ round.status == 'w' || (round.status == 's' &amp;&amp; !round.isStoryTeller) ? 'disabled' : '' }}">
 			<h4 class="list-group-item-heading">Round {{ round.number }}</h4>
 			<p class="list-group-item-text">
-				<span ng-if="round.status == 'f'" class="badge">{{ round.scores[currentPlayer.pk] }}</span>
+				<span ng-if="round.readyForStoryImage &amp;&amp; round.deadlineStoryLeft" class="badge badge-time-left">
+					{{ round.deadlineStoryLeft }}
+				</span>
+				<span ng-if="round.readyForOtherImage &amp;&amp; round.deadlineOthersLeft" class="badge badge-time-left">
+					{{ round.deadlineOthersLeft }}
+				</span>
+				<span ng-if="round.readyForVote &amp;&amp; round.deadlineVotesLeft" class="badge badge-time-left">
+					{{ round.deadlineVotesLeft }}
+				</span>
+				<span ng-if="round.status == 'f'" class="badge badge-score">
+					{{ round.scores[currentPlayer.pk] }}
+				</span>
 				{{ players[round.storyteller].user.username }}<span ng-show="round.story">: "{{ round.story }}"</span>
 			</p>
 			<div ng-if="round.status == 'f'" class="image-overview-container">

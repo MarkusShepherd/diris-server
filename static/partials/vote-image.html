@@ -7,13 +7,22 @@
 		</div>
 		<div class="panel-footer text-right">by <em>{{ players[round.storyteller].user.username }}</em></div>
 	</section>
-	<div ng-if="round.isStoryTeller" class="alert alert-success fade in">
+	<div ng-if="round.isStoryTeller" class="alert alert-success alert-dismissible fade in" role="alert">
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
 		These are the other players' submissions, wait for them to vote now...
 	</div>
-	<div ng-if="round.readyForVote" class="alert alert-info fade in">
-		Select the right image! Remember, you cannot vote for your own image.
+	<div ng-if="round.readyForVote" class="alert alert-info alert-dismissible fade in" role="alert">
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
+		Select the right image! Remember, you cannot vote for your own image. You have <b>{{ round.deadlineVotesLeft }}</b> to submit your vote.
 	</div>
-	<div ng-if="round.hasVoted" class="alert alert-success fade in">
+	<div ng-if="round.hasVoted" class="alert alert-success alert-dismissible fade in" role="alert">
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
 		You have already voted in this round, now wait for the other players...
 	</div>
 	<div ng-if="!round.hasVoted" class="row">

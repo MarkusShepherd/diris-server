@@ -12,6 +12,10 @@
 				<a ng-repeat="match in matches | orderBy:'last_modified':true | filter:{actionStatus:'w'}:true"
 					ng-href="#/accept/{{ match.pk }}"
 					class="list-group-item {{ match.hasAccepted ? '' : 'list-group-item-info' }}">
+					<span ng-if="!match.hasAccepted &amp;&amp; match.deadlineResponseLeft"
+						class="badge badge-time-left">
+						{{ match.deadlineResponseLeft }}
+					</span>
 					By {{ players[match.inviting_player].user.username }}
 				</a>
 			</div>
@@ -25,19 +29,31 @@
 				<a ng-repeat="match in matches | orderBy:'last_modified':true | filter:{actionStatus:'a'}:true"
 					ng-href="#/match/{{ match.pk }}"
 					class="list-group-item list-group-item-info">
-					<span ng-if="match.current_round &gt; 1" class="badge">{{ match.playerPositionOrd }}</span>
+					<span ng-if="match.current_round &gt; 1" class="badge badge-position">{{ match.playerPositionOrd }}</span>
 					<h4 class="list-group-item-heading">Round {{ match.current_round }} of {{ match.total_rounds }}</h4>
 					<p ng-if="match.currentRoundObj.status === 's'" class="list-group-item-text">
+						<span ng-if="match.currentRoundObj.isStoryTeller &amp;&amp; match.currentRoundObj.deadlineStoryLeft"
+							class="badge badge-time-left">
+							{{ match.currentRoundObj.deadlineStoryLeft }}
+						</span>
 						{{ match.currentRoundObj.isStoryTeller
 							? 'Tell your story!'
 							: 'Wait for the story...' }}
 					</p>
 					<p ng-if="match.currentRoundObj.status === 'o'" class="list-group-item-text">
+						<span ng-if="!match.currentRoundObj.hasSubmittedImage &amp;&amp; match.currentRoundObj.deadlineOthersLeft"
+							class="badge badge-time-left">
+							{{ match.currentRoundObj.deadlineOthersLeft }}
+						</span>
 						{{ !match.currentRoundObj.hasSubmittedImage
 							? 'Submit your image!'
 							: "Wait for the other players' images..." }}
 					</p>
 					<p ng-if="match.currentRoundObj.status === 'v'" class="list-group-item-text">
+						<span ng-if="!match.currentRoundObj.isStoryTeller &amp;&amp; !match.currentRoundObj.hasVoted &amp;&amp; match.currentRoundObj.deadlineVotesLeft"
+							class="badge badge-time-left">
+							{{ match.currentRoundObj.deadlineVotesLeft }}
+						</span>
 						{{ !match.currentRoundObj.isStoryTeller &amp;&amp; !match.currentRoundObj.hasVoted
 							? 'Submit your vote!'
 							: "Wait for the other players' votes..." }}
@@ -54,7 +70,7 @@
 				<a ng-repeat="match in matches | orderBy:'last_modified':true | filter:{actionStatus:'p'}:true"
 					ng-href="#/match/{{ match.pk }}"
 					class="list-group-item">
-					<span ng-if="match.current_round &gt; 1" class="badge">{{ match.playerPositionOrd }}</span>
+					<span ng-if="match.current_round &gt; 1" class="badge badge-position">{{ match.playerPositionOrd }}</span>
 					<h4 class="list-group-item-heading">Round {{ match.current_round }} of {{ match.total_rounds }}</h4>
 					<p ng-if="match.currentRoundObj.status === 's'" class="list-group-item-text">
 						{{ match.currentRoundObj.isStoryTeller
@@ -83,7 +99,7 @@
 				<a ng-repeat="match in matches | orderBy:'last_modified':true | filter:{actionStatus:'f'}:true"
 					ng-href="#/match/{{ match.pk }}"
 					class="list-group-item">
-					<span class="badge">{{ match.lastModifiedFromNow }}</span>
+					<span class="badge badge-time-passed">{{ match.lastModifiedFromNow }}</span>
 					You finished <b>{{ match.playerPositionOrd }}</b>!
 				</a>
 			</div>

@@ -11,6 +11,26 @@ function getOrdinal(n) {
     return n + (s[(v - 20) % 10] || s[v] || s[0]);
 }
 
+function time_left(date1, date2) {
+    if (!date1) {
+        return null;
+    }
+
+    date1 = moment(date1);
+    if (!date1.isValid()) {
+        return null;
+    }
+
+    date2 = date2 ? moment(date2) : moment();
+    if (!date2.isValid()) {
+        return null;
+    }
+
+    var diff = date1 - date2,
+        dur = moment.duration(diff, 'milliseconds');
+    return dur.humanize() + (diff > 0 ? ' left' : ' past');
+}
+
 function processRound(round, player) {
     if (!round) {
         return round;
@@ -62,6 +82,10 @@ function processRound(round, player) {
         };
     });
 
+    round.deadlineStoryLeft = time_left(round.deadline_story);
+    round.deadlineOthersLeft = time_left(round.deadline_others);
+    round.deadlineVotesLeft = time_left(round.deadline_votes);
+
     return round;
 }
 
@@ -108,6 +132,7 @@ function processMatch(match, player) {
 
     match.createdFromNow = moment(match.created).fromNow();
     match.lastModifiedFromNow = moment(match.last_modified).fromNow();
+    match.deadlineResponseLeft = time_left(match.deadline_response);
 
     match.hasAccepted = match.playerDetails && match.playerDetails.invitation_status === 'a';
 

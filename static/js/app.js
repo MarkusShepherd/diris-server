@@ -176,7 +176,7 @@ dirisApp.run(function (
                 $location.path(path);
             };
 
-            if (data.additionalData.coldstart) {
+            if (!data.additionalData.foreground || data.additionalData.coldstart) {
                 $location.path(path);
             }
         } else if (data.additionalData.match_pk) {
@@ -187,7 +187,7 @@ dirisApp.run(function (
                 $location.path(path);
             };
 
-            if (data.additionalData.coldstart) {
+            if (!data.additionalData.foreground || data.additionalData.coldstart) {
                 $location.path(path);
             }
         }

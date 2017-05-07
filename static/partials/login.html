@@ -1,8 +1,10 @@
 <section xmlns="http://www.w3.org/1999/xhtml">
 	<h2>Login</h2>
 
-	<p ng-show="message" class="alert alert-warning fade in">
-		<a class="close" data-dismiss="alert" aria-label="close">&times;</a>
+	<p ng-show="message" class="alert alert-warning alert-dismissible fade in" role="alert">
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
 		{{ message }}
 	</p>
 
@@ -11,14 +13,20 @@
 			<label class="sr-only" for="name">User name:</label>
 			<input type="text" id="name" name="name" placeholder="Name" ng-model="player.name" ng-required="true"  class="form-control" />
 		</div>
-		<p ng-show="myform.name.$invalid &amp;&amp; myform.name.$touched" class="alert alert-warning fade in">
+		<p ng-show="myform.name.$invalid &amp;&amp; myform.name.$touched" class="alert alert-warning alert-dismissible fade in" role="alert">
+			<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+				<span aria-hidden="true">&times;</span>
+			</button>
 			Name is required
 		</p>
 		<div class="form-group">
 			<label class="sr-only" for="password">Password:</label>
 			<input type="password" id="password" name="password" placeholder="Password" ng-model="player.password" ng-required="true" class="form-control" />
 		</div>
-		<p ng-show="myform.password.$invalid &amp;&amp; myform.password.$touched" class="alert alert-warning fade in">
+		<p ng-show="myform.password.$invalid &amp;&amp; myform.password.$touched" class="alert alert-warning alert-dismissible fade in" role="alert">
+			<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+				<span aria-hidden="true">&times;</span>
+			</button>
 			Password is required
 		</p>
 
@@ -28,7 +36,10 @@
 		</button>
 	</form>
 
-	<p class="alert alert-info fade in">
+	<p class="alert alert-info alert-dismissible fade in" role="alert">
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
 		No account? <a href="#/register" class="btn btn-default">Register!</a>
 	</p>
 </section>

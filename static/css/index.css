@@ -133,6 +133,23 @@ img.player-icon-standings {
     font-size: 30px;
 }
 
+.badge-position,
+.badge-score,
+.badge-time-left,
+.badge-time-passed {
+    float: right;
+}
+
+.badge-position {
+    background-color: #4cae4c;
+}
+
+.badge-score,
+.badge-time-left,
+.badge-time-passed {
+    background-color: #337ab7;
+}
+
 .select-image {
     display: block;
     max-width: 90vmin;

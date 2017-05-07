@@ -1,12 +1,17 @@
 <section xmlns="http://www.w3.org/1999/xhtml">
 	<h2>Register</h2>
 
-	<p class="alert alert-info fade in">
+	<p class="alert alert-info alert-dismissible fade in" role="alert">
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
 		Already registered? <a href="#/login" class="btn btn-default">Login!</a>
 	</p>
 
-	<p ng-show="message" class="alert alert-warning fade in">
-		<a class="close" data-dismiss="alert" aria-label="close">&times;</a>
+	<p ng-show="message" class="alert alert-warning alert-dismissible fade in" role="alert">
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
 		{{ message }}
 	</p>
 
@@ -15,7 +20,10 @@
 			<label class="sr-only" for="username">User name:</label>
 			<input type="text" id="username" name="username" placeholder="Name" ng-model="player.username" ng-required="true" class="form-control" />
 		</div>
-		<p ng-show="myform.username.$invalid &amp;&amp; myform.username.$touched" class="alert alert-warning fade in">
+		<p ng-show="myform.username.$invalid &amp;&amp; myform.username.$touched" class="alert alert-warning alert-dismissible fade in" role="alert">
+			<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+				<span aria-hidden="true">&times;</span>
+			</button>
 			Name is required
 		</p>
 
@@ -23,7 +31,10 @@
 			<label class="sr-only" for="email">Email:</label>
 			<input type="email" id="email" name="email" placeholder="Email" ng-model="player.email" ng-required="true" class="form-control" />
 		</div>
-		<p ng-show="myform.email.$invalid &amp;&amp; myform.email.$touched" class="alert alert-warning fade in">
+		<p ng-show="myform.email.$invalid &amp;&amp; myform.email.$touched" class="alert alert-warning alert-dismissible fade in" role="alert">
+			<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+				<span aria-hidden="true">&times;</span>
+			</button>
 			Must be a valid email
 		</p>
 
@@ -31,7 +42,10 @@
 			<label class="sr-only" for="password">Password:</label>
 			<input type="password" id="password" name="password" placeholder="Password" ng-model="player.password" ng-required="true" class="form-control" />
 		</div>
-		<p ng-show="myform.password.$invalid &amp;&amp; myform.password.$touched" class="alert alert-warning fade in">
+		<p ng-show="myform.password.$invalid &amp;&amp; myform.password.$touched" class="alert alert-warning alert-dismissible fade in" role="alert">
+			<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+				<span aria-hidden="true">&times;</span>
+			</button>
 			Password is required
 		</p>
 
