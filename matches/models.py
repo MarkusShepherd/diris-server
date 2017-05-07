@@ -400,12 +400,11 @@ class Round(object):
                     for player_pk in player_pks:
                         self.details_dict[player_pk].notification_finished_sent = timezone.now()
 
-    def update_deadlines(self, timeout):
+    def update_deadlines(self, delta):
         field = self.DEADLINE_FIELDS.get(self.status)
 
         if field:
-            setattr(self, field, getattr(self, field, None) or
-                    timezone.now() + timedelta(seconds=timeout))
+            setattr(self, field, getattr(self, field, None) or timezone.now() + delta)
 
     def display_images_to(self, player_pk=None):
         return bool(self.status in (Round.SUBMIT_VOTES, Round.FINISHED)
@@ -531,6 +530,7 @@ class Match(models.Model):
 
     status = fields.CharField(max_length=1, choices=MATCH_STATUSES, default=WAITING)
     timeout = models.PositiveIntegerField(default=STANDARD_TIMEOUT)
+    deadline_response = models.DateTimeField(blank=True, null=True, default=None)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 
@@ -640,6 +640,16 @@ class Match(models.Model):
             for round_ in self.rounds_list:
                 round_.send_notifications(match=self)
 
+    def update_deadlines(self):
+        delta = timedelta(seconds=self.timeout or Match.STANDARD_TIMEOUT)
+
+        if self.status == Match.WAITING:
+            self.deadline_response = self.deadline_response or timezone.now() + delta
+
+        else:
+            for round_ in self.rounds_list:
+                round_.update_deadlines(delta)
+
     def save(self, *args, **kwargs):
         if self.status == Match.DELETE:
             LOGGER.info('match %d marked for deletion', self.pk)
@@ -651,8 +661,7 @@ class Match(models.Model):
 
             return
 
-        for round_ in self.rounds_list:
-            round_.update_deadlines(self.timeout or Match.STANDARD_TIMEOUT)
+        self.update_deadlines()
 
         stt = time.time()
         self.send_notifications()

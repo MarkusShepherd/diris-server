@@ -62,17 +62,6 @@ indexes:
 - kind: matches_image
   properties:
   - name: is_available_publicly
-  - name: random_order
-    direction: desc
-  - name: height
-  - name: pagination_random_order
-  - name: size
-  - name: url
-  - name: width
-
-- kind: matches_image
-  properties:
-  - name: is_available_publicly
   - name: created
 
 - kind: matches_image
@@ -145,6 +134,17 @@ indexes:
   - name: is_available_publicly
   - name: random_order
     direction: desc
+
+- kind: matches_image
+  properties:
+  - name: is_available_publicly
+  - name: random_order
+    direction: desc
+  - name: height
+  - name: pagination_random_order
+  - name: size
+  - name: url
+  - name: width
 
 - kind: matches_image
   properties:
@@ -246,6 +246,11 @@ indexes:
   - name: status
   - name: pagination_last_modified
     direction: desc
+
+- kind: matches_match
+  properties:
+  - name: status
+  - name: last_modified
 
 - kind: matches_player
   properties:

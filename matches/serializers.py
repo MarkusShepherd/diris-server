@@ -90,6 +90,7 @@ class MatchSerializer(serializers.ModelSerializer):
             'images',
             'status',
             'timeout',
+            'deadline_response',
             'created',
             'last_modified',
         )
@@ -97,6 +98,7 @@ class MatchSerializer(serializers.ModelSerializer):
             'current_round',
             'images',
             'status',
+            'deadline_response',
             'created',
             'last_modified',
         )
