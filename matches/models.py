@@ -8,6 +8,7 @@ import logging
 import time
 
 from collections import defaultdict
+from datetime import timedelta
 
 from builtins import int, map, range, str
 from django.conf import settings
@@ -136,6 +137,12 @@ class Round(object):
 
     MINIMUM_STORY_LENGTH = 3
 
+    DEADLINE_FIELDS = {
+        SUBMIT_STORY: 'deadline_story',
+        SUBMIT_OTHERS: 'deadline_others',
+        SUBMIT_VOTES: 'deadline_votes',
+    }
+
     MAX_DECEIVED_VOTE_SCORE = 3
     DECEIVED_VOTE_SCORE = 1
     ALL_CORRECT_SCORE = 2
@@ -146,7 +153,8 @@ class Round(object):
     NOT_ALL_CORRECT_OR_WRONG_STORYTELLER_SCORE = 3
 
     def __init__(self, number, storyteller, details, match=None,
-                 is_current_round=False, status=WAITING, story=None):
+                 is_current_round=False, status=WAITING, story=None,
+                 deadline_story=None, deadline_others=None, deadline_votes=None):
         self.match = match
         self.number = number
         self.storyteller = storyteller
@@ -154,6 +162,9 @@ class Round(object):
         self.is_current_round = is_current_round
         self.status = status
         self.story = story
+        self.deadline_story = deadline_story
+        self.deadline_others = deadline_others
+        self.deadline_votes = deadline_votes
         self._details_dict = None
 
     @property
@@ -389,6 +400,13 @@ class Round(object):
                     for player_pk in player_pks:
                         self.details_dict[player_pk].notification_finished_sent = timezone.now()
 
+    def update_deadlines(self, timeout):
+        field = self.DEADLINE_FIELDS.get(self.status)
+
+        if field:
+            setattr(self, field, getattr(self, field, None) or
+                    timezone.now() + timedelta(seconds=timeout))
+
     def display_images_to(self, player_pk=None):
         return bool(self.status in (Round.SUBMIT_VOTES, Round.FINISHED)
                     or (player_pk and player_pk == self.storyteller))
@@ -413,6 +431,9 @@ class RoundSerializer(serializers.Serializer):
                                   min_length=Round.MINIMUM_STORY_LENGTH,
                                   allow_blank=False, trim_whitespace=True,
                                   validators=[validate_story])
+    deadline_story = serializers.DateTimeField(required=False, allow_null=True)
+    deadline_others = serializers.DateTimeField(required=False, allow_null=True)
+    deadline_votes = serializers.DateTimeField(required=False, allow_null=True)
 
     def create(self, validated_data):
         return Round(**validated_data)
@@ -629,6 +650,9 @@ class Match(models.Model):
                 player.save(new_match=self)
 
             return
+
+        for round_ in self.rounds_list:
+            round_.update_deadlines(self.timeout or Match.STANDARD_TIMEOUT)
 
         stt = time.time()
         self.send_notifications()
