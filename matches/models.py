@@ -261,15 +261,20 @@ class Round(object):
             self.score()
 
     def check_status(self, match=None, prev_round=None):
-        if all(details.vote for player_pk, details in iteritems(self.details_dict)
-               if player_pk != self.storyteller):
+        if (all(details.vote for player_pk, details in iteritems(self.details_dict)
+                if player_pk != self.storyteller)
+            or (self.deadline_votes and timezone.now() > self.deadline_votes)):
             self.status = Round.FINISHED
 
-        elif all(details.image for details in itervalues(self.details_dict)):
+        elif (all(details.image for details in itervalues(self.details_dict))
+              or (self.deadline_others and timezone.now() > self.deadline_others)):
             self.status = Round.SUBMIT_VOTES
 
         elif self.details_dict[self.storyteller].image and self.story:
             self.status = Round.SUBMIT_OTHERS
+
+        elif self.deadline_story and timezone.now() > self.deadline_story:
+            self.status = Round.FINISHED
 
         elif self.number == 1:
             match = match or self.match
@@ -287,11 +292,12 @@ class Round(object):
         self.is_current_round = self.status not in (Round.FINISHED, Round.WAITING)
 
     def score(self):
-        if self.status != Round.FINISHED:
-            return defaultdict(int)
-
         scores = defaultdict(int)
 
+        if self.status != Round.FINISHED:
+            return scores
+
+        # TODO take into account that images or votes might be missing
         non_storyteller_details = [details for player_pk, details in iteritems(self.details_dict)
                                    if player_pk != self.storyteller]
 
@@ -567,9 +573,14 @@ class Match(models.Model):
         return self._rounds_list
 
     def respond(self, player_pk, accept=False):
+        self.check_status()
+
+        if self.status != Match.WAITING:
+            raise ValueError('match does not expect invitation responses')
+
         player_details = self.details_dict[player_pk]
         if player_details.invitation_status != MatchDetails.INVITED:
-            raise ValueError('Player already responded to this invitation')
+            raise ValueError('player already responded to this invitation')
 
         player_details.invitation_status = (MatchDetails.ACCEPTED if accept
                                             else MatchDetails.DECLINED)
@@ -589,6 +600,11 @@ class Match(models.Model):
                        if any(details.invitation_status != MatchDetails.ACCEPTED
                               for details in itervalues(self.details_dict))
                        else Match.IN_PROGESS)
+
+        if self.status == Match.WAITING and self.deadline_response and timezone.now > self.deadline_response:
+            LOGGER.info('deadline for invitation response has passed, delete match')
+            self.status = Match.DELETE
+            return
 
         prev_round = None
         self.images_ids.clear()
