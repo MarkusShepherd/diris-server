@@ -151,6 +151,8 @@ class Round(object):
     ALL_WRONG_STORYTELLER_SCORE = 0
     NOT_ALL_CORRECT_OR_WRONG_SCORE = 3
     NOT_ALL_CORRECT_OR_WRONG_STORYTELLER_SCORE = 3
+    NO_STORY_SCORE = 3
+    NO_STORY_STORYTELLER_SCORE = 0
 
     def __init__(self, number, storyteller, details, match=None,
                  is_current_round=False, status=WAITING, story=None,
@@ -297,7 +299,13 @@ class Round(object):
         if self.status != Round.FINISHED:
             return scores
 
-        # TODO take into account that images or votes might be missing
+        if not (self.story and self.details_dict[self.storyteller].image):
+            for player_pk, details in iteritems(self.details_dict):
+                details.score = (Round.NO_STORY_STORYTELLER_SCORE
+                                 if details.is_storyteller else Round.NO_STORY_SCORE)
+                scores[player_pk] = details.score
+            return scores
+
         non_storyteller_details = [details for player_pk, details in iteritems(self.details_dict)
                                    if player_pk != self.storyteller]
 
@@ -314,7 +322,8 @@ class Round(object):
         elif all(details.vote_player != self.storyteller for details in non_storyteller_details):
             scores[self.storyteller] += Round.ALL_WRONG_STORYTELLER_SCORE
             for details in non_storyteller_details:
-                scores[details.player] += Round.ALL_WRONG_SCORE
+                if details.vote:
+                    scores[details.player] += Round.ALL_WRONG_SCORE
 
         else:
             scores[self.storyteller] += Round.NOT_ALL_CORRECT_OR_WRONG_STORYTELLER_SCORE

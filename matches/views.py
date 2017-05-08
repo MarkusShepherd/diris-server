@@ -67,6 +67,8 @@ class MatchViewSet(
     ordering = ('-last_modified',)
     filter_fields = ('inviting_player', 'status')
 
+    default_checks_size = 100
+
     def get_queryset(self):
         player = get_player(self.request)
         return player.matches.all() if player else Match.objects.none()
@@ -101,18 +103,26 @@ class MatchViewSet(
         return Response(serializer.data)
 
     @list_route(methods=['post'], permission_classes=())
-    def statuses(self, request, *args, **kwargs):
-        result = {}
-        for match in self.get_queryset():
+    def checks(self, request, *args, **kwargs):
+        matches = self.filter_queryset(self.get_queryset()).order_by('last_modified')
+
+        try:
+            size = int(request.query_params.get('size'))
+            size = size if size > 0 else self.default_checks_size
+        except (TypeError, ValueError):
+            size = self.default_checks_size
+
+        for match in matches[:size]:
             match.check_status()
             match.score()
             match.save()
-            result[match.pk] = match.status
-        return Response(result)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @detail_route(methods=['post'], permission_classes=())
     def check(self, request, pk=None, *args, **kwargs):
         match = self.get_object()
+
         match.check_status()
         match.score()
         match.save()
@@ -134,8 +144,8 @@ class MatchViewSet(
             match.respond(player.pk, accept=True)
         except ValueError as exc:
             raise_from(ValidationError(detail=str(exc)), exc)
-
-        match.save()
+        finally:
+            match.save()
 
         serializer = self.get_serializer(instance=match, player=player)
         return Response(serializer.data)
@@ -203,8 +213,8 @@ class MatchImageView(views.APIView):
             round_.submit_image(player_pk=player.pk, image_pk=image.pk, story=story)
         except ValueError as exc:
             raise_from(ValidationError(detail=str(exc)), exc)
-
-        match.save()
+        finally:
+            match.save()
 
         serializer = MatchSerializer(instance=match, player=player)
         return Response(serializer.data)
@@ -222,8 +232,8 @@ class MatchVoteView(views.APIView):
             round_.submit_vote(player_pk=player.pk, image_pk=int(image_pk))
         except ValueError as exc:
             raise_from(ValidationError(detail=str(exc)), exc)
-
-        match.save()
+        finally:
+            match.save()
 
         serializer = MatchSerializer(instance=match, player=player)
         return Response(serializer.data)
