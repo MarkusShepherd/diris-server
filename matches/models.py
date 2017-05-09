@@ -98,7 +98,7 @@ class RoundDetails(object):
             return bool(player_pk and player_pk == self.player)
 
         if (match_round.status == Round.FINISHED
-              or (player_pk and player_pk == self.player)):
+                or (player_pk and player_pk == self.player)):
             return True
 
         details = match_round.details_dict.get(player_pk)
@@ -597,13 +597,6 @@ class Match(models.Model):
         self.check_status()
 
     def check_status(self):
-        for details in itervalues(self.details_dict):
-            if details.invitation_status == MatchDetails.DECLINED:
-                # TODO remove the player instead (if possible) and adjust rounds & details
-                LOGGER.info('player %d declined the invitation, delete the match', details.player)
-                self.status = Match.DELETE
-                return
-
         self.status = (Match.WAITING
                        if any(details.invitation_status != MatchDetails.ACCEPTED
                               for details in itervalues(self.details_dict))
@@ -611,9 +604,20 @@ class Match(models.Model):
 
         if (self.status == Match.WAITING and self.deadline_response
                 and timezone.now() > self.deadline_response):
-            LOGGER.info('deadline for invitation response has passed, delete match')
-            self.status = Match.DELETE
-            return
+            LOGGER.info('deadline for invitation response has passed, '
+                        'decline invitation of pending players')
+            for details in itervalues(self.details_dict):
+                details.invitation_status = (MatchDetails.DECLINED
+                                             if details.invitation_status == MatchDetails.INVITED
+                                             else details.invitation_status)
+                details.date_responded = timezone.now()
+
+        for details in itervalues(self.details_dict):
+            if details.invitation_status == MatchDetails.DECLINED:
+                # TODO remove the player instead (if possible) and adjust rounds & details
+                LOGGER.info('player %d declined the invitation, delete the match', details.player)
+                self.status = Match.DELETE
+                return
 
         prev_round = None
         self.images_ids.clear()
