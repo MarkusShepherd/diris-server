@@ -43,6 +43,10 @@ handlers:
   secure: always
   login: admin
 
+- url: /matches/(\d+/)?checks?.*
+  script: diris.wsgi.application
+  secure: optional
+
 - url: /images/shuffle.*
   script: diris.wsgi.application
   secure: optional

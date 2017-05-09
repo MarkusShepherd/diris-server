@@ -102,9 +102,9 @@ class MatchViewSet(
         serializer = self.get_serializer(instance=matches, player=player, many=True)
         return Response(serializer.data)
 
-    @list_route(methods=['post'], permission_classes=())
+    @list_route(methods=['get', 'post'], permission_classes=())
     def checks(self, request, *args, **kwargs):
-        matches = self.filter_queryset(self.get_queryset()).order_by('last_modified')
+        matches = self.filter_queryset(Match.objects.all()).order_by('last_modified')
 
         try:
             size = int(request.query_params.get('size'))
@@ -119,9 +119,13 @@ class MatchViewSet(
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @detail_route(methods=['post'], permission_classes=())
+    @detail_route(methods=['get', 'post'], permission_classes=())
     def check(self, request, pk=None, *args, **kwargs):
-        match = self.get_object()
+        try:
+            match = Match.objects.get(pk=pk)
+        except Match.DoesNotExist:
+            return Response({'detail': 'match "{}" does not exist'.format(pk)},
+                            status=status.HTTP_404_NOT_FOUND)
 
         match.check_status()
         match.score()

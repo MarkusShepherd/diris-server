@@ -1,4 +1,12 @@
 cron:
 - description: shuffle images
   url: /images/shuffle/?size=100
+  schedule: every 30 minutes
+
+- description: update matches waiting for response
+  url: /matches/checks/?status=w&size=100
+  schedule: every 60 minutes
+
+- description: update matches in progress
+  url: /matches/checks/?status=p&size=100
   schedule: every 60 minutes

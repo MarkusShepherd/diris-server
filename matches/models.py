@@ -97,13 +97,12 @@ class RoundDetails(object):
         if not match_round:
             return bool(player_pk and player_pk == self.player)
 
-        elif (match_round.status == Round.FINISHED
+        if (match_round.status == Round.FINISHED
               or (player_pk and player_pk == self.player)):
             return True
 
-        else:
-            details = match_round.details_dict.get(player_pk)
-            return bool(details and (details.is_storyteller or details.vote))
+        details = match_round.details_dict.get(player_pk)
+        return bool(details and (details.is_storyteller or details.vote))
 
 
 class RoundDetailsSerializer(serializers.Serializer):
@@ -265,7 +264,7 @@ class Round(object):
     def check_status(self, match=None, prev_round=None):
         if (all(details.vote for player_pk, details in iteritems(self.details_dict)
                 if player_pk != self.storyteller)
-            or (self.deadline_votes and timezone.now() > self.deadline_votes)):
+                or (self.deadline_votes and timezone.now() > self.deadline_votes)):
             self.status = Round.FINISHED
 
         elif (all(details.image for details in itervalues(self.details_dict))
@@ -610,7 +609,8 @@ class Match(models.Model):
                               for details in itervalues(self.details_dict))
                        else Match.IN_PROGESS)
 
-        if self.status == Match.WAITING and self.deadline_response and timezone.now > self.deadline_response:
+        if (self.status == Match.WAITING and self.deadline_response
+                and timezone.now() > self.deadline_response):
             LOGGER.info('deadline for invitation response has passed, delete match')
             self.status = Match.DELETE
             return
