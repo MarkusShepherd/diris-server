@@ -3,13 +3,13 @@
 		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
 			<span aria-hidden="true">&times;</span>
 		</button>
-		You've been invited by <b>{{ players[match.inviting_player].user.username }}</b> to participate in their match. Please hit the button below to accept the invitation. You have <b>{{ match.deadlineResponseLeft }}</b> to respond.
+		You've been invited by <strong>{{ players[match.inviting_player].user.username }}</strong> to participate in their match. Please hit the button below to accept the invitation. You have <strong>{{ match.deadlineResponseLeft }}</strong> to respond.
 	</div>
 	<div ng-if="match.hasAccepted" class="alert alert-success alert-dismissible fade in" role="alert">
 		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
 			<span aria-hidden="true">&times;</span>
 		</button>
-		You have accepted the invitation by <b>{{ players[match.inviting_player].user.username }}</b> to participate in their match. Please wait for the other players to join the match too.
+		You have accepted the invitation by <strong>{{ players[match.inviting_player].user.username }}</strong> to participate in their match. Please wait for the other players to join the match too.
 	</div>
 
 	<section class="list-group">
@@ -29,7 +29,7 @@
 		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
 			<span aria-hidden="true">&times;</span>
 		</button>
-		The game will last a total of <b>{{ match.total_rounds }} rounds</b> with a timeout of <b>{{ timeout }} hours</b>.
+		The game will last a total of <strong>{{ match.total_rounds }} rounds</strong> with a timeout of <strong>{{ timeout }} hours</strong>.
 	</div>
 
 	<div ng-if="!match.hasAccepted" class="btn-group btn-group-justified btn-group-lg btn-group-accept">

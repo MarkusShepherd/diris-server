@@ -1,5 +1,5 @@
 <section xmlns="http://www.w3.org/1999/xhtml">
-	<section class="panel panel-primary">
+	<section ng-if="round.story" class="panel panel-primary">
 		<div class="panel-body">
 			<blockquote class="quote-story">
 				<p>{{ round.story }}</p>
@@ -7,7 +7,13 @@
 		</div>
 		<div class="panel-footer text-right">by <em>{{ players[round.storyteller].user.username }}</em></div>
 	</section>
-	<section>
+	<p ng-if="!round.story" class="alert alert-danger alert-dismissible fade in" role="alert">
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
+		Unfortunately, <strong>{{ players[round.storyteller].user.username }}</strong> did not submit any story this round.
+	</p>
+	<section ng-if="round.story">
 		<h3>Correct image</h3>
 		<div class="image-review-container">
 			<div class="submitted-by-container">
@@ -26,20 +32,20 @@
 			</div>
 		</div>
 	</section>
-	<section>
+	<section ng-if="round.story &amp;&amp; otherDetailsSize">
 		<h3>Other images</h3>
-		<div ng-repeat="(pPk, details) in round.details" ng-if="details.image && pPk != round.storyteller" class="col-lg-4 col-md-6 col-sm-12">
+		<div ng-repeat="details in otherDetails" class="col-lg-4 col-md-6 col-sm-12">
 			<div class="image-review-container">
 				<div class="submitted-by-container">
-					<player-icon player="players[pPk]"
+					<player-icon player="players[details.player]"
 						class-btn="btn-primary btn-lg"></player-icon>
 				</div>
 				<img src="default-placeholder.png"
 					ng-src="{{ images[details.image].url }}"
 					class="img-responsive img-rounded image-review" />
-				<div ng-if="round.votes[pPk]"
+				<div ng-if="round.votes[details.player]"
 					class="guessed-by-container">
-					<player-icon ng-repeat="pPk in round.votes[pPk]"
+					<player-icon ng-repeat="pPk in round.votes[details.player]"
 						player="players[pPk]"
 						class-img="image-player-incorrect"
 						class-btn="btn-danger btn-lg"></player-icon>

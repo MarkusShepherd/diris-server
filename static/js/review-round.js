@@ -55,6 +55,11 @@ dirisApp.controller('ReviewRoundController', function ReviewRoundController(
             $scope.match = match;
             $scope.round = round;
 
+            $scope.otherDetails = _.filter(round.details, function (details, pk) {
+                return details.image && pk !== round.storyteller;
+            });
+            $scope.otherDetailsSize = _.size($scope.otherDetails);
+
             return $q.all(_.map(match.players, function (pk) {
                 return dataService.getPlayer(pk, false);
             }));
