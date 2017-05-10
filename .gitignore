@@ -55,4 +55,5 @@ docs/_build/
 /man/
 pip-selfcheck.json
 /share/
+*.apk
 
