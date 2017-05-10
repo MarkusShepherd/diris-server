@@ -545,8 +545,10 @@ class Match(models.Model):
     status = fields.CharField(max_length=1, choices=MATCH_STATUSES, default=WAITING)
     timeout = models.PositiveIntegerField(default=STANDARD_TIMEOUT)
     deadline_response = models.DateTimeField(blank=True, null=True, default=None)
+    deadline_action = models.DateTimeField(blank=True, null=True, default=None)
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
+    finished = models.DateTimeField(blank=True, null=True, default=None)
 
     class Meta(object):
         ordering = ('-last_modified',)
@@ -633,6 +635,7 @@ class Match(models.Model):
 
         if prev_round.status == Round.FINISHED:
             self.status = Match.FINISHED
+            self.finished = self.finished or timezone.now()
 
     def score(self):
         scores = defaultdict(int)
@@ -674,10 +677,18 @@ class Match(models.Model):
 
         if self.status == Match.WAITING:
             self.deadline_response = self.deadline_response or timezone.now() + delta
+            self.deadline_action = self.deadline_response
 
         else:
             for round_ in self.rounds_list:
                 round_.update_deadlines(delta)
+
+            if self.status == Match.IN_PROGESS:
+                curr_round = self.rounds_list[self.current_round - 1]
+                field = Round.DEADLINE_FIELDS.get(curr_round.status) or ''
+                self.deadline_action = getattr(curr_round, field, None)
+            else:
+                self.deadline_action = None
 
     def save(self, *args, **kwargs):
         if self.status == Match.DELETE:

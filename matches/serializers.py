@@ -91,16 +91,20 @@ class MatchSerializer(serializers.ModelSerializer):
             'status',
             'timeout',
             'deadline_response',
+            'deadline_action',
             'created',
             'last_modified',
+            'finished',
         )
         read_only_fields = (
             'current_round',
             'images',
             'status',
             'deadline_response',
+            'deadline_action',
             'created',
             'last_modified',
+            'finished',
         )
 
     def to_representation(self, obj):

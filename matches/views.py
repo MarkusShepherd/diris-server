@@ -104,7 +104,7 @@ class MatchViewSet(
 
     @list_route(methods=['get', 'post'], permission_classes=())
     def checks(self, request, *args, **kwargs):
-        matches = self.filter_queryset(Match.objects.all()).order_by('last_modified')
+        matches = self.filter_queryset(Match.objects.all()).order_by('deadline_action')
 
         try:
             size = int(request.query_params.get('size'))

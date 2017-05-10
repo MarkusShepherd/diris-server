@@ -205,6 +205,32 @@ indexes:
 
 - kind: matches_match
   properties:
+  - name: deadline_action
+  - name: last_modified
+
+- kind: matches_match
+  properties:
+  - name: deadline_action
+  - name: last_modified
+  - name: status
+
+- kind: matches_match
+  properties:
+  - name: deadline_action
+  - name: last_modified
+    direction: desc
+  - name: status
+
+- kind: matches_match
+  properties:
+  - name: deadline_action
+    direction: desc
+  - name: last_modified
+    direction: desc
+  - name: status
+
+- kind: matches_match
+  properties:
   - name: inviting_player_id
   - name: players_ids
   - name: pagination_last_modified
@@ -246,6 +272,11 @@ indexes:
   - name: status
   - name: pagination_last_modified
     direction: desc
+
+- kind: matches_match
+  properties:
+  - name: status
+  - name: deadline_action
 
 - kind: matches_match
   properties:
