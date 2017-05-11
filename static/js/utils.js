@@ -132,6 +132,7 @@ function processMatch(match, player) {
 
     match.createdFromNow = moment(match.created).fromNow();
     match.lastModifiedFromNow = moment(match.last_modified).fromNow();
+    match.finishedFromNow = moment(match.finished || match.last_modified).fromNow();
     match.deadlineResponseLeft = time_left(match.deadline_response);
 
     match.hasAccepted = match.playerDetails && match.playerDetails.invitation_status === 'a';
