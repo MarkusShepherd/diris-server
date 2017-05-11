@@ -27,9 +27,9 @@ handlers:
   upload: static/index.html$
   secure: always
 
-- url: /(.*\.(html|js|css|png|json|map|ico)|.*glyphicons-halflings-regular.*)$
+- url: /(.*\.(html|js|css|png|json|map|ico|apk)|.*glyphicons-halflings-regular.*)$
   static_files: static/\1
-  upload: static/(.*\.(html|js|css|png|json|map|ico)|.*glyphicons-halflings-regular.*)$
+  upload: static/(.*\.(html|js|css|png|json|map|ico|apk)|.*glyphicons-halflings-regular.*)$
   secure: always
 
 - url: /$

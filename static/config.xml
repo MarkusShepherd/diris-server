@@ -16,7 +16,8 @@
     <content src="index.html" />
     <access origin="*" />
     <hook src="scripts/copy_resource_files.js" type="before_build" />
-    <hook src="scripts/copy_manifest.js" type="after_build" />
+    <hook src="scripts/copy_files.js" type="after_build" />
+    <hook src="scripts/rename_files.js" type="after_build" />
     <preference name="BackgroundColor" value="0xfff0f0f0" />
     <preference name="DisallowOverscroll" value="true" />
     <preference name="Fullscreen" value="false" />
