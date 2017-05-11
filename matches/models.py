@@ -8,7 +8,7 @@ import logging
 import time
 
 from collections import defaultdict
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from builtins import int, map, range, str
 from django.conf import settings
@@ -545,7 +545,7 @@ class Match(models.Model):
     status = fields.CharField(max_length=1, choices=MATCH_STATUSES, default=WAITING)
     timeout = models.PositiveIntegerField(default=STANDARD_TIMEOUT)
     deadline_response = models.DateTimeField(blank=True, null=True, default=None)
-    deadline_action = models.DateTimeField(blank=True, null=True, default=None)
+    deadline_action = models.DateTimeField(default=datetime.max.replace(tzinfo=timezone.utc))
     created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
     finished = models.DateTimeField(blank=True, null=True, default=None)
@@ -677,7 +677,8 @@ class Match(models.Model):
 
         if self.status == Match.WAITING:
             self.deadline_response = self.deadline_response or timezone.now() + delta
-            self.deadline_action = self.deadline_response
+            self.deadline_action = (self.deadline_response
+                                    or datetime.max.replace(tzinfo=timezone.utc))
 
         else:
             for round_ in self.rounds_list:
@@ -686,9 +687,10 @@ class Match(models.Model):
             if self.status == Match.IN_PROGESS:
                 curr_round = self.rounds_list[self.current_round - 1]
                 field = Round.DEADLINE_FIELDS.get(curr_round.status) or ''
-                self.deadline_action = getattr(curr_round, field, None)
+                self.deadline_action = (getattr(curr_round, field, None)
+                                        or datetime.max.replace(tzinfo=timezone.utc))
             else:
-                self.deadline_action = None
+                self.deadline_action = datetime.max.replace(tzinfo=timezone.utc)
 
     def save(self, *args, **kwargs):
         if self.status == Match.DELETE:
