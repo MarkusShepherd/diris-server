@@ -5,9 +5,11 @@
 from __future__ import absolute_import, division, print_function, unicode_literals, with_statement
 
 import logging
+import re
 
 from builtins import str, zip
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 from django.utils.crypto import random
 from djangae.contrib.gauth_datastore.models import GaeDatastoreUser
 
@@ -149,6 +151,13 @@ class MatchSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    username = serializers.RegexField(
+        regex=re.compile(r'^\d{21}$|^[a-zA-Z][a-zA-Z0-9_.\-]{2,20}$'),
+        min_length=3,
+        max_length=21,
+        validators=[UniqueValidator(queryset=GaeDatastoreUser.objects.all(), lookup='iexact')],
+    )
+
     class Meta(object):
         model = GaeDatastoreUser
         fields = (

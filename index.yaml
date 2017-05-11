@@ -277,12 +277,12 @@ indexes:
   properties:
   - name: status
   - name: deadline_action
-  - name: last_modified
 
 - kind: matches_match
   properties:
   - name: status
   - name: deadline_action
+  - name: last_modified
 
 - kind: matches_match
   properties:
