@@ -157,6 +157,18 @@ class UserSerializer(serializers.ModelSerializer):
         max_length=21,
         validators=[UniqueValidator(queryset=GaeDatastoreUser.objects.all(), lookup='iexact')],
     )
+    email = serializers.EmailField(
+        max_length=254,
+        validators=[UniqueValidator(queryset=GaeDatastoreUser.objects.all(), lookup='iexact')],
+        write_only=True,
+    )
+    password = serializers.RegexField(
+        regex=re.compile(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?!.*(.)\1\1)'
+                         r'[a-zA-Z0-9"!?,;.:@#$€£¥%&§/()<>=+*_-]{6,128}$'),
+        min_length=6,
+        max_length=128,
+        write_only=True,
+    )
 
     class Meta(object):
         model = GaeDatastoreUser
@@ -168,7 +180,6 @@ class UserSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
         )
-        extra_kwargs = {'password': {'write_only': True}}
 
 
 class PlayerSerializer(serializers.ModelSerializer):
