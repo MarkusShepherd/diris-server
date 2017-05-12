@@ -31,7 +31,7 @@ from .utils import clear_list, find_current_round, random_integer
 GCM_SENDER = GCM(settings.GCM_API_KEY, debug=settings.DEBUG)
 LOGGER = logging.getLogger(__name__)
 PUBSUB_SENDER = PubSubSender()
-STORAGE = storage.CloudStorage(bucket='diris-images', google_acl='public-read')
+STORAGE = storage.CloudStorage(bucket='diris-app.appspot.com', google_acl='public-read')
 
 
 class MatchDetails(object):
