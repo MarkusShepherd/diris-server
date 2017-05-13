@@ -85,6 +85,12 @@ dirisApp.factory('dataService', function dataService(
         return (token && !jwtHelper.isTokenExpired(token)) ? token : undefined;
     };
 
+    factory.resetPassword = function resetPassword(username, email) {
+        return $http.post(BACKEND_URL + '/players/reset_password/',
+                {username: username, email: email},
+                {skipAuthorization: true});
+    };
+
     factory.setGcmRegistrationID = function setGcmRegistrationID(gri) {
         gcmRegistrationID = gri || gcmRegistrationID;
     };

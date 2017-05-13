@@ -224,7 +224,7 @@ class PlayerSerializer(serializers.ModelSerializer):
             user.first_name = user_data.get('first_name') or user.first_name
             user.last_name = user_data.get('last_name') or user.last_name
 
-            password = user_data.pop('password')
+            password = user_data.pop('password', None)
             if password:
                 user.set_password(password)
 

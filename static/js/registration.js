@@ -15,6 +15,7 @@ dirisApp.controller('RegistrationController', function RegistrationController(
 
     blockUI.stop();
 
+    $rootScope.menuItems = [];
     $rootScope.refreshButton = false;
 
     $scope.register = function register() {

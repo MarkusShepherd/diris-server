@@ -14,12 +14,13 @@ from builtins import int, str
 from django.conf import settings
 from django.contrib.auth import login
 from django.db.models import Q
-from django.utils.crypto import random
+from django.utils.crypto import get_random_string, random
 from djangae.contrib.gauth_datastore.models import GaeDatastoreUser
 from djangae.contrib.pagination import Paginator
+from google.appengine.api.mail import send_mail
 from rest_framework import mixins, permissions, status, views, viewsets
 from rest_framework.decorators import detail_route, list_route
-from rest_framework.exceptions import ValidationError, NotAuthenticated
+from rest_framework.exceptions import ValidationError, NotAuthenticated, NotFound
 from rest_framework.response import Response
 from rest_framework.parsers import FileUploadParser, MultiPartParser
 from rest_framework_jwt.settings import api_settings
@@ -124,9 +125,8 @@ class MatchViewSet(
     def check(self, request, pk=None, *args, **kwargs):
         try:
             match = Match.objects.get(pk=pk)
-        except Match.DoesNotExist:
-            return Response({'detail': 'match "{}" does not exist'.format(pk)},
-                            status=status.HTTP_404_NOT_FOUND)
+        except Match.DoesNotExist as exc:
+            raise_from(NotFound(detail='match "{}" does not exist'.format(pk)), exc)
 
         match.check_status()
         match.score()
@@ -305,6 +305,43 @@ class PlayerViewSet(viewsets.ModelViewSet):
         for player in Player.objects.filter(pk__in=player_pks):
             LOGGER.info(player.pk)
             LOGGER.info(player.send_message(**data))
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @list_route(methods=['post'], permission_classes=())
+    def reset_password(self, request, *args, **kwargs):
+        username = request.data.get('username') or request.query_params.get('username')
+        email = request.data.get('email') or request.query_params.get('email')
+
+        if not username or not email:
+            raise ValidationError(detail='username and email are required')
+
+        try:
+            user = GaeDatastoreUser.objects.get(username=username, email=email)
+        except GaeDatastoreUser.DoesNotExist as exc:
+            raise_from(NotFound(detail='user with this combination of '
+                                'name and email does not exist'), exc)
+
+        new_password = get_random_string(length=20)
+        user.set_password(new_password)
+        user.save()
+
+        # TODO put into util function
+        # TODO use email template
+        send_mail(
+            sender='noreply@diris-app.appspotmail.com',
+            to=[email],
+            subject='[Diris] New password',
+            body='''
+            Hi {username}!
+
+            Your new password is {password}.
+
+            Please use it to log in and change it.
+
+            Happy storytelling!
+            '''.format(username=username, password=new_password),
+        )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

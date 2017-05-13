@@ -53,6 +53,9 @@ dirisApp.config(function (
     }).when('/register', {
         templateUrl: 'partials/registration.html',
         controller: 'RegistrationController'
+    }).when('/forgot', {
+        templateUrl: 'partials/forgot-password.html',
+        controller: 'ForgotPasswordController'
     }).when('/overview', {
         templateUrl: 'partials/overview.html',
         controller: 'OverviewController',
