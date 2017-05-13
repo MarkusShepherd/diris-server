@@ -9,6 +9,7 @@ import re
 
 from builtins import str, zip
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 from rest_framework.validators import UniqueValidator
 from django.utils.crypto import random
 from djangae.contrib.gauth_datastore.models import GaeDatastoreUser
@@ -169,6 +170,8 @@ class UserSerializer(serializers.ModelSerializer):
         max_length=128,
         write_only=True,
     )
+    old_password = serializers.CharField(write_only=True, required=False,
+                                         allow_null=True, allow_blank=True)
 
     class Meta(object):
         model = GaeDatastoreUser
@@ -177,6 +180,7 @@ class UserSerializer(serializers.ModelSerializer):
             'username',
             'email',
             'password',
+            'old_password',
             'first_name',
             'last_name',
         )
@@ -224,8 +228,13 @@ class PlayerSerializer(serializers.ModelSerializer):
             user.first_name = user_data.get('first_name') or user.first_name
             user.last_name = user_data.get('last_name') or user.last_name
 
-            password = user_data.pop('password', None)
+            password = user_data.get('password')
             if password:
+                old_password = user_data.get('old_password')
+                if not user.check_password(old_password):
+                    raise ValidationError(detail='current password needs to be provided '
+                                          'when setting a new password')
+
                 user.set_password(password)
 
             user.save()
