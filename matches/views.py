@@ -27,6 +27,7 @@ from rest_framework_jwt.settings import api_settings
 from six import itervalues, raise_from, string_types
 
 from .models import Image, Match, Player
+from .permissions import IsOwnerOrCreateAndRead
 from .serializers import MatchSerializer, PlayerSerializer, ImageSerializer
 from .utils import get_player, merge, normalize_space, random_string
 
@@ -246,6 +247,7 @@ class MatchVoteView(views.APIView):
 
 class PlayerViewSet(viewsets.ModelViewSet):
     queryset = Player.objects.all()
+    permission_classes = (IsOwnerOrCreateAndRead,)
     serializer_class = PlayerSerializer
     ordering = ('-last_modified',)
 
@@ -348,6 +350,7 @@ class PlayerViewSet(viewsets.ModelViewSet):
 
 class ImageViewSet(viewsets.ModelViewSet):
     queryset = Image.objects.all()
+    permission_classes = (IsOwnerOrCreateAndRead,)
     serializer_class = ImageSerializer
     parser_classes = (MultiPartParser, FileUploadParser)
     ordering = ('random_order',)
@@ -380,33 +383,6 @@ class ImageViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(instance=images, player=player, many=True)
         return Response(serializer.data)
-
-    def update(self, request, *args, **kwargs):
-        player = get_player(request, raise_error=True)
-        image = self.get_object()
-
-        if image.owner_id != player.pk:
-            raise NotAuthenticated('cannot change an image you do not own')
-
-        return super(ImageViewSet, self).update(request, *args, **kwargs)
-
-    def partial_update(self, request, *args, **kwargs):
-        player = get_player(request, raise_error=True)
-        image = self.get_object()
-
-        if image.owner_id != player.pk:
-            raise NotAuthenticated('cannot change an image you do not own')
-
-        return super(ImageViewSet, self).partial_update(request, *args, **kwargs)
-
-    def destroy(self, request, *args, **kwargs):
-        player = get_player(request, raise_error=True)
-        image = self.get_object()
-
-        if image.owner_id != player.pk:
-            raise NotAuthenticated('cannot change an image you do not own')
-
-        return super(ImageViewSet, self).destroy(request, *args, **kwargs)
 
     @list_route(methods=['get', 'post'])
     def shuffle(self, request, *args, **kwargs):
