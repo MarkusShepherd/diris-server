@@ -10,7 +10,7 @@ import re
 from builtins import str, zip
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from rest_framework.validators import UniqueValidator
+# from rest_framework.validators import UniqueValidator
 from django.utils.crypto import random
 from djangae.contrib.gauth_datastore.models import GaeDatastoreUser
 
@@ -156,11 +156,11 @@ class UserSerializer(serializers.ModelSerializer):
         regex=re.compile(r'^\d{21}$|^[a-zA-Z][a-zA-Z0-9_.\-]{2,20}$'),
         min_length=3,
         max_length=21,
-        validators=[UniqueValidator(queryset=GaeDatastoreUser.objects.all(), lookup='iexact')],
+        # validators=[UniqueValidator(queryset=GaeDatastoreUser.objects.all(), lookup='iexact')],
     )
     email = serializers.EmailField(
         max_length=254,
-        validators=[UniqueValidator(queryset=GaeDatastoreUser.objects.all(), lookup='iexact')],
+        # validators=[UniqueValidator(queryset=GaeDatastoreUser.objects.all(), lookup='iexact')],
         write_only=True,
     )
     password = serializers.RegexField(
@@ -209,6 +209,16 @@ class PlayerSerializer(serializers.ModelSerializer):
         user_data = validated_data.pop('user')
         password = user_data.pop('password')
 
+        users = GaeDatastoreUser.objects.all()
+
+        username = user_data['username']
+        if users.filter(username__iexact=username).exists():
+            raise ValidationError(detail='username already exists')
+
+        email = user_data['email']
+        if users.filter(email__iexact=email).exists():
+            raise ValidationError(detail='email already exists')
+
         user = GaeDatastoreUser.objects.create_user(**user_data)
 
         user.set_password(password)
@@ -222,9 +232,18 @@ class PlayerSerializer(serializers.ModelSerializer):
         user_data = validated_data.pop('user', None)
         if user_data:
             user = instance.user
+            users = GaeDatastoreUser.objects.exclude(pk=user.pk)
 
-            user.username = user_data.get('username') or user.username
-            user.email = user_data.get('email') or user.email
+            username = user_data.get('username')
+            if username and users.filter(username__iexact=username).exists():
+                raise ValidationError(detail='username already exists')
+
+            email = user_data.get('email')
+            if email and users.filter(email__iexact=email).exists():
+                raise ValidationError(detail='email already exists')
+
+            user.username = username or user.username
+            user.email = email or user.email
             user.first_name = user_data.get('first_name') or user.first_name
             user.last_name = user_data.get('last_name') or user.last_name
 
