@@ -160,9 +160,35 @@ function roundAction(round) {
     return 'image';
 }
 
+function removeEmpty(value) {
+    var result;
+
+    if (_.isNumber(value) || _.isBoolean(value) || _.isDate(value) ||
+            (_.isString(value) && !_.isEmpty(value))) {
+        return value;
+    }
+
+    if (_.isArrayLike(value)) {
+        result = _(value).map(removeEmpty).reject(_.isNil).value();
+        return _.isEmpty(result) ? undefined : result;
+    }
+
+    if (_.isPlainObject(value)) {
+        result = _(value).toPairs().map(function (pair) {
+            return [pair[0], removeEmpty(pair[1])];
+        }).reject(function (pair) {
+            return _.isNil(pair[1]);
+        }).fromPairs().value();
+        return _.isEmpty(result) ? undefined : result;
+    }
+
+    return undefined;
+}
+
 utils = {
     processMatch: processMatch,
     getOrdinal: getOrdinal,
     isBrowser: isBrowser,
-    roundAction: roundAction
+    roundAction: roundAction,
+    removeEmpty: removeEmpty
 };

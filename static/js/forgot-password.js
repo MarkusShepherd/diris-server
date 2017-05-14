@@ -32,6 +32,6 @@ dirisApp.controller('ForgotPasswordController', function ForgotPasswordControlle
                 $log.debug(response);
                 $scope.message = response.message || "There was an error...";
                 blockUI.stop();
-            })
+            });
     }; // reset
 }); // ForgotPasswordController

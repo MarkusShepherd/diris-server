@@ -276,6 +276,8 @@ dirisApp.factory('dataService', function dataService(
             }).catch(function (response) {
                 $log.debug("Failed to updated player", pPk);
                 $log.debug(response);
+
+                throw new Error(response);
             });
     };
 

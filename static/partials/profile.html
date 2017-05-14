@@ -7,4 +7,66 @@
 
 	<h3>Statistics</h3>
 	<p>{{ player.user.username }} participates in <strong>{{ player.total_matches }} game{{ player.total_matches == 1 ? '' : 's' }}</strong>.</p>
+
+	<form ng-if="update" id="update" name="myform" novalidate="novalidate" ng-submit="update()" role="form" class="form">
+		<div class="form-group">
+			<label class="sr-only" for="username">User name:</label>
+			<input type="text" id="username" name="username" placeholder="Name" ng-model="uPlayer.user.username" ng-required="true" class="form-control" />
+		</div>
+		<p ng-show="myform.username.$invalid &amp;&amp; myform.username.$touched" class="alert alert-warning" role="alert">
+			User name is required
+		</p>
+
+		<div class="form-group">
+			<label class="sr-only" for="first_name">First name:</label>
+			<input type="text" id="first_name" name="first_name" placeholder="First name" ng-model="uPlayer.user.first_name" class="form-control" />
+		</div>
+
+		<div class="form-group">
+			<label class="sr-only" for="last_name">Last name:</label>
+			<input type="text" id="last_name" name="last_name" placeholder="Last name" ng-model="uPlayer.user.last_name" class="form-control" />
+		</div>
+
+		<div class="form-group">
+			<label class="sr-only" for="email">Email:</label>
+			<input type="email" id="email" name="email" placeholder="Email" ng-model="uPlayer.user.email" ng-required="true" class="form-control" />
+		</div>
+		<p ng-show="myform.email.$invalid &amp;&amp; myform.email.$touched" class="alert alert-warning" role="alert">
+			Must be a valid email
+		</p>
+
+		<p class="alert alert-info" role="alert">
+			Only provide password information if you want to change it
+		</p>
+
+		<div class="form-group">
+			<label class="sr-only" for="password">Old password:</label>
+			<input type="password" id="old_password" name="old_password" placeholder="Old password" ng-model="uPlayer.user.old_password" class="form-control" />
+		</div>
+		<p ng-show="myform.old_password.$invalid &amp;&amp; myform.old_password.$touched" class="alert alert-warning" role="alert">
+			Please provide your old password
+		</p>
+
+		<div class="form-group">
+			<label class="sr-only" for="password">New password:</label>
+			<input type="password" id="password" name="password" placeholder="New password" ng-model="uPlayer.user.password" class="form-control" />
+		</div>
+		<p ng-show="myform.password.$invalid &amp;&amp; myform.password.$touched" class="alert alert-warning" role="alert">
+			Password must be at least 6 characters long with one of each lowercase, one uppercase letters, and digits
+		</p>
+
+		<div class="form-group">
+			<label class="sr-only" for="password">Repeat password:</label>
+			<input type="password" id="repeat_password" name="repeat_password" placeholder="Repeat password" ng-model="uPlayer.user.repeat_password" class="form-control" />
+		</div>
+		<p ng-show="myform.repeat_password.$touched &amp;&amp; (myform.repeat_password.$invalid || uPlayer.user.password !== uPlayer.user.repeat_password)"
+			class="alert alert-warning" role="alert">
+			Passwords don't match
+		</p>
+
+		<button type="submit" ng-disabled="myform.$invalid" class="btn btn-primary btn-lg btn-block">
+			<span class="glyphicon glyphicon-ok"></span>
+			Update
+		</button>
+	</form>
 </section>
