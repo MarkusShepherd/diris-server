@@ -1,7 +1,7 @@
 'use strict';
 
-/*jslint browser: true */
-/*global dirisApp */
+/*jslint browser: true, nomen: true */
+/*global _, dirisApp */
 
 dirisApp.controller('LoginController', function LoginController(
     $location,
@@ -9,6 +9,7 @@ dirisApp.controller('LoginController', function LoginController(
     $rootScope,
     $scope,
     blockUI,
+    toastr,
     dataService
 ) {
     var player = dataService.getLoggedInPlayer();
@@ -31,13 +32,21 @@ dirisApp.controller('LoginController', function LoginController(
         dataService.getToken($scope.player.name, $scope.player.password)
             .then(function (token) {
                 $log.debug('token:', token);
+
                 if (!token) {
-                    throw new Error('no token');
+                    throw 'There was an error logging in...';
                 }
+
                 $location.path('/overview').replace();
             }).catch(function (response) {
+                var message = _.upperFirst(response.non_field_errors || response.message ||
+                                           response.toString() || 'There was an error logging in...');
+
                 $log.debug(response);
-                $scope.message = response.message || "There was an error...";
+                $log.debug(message);
+
+                toastr.error(message);
+
                 blockUI.stop();
             });
     }; // login

@@ -39,6 +39,7 @@
 	<script type="text/javascript" src="js/app.js"></script>
 	<script type="text/javascript" src="js/data-service.js"></script>
 	<script type="text/javascript" src="js/navigation.js"></script>
+	<script type="text/javascript" src="js/footer.js"></script>
 	<script type="text/javascript" src="js/login.js"></script>
 	<script type="text/javascript" src="js/registration.js"></script>
 	<script type="text/javascript" src="js/forgot-password.js"></script>
@@ -72,8 +73,11 @@
 	<meta name="theme-color" content="#222" />
 </head>
 <body>
-	<nav ng-controller="NavigationController" ng-include="'partials/navigation.html'" class="navbar navbar-inverse"></nav>
-	<div class="container" ng-view="" autoscroll="true"></div>
+	<div class="flex-container">
+		<nav ng-controller="NavigationController" ng-include="'partials/navigation.html'" class="navbar navbar-inverse"></nav>
+		<div class="container" ng-view="" autoscroll="true"></div>
+		<footer ng-controller="FooterController" ng-include="'partials/footer.html'" class="navbar navbar-inverse navbar-footer"></footer>
+	</div>
 
 	<script type="text/javascript" src="https://cdn.flurry.com/js/flurry.js"></script>
 	<script type="text/javascript">

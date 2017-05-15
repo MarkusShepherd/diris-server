@@ -1,32 +1,20 @@
 <section xmlns="http://www.w3.org/1999/xhtml">
 	<h2>Login</h2>
 
-	<p ng-show="message" class="alert alert-warning alert-dismissible fade in" role="alert">
-		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
-			<span aria-hidden="true">&times;</span>
-		</button>
-		{{ message }}
-	</p>
-
 	<form id="login" name="myform" novalidate="novalidate" ng-submit="login()" role="form" class="form">
 		<div class="form-group">
 			<label class="sr-only" for="name">User name:</label>
-			<input type="text" id="name" name="name" placeholder="Name" ng-model="player.name" ng-required="true"  class="form-control" />
+			<input type="text" id="name" name="name" placeholder="Name" ng-model="player.name" ng-required="true" class="form-control" />
 		</div>
-		<p ng-show="myform.name.$invalid &amp;&amp; myform.name.$touched" class="alert alert-warning alert-dismissible fade in" role="alert">
-			<button type="button" class="close" data-dismiss="alert" aria-label="Close">
-				<span aria-hidden="true">&times;</span>
-			</button>
+		<p ng-show="myform.name.$invalid &amp;&amp; myform.name.$touched" class="alert alert-warning" role="alert">
 			Name is required
 		</p>
+
 		<div class="form-group">
 			<label class="sr-only" for="password">Password:</label>
 			<input type="password" id="password" name="password" placeholder="Password" ng-model="player.password" ng-required="true" class="form-control" />
 		</div>
-		<p ng-show="myform.password.$invalid &amp;&amp; myform.password.$touched" class="alert alert-warning alert-dismissible fade in" role="alert">
-			<button type="button" class="close" data-dismiss="alert" aria-label="Close">
-				<span aria-hidden="true">&times;</span>
-			</button>
+		<p ng-show="myform.password.$invalid &amp;&amp; myform.password.$touched" class="alert alert-warning" role="alert">
 			Password is required
 		</p>
 
@@ -36,17 +24,11 @@
 		</button>
 	</form>
 
-	<p class="alert alert-info alert-dismissible fade in" role="alert">
-		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
-			<span aria-hidden="true">&times;</span>
-		</button>
+	<p class="alert alert-info" role="alert">
 		No account? <a href="#/register" class="btn btn-default">Register!</a>
 	</p>
 
-	<p class="alert alert-warning alert-dismissible fade in" role="alert">
-		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
-			<span aria-hidden="true">&times;</span>
-		</button>
+	<p class="alert alert-warning" role="alert">
 		<a href="#/forgot" class="btn btn-default">Forgot password?</a>
 	</p>
 </section>

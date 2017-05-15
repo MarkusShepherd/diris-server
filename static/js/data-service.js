@@ -76,7 +76,7 @@ dirisApp.factory('dataService', function dataService(
             }).catch(function (response) {
                 $log.debug(response);
                 factory.logout();
-                throw new Error(response);
+                throw response.data;
             });
     };
 
@@ -248,7 +248,7 @@ dirisApp.factory('dataService', function dataService(
                 var player = response.data;
 
                 if (!player) {
-                    throw new Error(response);
+                    throw response;
                 }
 
                 factory.setToken(player.token);
@@ -262,7 +262,7 @@ dirisApp.factory('dataService', function dataService(
 
                 factory.logout();
 
-                throw new Error(response);
+                throw response.data;
             });
     };
 

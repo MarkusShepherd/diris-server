@@ -23,7 +23,12 @@ dirisApp.constant('BACKEND_URL', liveUrl)
     .constant('MAXIMUM_PLAYER', 10)
     .constant('STANDARD_TIMEOUT', 60 * 60 * 36)
     .constant('CACHE_TIMEOUT', 60 * 60 * 1000)
-    .constant('GCM_SENDER_ID', 696693451234);
+    .constant('GCM_SENDER_ID', 696693451234)
+    .constant('ANDROID_APP_LINK', 'https://diris-app.appspot.com/diris.apk')
+    .constant('CREATOR_NAME', 'Markus Shepherd')
+    .constant('CREATOR_LINK', 'http://www.riemannhypothesis.info/')
+    .constant('FEEDBACK_EMAIL', 'mk.schepke@gmail.com')
+    .constant('FEEDBACK_LINK', 'https://bitbucket.org/MarkusShepherd/diris-app/issues/new');
 
 dirisApp.config(function (
     $httpProvider,

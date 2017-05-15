@@ -1,0 +1,30 @@
+<div class="container-fluid" xmlns="http://www.w3.org/1999/xhtml">
+	<ul class="nav navbar-nav">
+		<li ng-if="appLink">
+			<a ng-href="{{ appLink }}" target="_blank">
+				<span class="glyphicon glyphicon-phone"></span>
+				Download the app
+			</a>
+		</li>
+		<li ng-if="feedbackLink">
+			<a ng-href="{{ feedbackLink }}" target="_blank">
+				<span class="glyphicon glyphicon-send"></span>
+				Send a bug report
+			</a>
+		</li>
+		<li ng-if="feedbackEmail">
+			<a ng-href="mailto:{{ feedbackEmail }}" target="_blank">
+				<span class="glyphicon glyphicon-envelope"></span>
+				Send email feedback
+			</a>
+		</li>
+	</ul>
+	<ul ng-if="creatorName || creatorLink" class="nav navbar-nav navbar-right">
+		<li>
+			<a ng-href="{{ creatorLink || '#' }}" target="{{ creatorLink ? '_blank' : '_self' }}">
+				<span class="glyphicon glyphicon-sunglasses"></span>
+				{{ creatorName }} &copy; {{ now | date:'yyyy' }}
+			</a>
+		</li>
+	</ul>
+</div>

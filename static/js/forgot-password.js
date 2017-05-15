@@ -1,7 +1,7 @@
 'use strict';
 
-/*jslint browser: true */
-/*global dirisApp */
+/*jslint browser: true, nomen: true */
+/*global _, dirisApp */
 
 dirisApp.controller('ForgotPasswordController', function ForgotPasswordController(
     $location,
@@ -29,8 +29,14 @@ dirisApp.controller('ForgotPasswordController', function ForgotPasswordControlle
                 toastr.success('You should receive an email with your new password', 'Check your emails');
                 $location.path('/login').replace();
             }).catch(function (response) {
+                var message = _.upperFirst(response.data.detail || response.data.message ||
+                                           response.data.toString() || 'There was an error...');
+
                 $log.debug(response);
-                $scope.message = response.message || "There was an error...";
+                $log.debug(message);
+
+                toastr.error(message);
+
                 blockUI.stop();
             });
     }; // reset

@@ -140,6 +140,15 @@ function processMatch(match, player) {
     return match;
 }
 
+function isAndroid() {
+    try {
+        var platform = _.lowerCase(device ? device.platform : navigator.userAgent);
+        return _.includes(platform, 'android');
+    } catch (err) {
+        return false;
+    }
+}
+
 function isBrowser() {
     try {
         return !device || device.platform === 'browser';
@@ -188,6 +197,7 @@ function removeEmpty(value) {
 utils = {
     processMatch: processMatch,
     getOrdinal: getOrdinal,
+    isAndroid: isAndroid,
     isBrowser: isBrowser,
     roundAction: roundAction,
     removeEmpty: removeEmpty

@@ -1,7 +1,7 @@
 'use strict';
 
-/*jslint browser: true */
-/*global dirisApp */
+/*jslint browser: true, nomen: true, todo: true */
+/*global _, dirisApp */
 
 dirisApp.controller('RegistrationController', function RegistrationController(
     $location,
@@ -9,6 +9,7 @@ dirisApp.controller('RegistrationController', function RegistrationController(
     $rootScope,
     $scope,
     blockUI,
+    toastr,
     dataService
 ) {
     dataService.logout();
@@ -29,10 +30,18 @@ dirisApp.controller('RegistrationController', function RegistrationController(
             .then(function () {
                 dataService.setNextUpdate();
                 $location.path('/overview');
-            }).catch(function () {
+            }).catch(function (response) {
+                // TODO use details on fields if available
+                var message = _.upperFirst(JSON.stringify(response) ||
+                                           'There was an error - player "' +
+                                           $scope.player.username + '" could not be registered.');
+
+                $log.debug(response);
+                $log.debug(message);
+
+                toastr.error(message);
+
                 blockUI.stop();
-                $scope.message = 'There was an error - player "' +
-                    $scope.player.username + '" could not be registered.';
             });
     }; // register
 }); // RegistrationController

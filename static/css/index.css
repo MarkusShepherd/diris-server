@@ -2,9 +2,32 @@
     -webkit-tap-highlight-color: rgba(0,0,0,0); /* make transparent link selection, adjust last value opacity 0 to 1.0 */
 }
 
-body {
+html, body {
     /*padding-bottom: 1em;*/
     background-color: #f0f0f0;
+    height: 100%;
+}
+
+.flex-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+}
+
+.flex-container > nav,
+.flex-container > footer {
+    flex: initial;
+}
+
+.flex-container > div {
+    flex: auto;
+}
+
+/* TODO: don't hard-code width */
+@media (max-width: 768px) {
+    .flex-container > div {
+        min-width: 100%;
+    }
 }
 
 h2 {
@@ -194,6 +217,10 @@ img.player-icon-standings {
 
 .btn-group-image-edit {
     margin: 0 5px 5px;
+}
+
+.navbar-footer {
+    margin-bottom: 0;
 }
 
 /* sly */
