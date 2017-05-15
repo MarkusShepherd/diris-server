@@ -17,4 +17,10 @@ dirisApp.controller('FooterController', function FooterController(
     $scope.creatorLink = CREATOR_LINK;
     $scope.feedbackEmail = FEEDBACK_EMAIL;
     $scope.feedbackLink = FEEDBACK_LINK;
+
+    $scope.open = function open(url) {
+        if (url) {
+            window.open(url, '_system', 'location=yes');
+        }
+    };
 });

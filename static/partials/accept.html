@@ -14,7 +14,7 @@
 
 	<section class="list-group">
 		<a ng-repeat="(pPk, acc) in match.accepted"
-			ng-href="#/profile/{{ pPk }}"
+			ng-href="#/profile/{{ pPk }}/view"
 			class="list-group-item {{ acc ? 'list-group-item-success' : 'list-group-item-info' }}">
 			<player-icon player="players[pPk]"
 				class-icon="player-icon-accept"

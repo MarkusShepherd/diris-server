@@ -4,7 +4,7 @@
 			<h4>Standings</h4>
 		</div>
 		<a ng-repeat="item in match.standingsArray | orderBy:'score':true"
-			ng-href="#/profile/{{ item.playerPk }}"
+			ng-href="#/profile/{{ item.playerPk }}/view"
 			class="list-group-item">
 			<span class="badge badge-score">{{ item.score }}</span>
 			<player-icon player="players[item.playerPk]"

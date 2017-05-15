@@ -27,7 +27,7 @@ dirisApp.constant('BACKEND_URL', liveUrl)
     .constant('ANDROID_APP_LINK', 'https://diris-app.appspot.com/diris.apk')
     .constant('CREATOR_NAME', 'Markus Shepherd')
     .constant('CREATOR_LINK', 'http://www.riemannhypothesis.info/')
-    .constant('FEEDBACK_EMAIL', 'mk.schepke@gmail.com')
+    .constant('FEEDBACK_EMAIL', 'markus.r.shepherd@gmail.com')
     .constant('FEEDBACK_LINK', 'https://bitbucket.org/MarkusShepherd/diris-app/issues/new');
 
 dirisApp.config(function (

@@ -1,4 +1,13 @@
 <section xmlns="http://www.w3.org/1999/xhtml">
+	<button ng-if="ownProfile && !edit" ng-click="setEdit(true)" class="btn btn-primary btn-right">
+		<span class="glyphicon glyphicon-edit"></span>
+		Edit
+	</button>
+	<button ng-if="ownProfile && edit" ng-click="setEdit(false)" class="btn btn-danger btn-right">
+		<span class="glyphicon glyphicon-remove"></span>
+		Cancel
+	</button>
+
 	<h2><span class="glyphicon glyphicon-user"></span> {{ player.user.username }}</h2>
 
 	<div ng-if="player.avatarURL" class="image-review-container">
@@ -8,7 +17,7 @@
 	<h3>Statistics</h3>
 	<p>{{ player.user.username }} participates in <strong>{{ player.total_matches }} game{{ player.total_matches == 1 ? '' : 's' }}</strong>.</p>
 
-	<form ng-if="update" id="update" name="myform" novalidate="novalidate" ng-submit="update()" role="form" class="form">
+	<form ng-if="edit" id="update" name="myform" novalidate="novalidate" ng-submit="update()" role="form" class="form">
 		<div class="form-group">
 			<label class="sr-only" for="username">User name:</label>
 			<input type="text" id="username" name="username" placeholder="Name" ng-model="uPlayer.user.username" ng-required="true" class="form-control" />

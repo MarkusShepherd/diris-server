@@ -15,7 +15,8 @@ dirisApp.controller('ProfileController', function ProfileController(
 ) {
     var loggedInPlayer = dataService.getLoggedInPlayer(),
         pPk = _.parseInt($routeParams.pPk),
-        action = $routeParams.action;
+        action = $routeParams.action,
+        ownProfile = false;
 
     $rootScope.menuItems = [{
         link: '#/overview',
@@ -28,15 +29,12 @@ dirisApp.controller('ProfileController', function ProfileController(
         blockUI.start();
     }
 
-    if (!pPk && loggedInPlayer) {
-        pPk = loggedInPlayer.pk;
-    }
-
-    if (!action) {
-        action = pPk === loggedInPlayer.pk ? 'edit' : 'view';
-    }
+    pPk = pPk || loggedInPlayer.pk;
+    ownProfile = !!(loggedInPlayer && pPk === loggedInPlayer.pk);
+    action = ownProfile ? action || 'edit' : 'view';
 
     $scope.edit = action === 'edit';
+    $scope.ownProfile = ownProfile;
     $scope.uPlayer = {
         user: {}
     };
@@ -53,6 +51,12 @@ dirisApp.controller('ProfileController', function ProfileController(
             $log.debug('error');
             $log.debug(response);
         }).then(blockUI.stop);
+
+    $scope.setEdit = function setEdit(edit) {
+        edit = !!(ownProfile && edit);
+        action = edit ? 'edit' : 'view';
+        $scope.edit = edit;
+    }
 
     $scope.update = function update() {
         var player = utils.removeEmpty($scope.uPlayer);

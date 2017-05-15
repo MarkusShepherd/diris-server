@@ -220,6 +220,10 @@ img.player-icon-standings {
     margin: 0 5px 5px;
 }
 
+.btn-right {
+    float: right;
+}
+
 .navbar-footer {
     margin-bottom: 0;
 }

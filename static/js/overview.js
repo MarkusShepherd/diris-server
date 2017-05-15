@@ -44,7 +44,7 @@ dirisApp.controller('OverviewController', function OverviewController(
         }).catch(function (response) {
             $log.debug('error');
             $log.debug(response);
-            toastr.error("There was an error fetching the data - please try again later...");
+            toastr.error('There was an error fetching the data - please try again later...');
         });
 
     playerPromise = dataService.getPlayers(forceRefresh, true)
@@ -57,9 +57,4 @@ dirisApp.controller('OverviewController', function OverviewController(
         });
 
     $q.all([matchPromise, playerPromise]).then(blockUI.stop);
-
-    $scope.newMatch = function newMatch() {
-        $location.path('/newmatch');
-    };
-
 }); // PlayerController

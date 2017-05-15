@@ -58,7 +58,7 @@
 			<h4>Scores</h4>
 		</div>
 		<a ng-repeat="item in round.scoresArray | orderBy:'score':true"
-			ng-href="#/profile/{{ item.playerPk }}"
+			ng-href="#/profile/{{ item.playerPk }}/view"
 			class="list-group-item">
 			<span class="badge">{{ item.score }} points</span>
 			<player-icon player="players[item.playerPk]"
