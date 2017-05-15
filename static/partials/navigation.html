@@ -12,9 +12,6 @@
 	</div>
 	<div ng-show="(menuItems &amp;&amp; menuItems.length) || currentPlayer" class="collapse navbar-collapse" id="myNavbar">
 		<ul ng-show="menuItems &amp;&amp; menuItems.length" class="nav navbar-nav">
-			<!-- <li>
-				<a href="#/overview"><span class="glyphicon glyphicon-home"></span> Overview</a>
-			</li> -->
 			<li ng-repeat="item in menuItems">
 				<a ng-href="{{ item.link }}" data-toggle="collapse" data-target="#myNavbar">
 					<span ng-show="item.glyphicon" class="glyphicon glyphicon-{{ item.glyphicon }}"></span>

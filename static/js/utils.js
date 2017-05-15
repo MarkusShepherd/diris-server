@@ -142,8 +142,9 @@ function processMatch(match, player) {
 
 function isAndroid() {
     try {
-        var platform = _.lowerCase(device ? device.platform : navigator.userAgent);
-        return _.includes(platform, 'android');
+        var platform = _.lowerCase(device && device.platform),
+            userAgent = _.lowerCase(navigator.userAgent);
+        return _.includes(platform, 'android') || _.includes(userAgent, 'android');
     } catch (err) {
         return false;
     }

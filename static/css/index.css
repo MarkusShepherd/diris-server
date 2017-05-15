@@ -27,6 +27,7 @@ html, body {
 @media (max-width: 768px) {
     .flex-container > div {
         min-width: 100%;
+        max-width: 100%;
     }
 }
 
