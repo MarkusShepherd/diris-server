@@ -212,6 +212,12 @@ indexes:
   properties:
   - name: deadline_action
   - name: last_modified
+    direction: desc
+
+- kind: matches_match
+  properties:
+  - name: deadline_action
+  - name: last_modified
   - name: status
 
 - kind: matches_match
@@ -219,7 +225,19 @@ indexes:
   - name: deadline_action
   - name: last_modified
     direction: desc
+
+- kind: matches_match
+  properties:
+  - name: deadline_action
+  - name: last_modified
+    direction: desc
   - name: status
+
+- kind: matches_match
+  properties:
+  - name: deadline_action
+    direction: desc
+  - name: last_modified
 
 - kind: matches_match
   properties:
@@ -256,6 +274,11 @@ indexes:
 - kind: matches_match
   properties:
   - name: players_ids
+  - name: pagination_deadline_action_neg_last_modified
+
+- kind: matches_match
+  properties:
+  - name: players_ids
   - name: pagination_last_modified
     direction: desc
 
@@ -282,6 +305,20 @@ indexes:
   properties:
   - name: status
   - name: deadline_action
+  - name: last_modified
+
+- kind: matches_match
+  properties:
+  - name: status
+  - name: deadline_action
+  - name: last_modified
+    direction: desc
+
+- kind: matches_match
+  properties:
+  - name: status
+  - name: deadline_action
+    direction: desc
   - name: last_modified
 
 - kind: matches_match

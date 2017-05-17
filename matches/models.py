@@ -510,7 +510,8 @@ class MatchManager(models.Manager):
         return match
 
 
-@paginated_model(orderings=('created', 'last_modified'))
+@paginated_model(orderings=('deadline_action', 'created', 'last_modified',
+                            ('deadline_action', '-last_modified')))
 @python_2_unicode_compatible
 class Match(models.Model):
     WAITING = 'w'
@@ -551,7 +552,7 @@ class Match(models.Model):
     finished = models.DateTimeField(blank=True, null=True, default=None)
 
     class Meta(object):
-        ordering = ('-last_modified',)
+        ordering = ('deadline_action', '-last_modified')
         verbose_name_plural = 'matches'
 
     @property

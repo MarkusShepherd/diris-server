@@ -66,7 +66,7 @@ class MatchViewSet(
 ):
     serializer_class = MatchSerializer
     permission_classes = (permissions.IsAuthenticated,)
-    ordering = ('-last_modified',)
+    ordering = ('deadline_action', '-last_modified')
     filter_fields = ('inviting_player', 'status')
 
     default_checks_size = 100
@@ -94,7 +94,7 @@ class MatchViewSet(
     def list(self, request, *args, **kwargs):
         player = get_player(request, raise_error=True)
 
-        matches = self.filter_queryset(self.get_queryset()).order_by('-last_modified')
+        matches = self.filter_queryset(self.get_queryset()).order_by(*self.ordering)
 
         page = self.paginate_queryset(matches)
         if page is not None:
