@@ -7,6 +7,7 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
     $location,
     $log,
     $q,
+    $window,
     $rootScope,
     $routeParams,
     $scope,
@@ -149,7 +150,7 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
                 $frame.sly('reload');
             }, 1000);
 
-            $(window).resize(function () {
+            $($window).resize(function () {
                 $frame.sly('reload');
             });
         }).catch(function (response) {

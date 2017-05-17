@@ -5,6 +5,7 @@
 
 dirisApp.controller('FooterController', function FooterController(
     $scope,
+    $window,
     ANDROID_APP_LINK,
     CREATOR_LINK,
     CREATOR_NAME,
@@ -20,7 +21,7 @@ dirisApp.controller('FooterController', function FooterController(
 
     $scope.open = function open(url) {
         if (url) {
-            window.open(url, '_system', 'location=yes');
+            $window.open(url, '_system', 'location=yes');
         }
     };
 });

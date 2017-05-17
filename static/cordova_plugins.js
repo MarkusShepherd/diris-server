@@ -101,8 +101,8 @@ module.exports.metadata =
     "cordova-plugin-dialogs": "1.3.2",
     "cordova-plugin-whitelist": "1.3.2",
     "phonegap-plugin-push": "1.10.1",
-    "cordova-plugin-console": "1.0.6",
-    "cordova-plugin-inappbrowser": "1.7.1"
+    "cordova-plugin-inappbrowser": "1.7.1",
+    "cordova-plugin-console": "1.0.7"
 }
 // BOTTOM OF METADATA
 });

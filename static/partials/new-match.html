@@ -1,7 +1,7 @@
 <section xmlns="http://www.w3.org/1999/xhtml">
 	<h2>New Match</h2>
 
-	<form id="create" name="createForm" novalidate="novalidate" ng-submit="createMatch()" role="form" class="form-inline">
+	<form id="create" name="createForm" novalidate="novalidate" role="form" class="form-inline">
 		<div class="list-group">
 			<a ng-repeat="player in playersArray | orderBy:'user.username'"
 				ng-hide="player.selected || player.pk == currentPlayer.pk"
@@ -10,6 +10,10 @@
 				{{ player.user.username }}
 			</a>
 		</div>
+
+		<button ng-if="playersNextPage" ng-click="loadMore(playersNextPage)" class="btn btn-primary btn-lg btn-block btn-load-more">
+			<span class="glyphicon glyphicon-cloud-download"></span> Load more players
+		</button>
 
 		<h3>Selected</h3>
 		<div class="list-group">
@@ -52,7 +56,8 @@
 
 		<button type="submit"
 			ng-disabled="numPlayers &lt; minimumPlayer || numPlayers &gt; maximumPlayer"
-			class="btn btn-primary btn-block btn-lg">
+			ng-click="createMatch()"
+			class="btn btn-success btn-block btn-lg">
 			<span class="glyphicon glyphicon-plus-sign"></span>
 			Send invites
 		</button>

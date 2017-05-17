@@ -15,7 +15,22 @@ dirisApp.controller('NewMatchController', function NewMatchController(
     MAXIMUM_PLAYER,
     STANDARD_TIMEOUT
 ) {
-    var player = dataService.getLoggedInPlayer();
+    var player = dataService.getLoggedInPlayer(),
+        allPlayers = {};
+
+    function addPlayers(players) {
+        _.forEach(players, function (p) {
+            if (p && p.pk) {
+                p.selected = false;
+            }
+        });
+
+        _.assign(allPlayers, players);
+
+        $scope.playersArray = _(allPlayers).map().filter('pk').reject({pk: player.pk}).value();
+        $scope.playersNextPage = _.isUndefined(allPlayers._nextPage) ? 1 : allPlayers._nextPage;
+        $scope.playersPrevPage = allPlayers._prevPage;
+    }
 
     if (!player) {
         $location.path('/login');
@@ -26,8 +41,6 @@ dirisApp.controller('NewMatchController', function NewMatchController(
         blockUI.start();
     }
 
-    $scope.currentPlayer = player;
-
     $rootScope.menuItems = [{
         link: '#/overview',
         label: 'Overview',
@@ -35,24 +48,35 @@ dirisApp.controller('NewMatchController', function NewMatchController(
     }];
     $rootScope.refreshButton = false;
 
-    dataService.getPlayers()
-        .then(function (players) {
-            _.forEach(players, function (p) {
-                p.selected = false;
-            });
-            $scope.playersArray = _(players).map().reject({pk: player.pk}).value();
-        }).catch(function (response) {
-            $log.debug('error');
-            $log.debug(response);
-            toastr.error('There was an error fetching the player data...');
-        }).then(blockUI.stop);
-
+    $scope.currentPlayer = player;
     $scope.selected = {};
     $scope.roundsPerPlayer = 2;
     $scope.numPlayers = 1;
     $scope.minimumPlayer = MINIMUM_PLAYER;
     $scope.maximumPlayer = MAXIMUM_PLAYER;
     $scope.timeout = _.toInteger(STANDARD_TIMEOUT / 3600);
+
+    dataService.getPlayers()
+        .then(addPlayers)
+        .catch(function (response) {
+            $log.debug('error');
+            $log.debug(response);
+            toastr.error('There was an error fetching the player data...');
+        }).then(blockUI.stop);
+
+    $scope.loadMore = function loadMore(page) {
+        if (!blockUI.state().blocking) {
+            blockUI.start();
+        }
+
+        dataService.getPlayers(true, true, page)
+            .then(addPlayers)
+            .catch(function (response) {
+                $log.warn('error');
+                $log.warn(response);
+                toastr.error('There was an error fetching the player data...');
+            }).then(blockUI.stop);
+    }; // loadMore
 
     $scope.addPlayer = function addPlayer(p) {
         if (p.pk === player.pk) {
@@ -118,5 +142,4 @@ dirisApp.controller('NewMatchController', function NewMatchController(
                 toastr.error("There was an error when creating the match...");
             });
     }; // createMatch
-
 }); // NewMatchController

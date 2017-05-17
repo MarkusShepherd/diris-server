@@ -161,7 +161,7 @@ dirisApp.factory('dataService', function dataService(
             });
     };
 
-    factory.getMatches = function getMatches(forceRefresh, fallback) {
+    factory.getMatches = function getMatches(forceRefresh, fallback, page) {
         if (!forceRefresh) {
             if (!_.size(matches)) {
                 _.forEach($localStorage, function (match, key) {
@@ -176,12 +176,21 @@ dirisApp.factory('dataService', function dataService(
 
         factory.setNextUpdate('_renew');
 
-        return $http.get(BACKEND_URL + '/matches/')
+        page = _.parseInt(page) || 1;
+
+        return $http.get(BACKEND_URL + '/matches/?page=' + page)
             .then(function (response) {
-                $log.debug('Matches from server:', response.data.results);
-                matches = {};
+                // TODO delete old matches from localStorage
+                matches = page === 1 ? {} : matches;
+
                 _.forEach(response.data.results, setMatch);
-                return matches;
+
+                var result = _.clone(matches);
+                result._total = _.parseInt(response.data.count) || _.size(response.data.results);
+                result._nextPage = response.data.next ? page + 1 : null;
+                result._prevPage = response.data.previous ? page - 1 : null;
+
+                return result;
             }).catch(function (response) {
                 if (forceRefresh && fallback) {
                     // TODO add message
@@ -281,7 +290,7 @@ dirisApp.factory('dataService', function dataService(
             });
     };
 
-    factory.getPlayers = function getPlayers(forceRefresh, fallback) {
+    factory.getPlayers = function getPlayers(forceRefresh, fallback, page) {
         if (!forceRefresh) {
             if (!_.size(players)) {
                 _.forEach($localStorage, function (player, key) {
@@ -296,13 +305,21 @@ dirisApp.factory('dataService', function dataService(
 
         factory.setNextUpdate('_renew');
 
-        return $http.get(BACKEND_URL + '/players/')
+        page = _.parseInt(page) || 1;
+
+        return $http.get(BACKEND_URL + '/players/?page=' + page)
             .then(function (response) {
-                players = {};
-                _.forEach(response.data.results, function (player) {
-                    setPlayer(player);
-                });
-                return players;
+                // TODO delete old player data from localStorage
+                players = page === 1 ? {} : players;
+
+                _.forEach(response.data.results, setPlayer);
+
+                var result = _.clone(players);
+                result._total = _.parseInt(response.data.count) || _.size(response.data.results);
+                result._nextPage = response.data.next ? page + 1 : null;
+                result._prevPage = response.data.previous ? page - 1 : null;
+
+                return result;
             }).catch(function (response) {
                 if (forceRefresh && fallback) {
                     // TODO add message
@@ -347,67 +364,37 @@ dirisApp.factory('dataService', function dataService(
     }
 
     factory.getImages = function getImages(mPk, forceRefresh, fallback) {
-        if (mPk) {
-            if (forceRefresh) {
-                return $http.get(BACKEND_URL + '/matches/' + mPk + '/images/')
-                    .then(function (response) {
-                        _.forEach(response.data, function (image) {
-                            setImage(image);
-                        });
-                        return response.data;
-                    }).catch(function (response) {
-                        $log.debug('There has been an error', response);
-                        if (fallback) {
-                            return factory.getImages(mPk, false, false);
-                        }
-
-                        throw new Error(response);
-                    });
-            }
-
-            return factory.getMatch(mPk)
-                .then(function (match) {
-                    var promises = _.flatMap(match.rounds || [], function (round) {
-                        return _.map(round.images || [], factory.getImage);
-                    });
-                    return $q.all(promises);
-                }).catch(function (response) {
-                    $log.debug('There has been an error', response);
-                    return $q.resolve(images);
-                });
+        if (!mPk) {
+            return $q.reject('match is required');
         }
 
-        if (!forceRefresh) {
-            if (!_.size(images)) {
-                _.forEach($localStorage, function (image, key) {
-                    if (_.startsWith(key, 'image_') && !images[image.pk]) {
+        if (forceRefresh) {
+            return $http.get(BACKEND_URL + '/matches/' + mPk + '/images/')
+                .then(function (response) {
+                    _.forEach(response.data, function (image) {
                         setImage(image);
-                    }
-                });
-            }
+                    });
+                    return response.data;
+                }).catch(function (response) {
+                    $log.error('There has been an error', response);
 
-            return $q.resolve(images);
+                    if (fallback) {
+                        return factory.getImages(mPk, false, false);
+                    }
+
+                    throw response;
+                });
         }
 
-        factory.setNextUpdate('_renew');
-
-        return $http.get(BACKEND_URL + '/images/')
-            .then(function (response) {
-                images = {};
-                _.forEach(response.data.results, setImage);
-                return images;
+        return factory.getMatch(mPk)
+            .then(function (match) {
+                var promises = _.flatMap(match.rounds || [], function (round) {
+                    return _.map(round.images || [], factory.getImage);
+                });
+                return $q.all(promises);
             }).catch(function (response) {
-                if (forceRefresh && fallback) {
-                    // TODO add message
-                    _.forEach($localStorage, function (image, key) {
-                        if (_.startsWith(key, 'image_')) {
-                            images[image.pk] = image;
-                        }
-                    });
-                    return images;
-                }
-
-                throw new Error(response);
+                $log.debug('There has been an error', response);
+                return $q.resolve(images);
             });
     };
 

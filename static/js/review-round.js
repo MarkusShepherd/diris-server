@@ -16,7 +16,8 @@ dirisApp.controller('ReviewRoundController', function ReviewRoundController(
 ) {
     var player = dataService.getLoggedInPlayer(),
         mPk = $routeParams.mPk,
-        rNo = $routeParams.rNo;
+        rNo = $routeParams.rNo,
+        forceRefresh = _.now() >= dataService.getNextUpdate();
 
     if (!player) {
         $location.path('/login');
@@ -40,9 +41,9 @@ dirisApp.controller('ReviewRoundController', function ReviewRoundController(
         label: 'Match',
         glyphicon: 'knight'
     }];
-    $rootScope.refreshButton = false;
+    $rootScope.refreshButton = true;
 
-    dataService.getMatch(mPk)
+    dataService.getMatch(mPk, forceRefresh, true)
         .then(function (match) {
             var round = match.rounds[rNo - 1],
                 action = utils.roundAction(round);
@@ -74,7 +75,7 @@ dirisApp.controller('ReviewRoundController', function ReviewRoundController(
             toastr.error("There was an error fetching the data - please try again later...");
         }).then(blockUI.stop);
 
-    dataService.getImages(mPk, true, true)
+    dataService.getImages(mPk, forceRefresh, true)
         .then(function (images) {
             $scope.images = {};
             _.forEach(images, function (img) {

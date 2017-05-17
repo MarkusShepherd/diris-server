@@ -56,7 +56,7 @@ dirisApp.controller('ProfileController', function ProfileController(
         edit = !!(ownProfile && edit);
         action = edit ? 'edit' : 'view';
         $scope.edit = edit;
-    }
+    };
 
     $scope.update = function update() {
         var player = utils.removeEmpty($scope.uPlayer);
