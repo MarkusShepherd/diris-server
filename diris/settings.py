@@ -158,7 +158,7 @@ from djangae.contrib.gauth.settings import *
 # REST framework settings
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'matches.pagination.GaePageNumberPagination',
-    'PAGE_SIZE': 20,
+    'PAGE_SIZE': 10,
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
