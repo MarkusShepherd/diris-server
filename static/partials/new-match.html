@@ -4,14 +4,21 @@
 	<form id="create" name="createForm" novalidate="novalidate" role="form" class="form-inline">
 		<div class="list-group">
 			<a ng-repeat="player in playersArray | orderBy:'user.username'"
-				ng-hide="player.selected || player.pk == currentPlayer.pk"
+				ng-if="!player.selected &amp;&amp; player.pk != currentPlayer.pk"
 				ng-click="addPlayer(player)"
 				class="list-group-item">
 				{{ player.user.username }}
 			</a>
 		</div>
 
-		<button ng-if="playersNextPage" ng-click="loadMore(playersNextPage)" class="btn btn-primary btn-lg btn-block btn-load-more">
+		<button ng-if="playersRefreshButton &amp;&amp; !playersNextPage"
+			ng-click="loadMore(1)"
+			class="btn btn-primary btn-lg btn-block btn-load-more">
+			<span class="glyphicon glyphicon-refresh"></span> Reload players
+		</button>
+		<button ng-if="playersNextPage"
+			ng-click="loadMore(playersNextPage)"
+			class="btn btn-primary btn-lg btn-block btn-load-more">
 			<span class="glyphicon glyphicon-cloud-download"></span> Load more players
 		</button>
 

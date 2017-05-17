@@ -9,7 +9,7 @@
 				<div class="list-group-item active">
 					<h4>Invitations</h4>
 				</div>
-				<a ng-repeat="match in matches | orderBy:'deadline_action':true | filter:{actionStatus:'w'}:true"
+				<a ng-repeat="match in matches | filter:{actionStatus:'w'}:true | orderBy:'deadline_action':false"
 					ng-href="#/accept/{{ match.pk }}"
 					class="list-group-item {{ match.hasAccepted ? '' : 'list-group-item-info' }}">
 					<span ng-if="!match.hasAccepted &amp;&amp; match.deadlineResponseLeft"
@@ -26,7 +26,7 @@
 				<div class="list-group-item active">
 					<h4>Active Matches</h4>
 				</div>
-				<a ng-repeat="match in matches | orderBy:'deadline_action':true | filter:{actionStatus:'a'}:true"
+				<a ng-repeat="match in matches | filter:{actionStatus:'a'}:true | orderBy:'deadline_action':false"
 					ng-href="#/match/{{ match.pk }}"
 					class="list-group-item list-group-item-info">
 					<span ng-if="match.current_round &gt; 1" class="badge badge-position">{{ match.playerPositionOrd }}</span>
@@ -67,7 +67,7 @@
 				<div class="list-group-item active">
 					<h4>Waiting for other players</h4>
 				</div>
-				<a ng-repeat="match in matches | orderBy:'deadline_action':true | filter:{actionStatus:'p'}:true"
+				<a ng-repeat="match in matches | filter:{actionStatus:'p'}:true | orderBy:'deadline_action':false"
 					ng-href="#/match/{{ match.pk }}"
 					class="list-group-item">
 					<span ng-if="match.current_round &gt; 1" class="badge badge-position">{{ match.playerPositionOrd }}</span>
@@ -96,7 +96,7 @@
 				<div class="list-group-item active">
 					<h4>Previous Matches</h4>
 				</div>
-				<a ng-repeat="match in matches | orderBy:'finished':true | filter:{actionStatus:'f'}:true"
+				<a ng-repeat="match in matches | filter:{actionStatus:'f'}:true | orderBy:'finished':true"
 					ng-href="#/match/{{ match.pk }}"
 					class="list-group-item">
 					<span class="badge badge-time-passed">{{ match.finishedFromNow }}</span>
@@ -106,7 +106,14 @@
 		</div>
 	</div>
 
-	<button ng-if="matchesNextPage" ng-click="loadMore(matchesNextPage)" class="btn btn-primary btn-lg btn-block btn-load-more">
+	<button ng-if="matchesRefreshButton &amp;&amp; !matchesNextPage"
+		ng-click="loadMore(1)"
+		class="btn btn-primary btn-lg btn-block btn-load-more">
+		<span class="glyphicon glyphicon-refresh"></span> Reload matches
+	</button>
+	<button ng-if="matchesNextPage"
+		ng-click="loadMore(matchesNextPage)"
+		class="btn btn-primary btn-lg btn-block btn-load-more">
 		<span class="glyphicon glyphicon-cloud-download"></span> Load more matches
 	</button>
 </section>

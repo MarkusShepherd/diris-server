@@ -21,14 +21,25 @@ dirisApp.controller('NewMatchController', function NewMatchController(
     function addPlayers(players) {
         _.forEach(players, function (p) {
             if (p && p.pk) {
-                p.selected = false;
+                p.selected = _.has(allPlayers, p.pk) ? !!allPlayers[p.pk].selected : false;
             }
         });
 
         _.assign(allPlayers, players);
 
-        $scope.playersArray = _(allPlayers).map().filter('pk').reject({pk: player.pk}).value();
-        $scope.playersNextPage = _.isUndefined(allPlayers._nextPage) ? 1 : allPlayers._nextPage;
+        $scope.playersArray = _(allPlayers)
+                                .map()
+                                .filter('pk')
+                                .reject({pk: player.pk})
+                                .value();
+        $scope.selected = _($scope.playersArray)
+                                .filter({selected: true})
+                                .map(function (p) { return [p.pk, p]; })
+                                .fromPairs()
+                                .value();
+        $scope.numPlayers = _.size($scope.selected) + 1;
+        $scope.playersRefreshButton = _.isUndefined(allPlayers._nextPage);
+        $scope.playersNextPage = allPlayers._nextPage;
         $scope.playersPrevPage = allPlayers._prevPage;
     }
 
@@ -55,6 +66,7 @@ dirisApp.controller('NewMatchController', function NewMatchController(
     $scope.minimumPlayer = MINIMUM_PLAYER;
     $scope.maximumPlayer = MAXIMUM_PLAYER;
     $scope.timeout = _.toInteger(STANDARD_TIMEOUT / 3600);
+    $scope.playersRefreshButton = true;
 
     dataService.getPlayers()
         .then(addPlayers)
@@ -85,7 +97,7 @@ dirisApp.controller('NewMatchController', function NewMatchController(
         }
 
         p.selected = true;
-        $scope.selected[p.pk.toString()] = p;
+        $scope.selected[p.pk] = p;
         $scope.numPlayers = _.size($scope.selected) + 1;
 
         if ($scope.createForm.roundsPerPlayer.$pristine &&
@@ -96,7 +108,7 @@ dirisApp.controller('NewMatchController', function NewMatchController(
 
     $scope.removePlayer = function removePlayer(p) {
         p.selected = false;
-        delete $scope.selected[p.pk.toString()];
+        delete $scope.selected[p.pk];
         $scope.numPlayers = _.size($scope.selected) + 1;
 
         if ($scope.createForm.roundsPerPlayer.$pristine &&

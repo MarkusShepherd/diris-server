@@ -23,7 +23,8 @@ dirisApp.controller('OverviewController', function OverviewController(
         _.assign(allMatches, matches);
 
         $scope.matches = _(allMatches).map().filter('pk').value();
-        $scope.matchesNextPage = _.isUndefined(allMatches._nextPage) ? 1 : allMatches._nextPage;
+        $scope.matchesRefreshButton = _.isUndefined(allMatches._nextPage);
+        $scope.matchesNextPage = allMatches._nextPage;
         $scope.matchesPrevPage = allMatches._prevPage;
         $scope.status = {};
 
@@ -38,7 +39,7 @@ dirisApp.controller('OverviewController', function OverviewController(
     }
 
     $scope.currentPlayer = player;
-    $scope.matchesNextPage = forceRefresh ? null : 1;
+    $scope.matchesRefreshButton = !forceRefresh;
 
     $rootScope.menuItems = [];
     $rootScope.refreshButton = true;

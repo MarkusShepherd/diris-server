@@ -849,8 +849,8 @@ class Image(models.Model):
         upload_to='%Y/%m/%d/%H/%M/',
         storage=STORAGE,
     )
-    url = fields.ComputedCharField(func=lambda image: image.file.url, max_length=1500,
-                                   blank=True, null=True, default=None)
+    url = fields.ComputedCharField(func=lambda image: '{}?pk={}'.format(image.file.url, image.pk),
+                                   max_length=1500, blank=True, null=True, default=None)
     width = models.PositiveSmallIntegerField(blank=True, null=True)
     height = models.PositiveSmallIntegerField(blank=True, null=True)
     size = models.PositiveIntegerField(blank=True, null=True)
