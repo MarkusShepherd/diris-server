@@ -20,6 +20,11 @@ dirisApp.controller('RegistrationController', function RegistrationController(
     $rootScope.refreshButton = false;
 
     $scope.register = function register() {
+        if ($scope.player.password !== $scope.repeat_password) {
+            toastr.error("Passwords don't match");
+            return;
+        }
+
         if (!blockUI.state().blocking) {
             blockUI.start();
         }

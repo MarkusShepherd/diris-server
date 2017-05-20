@@ -20,58 +20,118 @@
 	<form ng-if="edit" id="update" name="myform" novalidate="novalidate" ng-submit="update()" role="form" class="form">
 		<div class="form-group">
 			<label class="sr-only" for="username">User name:</label>
-			<input type="text" id="username" name="username" placeholder="Name" ng-model="uPlayer.user.username" ng-required="true" class="form-control" />
+			<input type="text"
+				id="username"
+				name="username"
+				placeholder="Name"
+				ng-model="uPlayer.user.username"
+				ng-required="true"
+				ng-minlength="3"
+				ng-maxlength="21"
+				ng-pattern="'[a-zA-Z][a-zA-Z0-9_.-]{2,20}'"
+				class="form-control" />
+				<!-- TODO validate username is not taken (#100) -->
 		</div>
-		<p ng-show="myform.username.$invalid &amp;&amp; myform.username.$touched" class="alert alert-warning" role="alert">
-			User name is required
-		</p>
+		<div ng-show="myform.username.$touched &amp;&amp; myform.username.$invalid" class="alert alert-warning" role="alert">
+			<ul>
+				<li ng-show="myform.username.$error.required">User name is required</li>
+				<li ng-show="myform.username.$error.minlength">User name must be at least 3 characters long</li>
+				<li ng-show="myform.username.$error.maxlength">User name must be at most 21 characters long</li>
+				<li ng-show="myform.username.$error.pattern">User name must start with a letter and contain only letters, digits, dashs (-), periods (.), and underscores (_)</li>
+			</ul>
+		</div>
 
 		<div class="form-group">
 			<label class="sr-only" for="first_name">First name:</label>
-			<input type="text" id="first_name" name="first_name" placeholder="First name" ng-model="uPlayer.user.first_name" class="form-control" />
+			<input type="text"
+				id="first_name"
+				name="first_name"
+				placeholder="First name"
+				ng-model="uPlayer.user.first_name"
+				class="form-control" />
 		</div>
 
 		<div class="form-group">
 			<label class="sr-only" for="last_name">Last name:</label>
-			<input type="text" id="last_name" name="last_name" placeholder="Last name" ng-model="uPlayer.user.last_name" class="form-control" />
+			<input type="text"
+				id="last_name"
+				name="last_name"
+				placeholder="Last name"
+				ng-model="uPlayer.user.last_name"
+				class="form-control" />
 		</div>
 
 		<div class="form-group">
 			<label class="sr-only" for="email">Email:</label>
-			<input type="email" id="email" name="email" placeholder="Email" ng-model="uPlayer.user.email" ng-required="true" class="form-control" />
+			<input type="email"
+				id="email"
+				name="email"
+				placeholder="Email"
+				ng-model="uPlayer.user.email"
+				ng-required="true"
+				class="form-control" />
+				<!-- TODO validate email is not taken (#100) -->
 		</div>
-		<p ng-show="myform.email.$invalid &amp;&amp; myform.email.$touched" class="alert alert-warning" role="alert">
+		<div ng-show="myform.email.$touched &amp;&amp; myform.email.$invalid" class="alert alert-warning" role="alert">
 			Must be a valid email
-		</p>
+		</div>
 
-		<p class="alert alert-info" role="alert">
+		<div class="alert alert-info" role="alert">
 			Only provide password information if you want to change it
-		</p>
+		</div>
 
 		<div class="form-group">
 			<label class="sr-only" for="password">Old password:</label>
-			<input type="password" id="old_password" name="old_password" placeholder="Old password" ng-model="uPlayer.user.old_password" class="form-control" />
+			<input type="password"
+				id="old_password"
+				name="old_password"
+				placeholder="Old password"
+				ng-model="uPlayer.user.old_password"
+				ng-required="myform.password.$modelValue"
+				class="form-control" />
 		</div>
-		<p ng-show="myform.old_password.$invalid &amp;&amp; myform.old_password.$touched" class="alert alert-warning" role="alert">
-			Please provide your old password
-		</p>
+		<div ng-show="myform.old_password.$invalid" class="alert alert-warning" role="alert">
+			Please provide your old password if you want to change it
+		</div>
 
 		<div class="form-group">
 			<label class="sr-only" for="password">New password:</label>
-			<input type="password" id="password" name="password" placeholder="New password" ng-model="uPlayer.user.password" class="form-control" />
+			<input type="password"
+				id="password"
+				name="password"
+				placeholder="Password"
+				ng-model="uPlayer.user.password"
+				ng-minlength="6"
+				ng-maxlength="128"
+				ng-pattern="'(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?!.*(.)\\1\\1)[a-zA-Z0-9&quot;!?,;.:@#$€£¥%&amp;§/()&lt;&gt;=+*_-]{6,128}'"
+				class="form-control" />
 		</div>
-		<p ng-show="myform.password.$invalid &amp;&amp; myform.password.$touched" class="alert alert-warning" role="alert">
-			Password must be at least 6 characters long with one of each lowercase, uppercase letters, and digits
-		</p>
+		<div ng-show="myform.password.$touched &amp;&amp; myform.password.$invalid" class="alert alert-warning" role="alert">
+			<ul>
+				<li ng-show="myform.password.$error.minlength">Password must be at least 6 characters long</li>
+				<li ng-show="myform.password.$error.maxlength">Password must be at most 128 characters long</li>
+				<li ng-show="myform.password.$error.pattern">
+					Password must contain one of each lowercase, uppercase letters, and digits,
+					no more than two of the same in a row, with only these special characters allowed:
+					&quot;!?,;.:@#$€£¥%&amp;§/()&lt;&gt;=+*_-
+				</li>
+			</ul>
+		</div>
 
 		<div class="form-group">
-			<label class="sr-only" for="password">Repeat password:</label>
-			<input type="password" id="repeat_password" name="repeat_password" placeholder="Repeat password" ng-model="uPlayer.user.repeat_password" class="form-control" />
+			<label class="sr-only" for="repeat_password">Repeat password:</label>
+			<input type="password"
+				id="repeat_password"
+				name="repeat_password"
+				placeholder="Repeat password"
+				ng-model="uPlayer.user.repeat_password"
+				ng-required="myform.password.$modelValue"
+				passwords="passwords"
+				class="form-control" />
 		</div>
-		<p ng-show="myform.repeat_password.$touched &amp;&amp; (myform.repeat_password.$invalid || uPlayer.user.password !== uPlayer.user.repeat_password)"
-			class="alert alert-warning" role="alert">
+		<div ng-show="myform.repeat_password.$touched &amp;&amp; myform.repeat_password.$invalid" class="alert alert-warning" role="alert">
 			Passwords don't match
-		</p>
+		</div>
 
 		<button type="submit" ng-disabled="myform.$invalid" class="btn btn-success btn-lg btn-block">
 			<span class="glyphicon glyphicon-edit"></span>

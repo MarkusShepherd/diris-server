@@ -98,7 +98,17 @@ dirisApp.controller('VoteImageController', function VoteImageController(
 
         dataService.submitVote(mPk, rNo, $scope.selectedImage.pk)
             .then(function (match) {
-                $log.debug('new match:', match);
+                var round = match.rounds[rNo - 1],
+                    votedFor = _.get(round, 'details.' + player.pk + '.vote_player');
+
+                if (votedFor === round.storyteller) {
+                    toastr.success('Congratulations! You selected the right image!', 'Good choice');
+                } else if (votedFor) {
+                    toastr.error("That wasn't the storyteller's image – " +
+                                 _.get($scope, 'players.' + votedFor + '.user.username') +
+                                 ' deceived you...', 'No luck');
+                }
+
                 $location.path('/review/' + mPk + '/' + rNo).replace();
             }).catch(function (response) {
                 $log.debug('error');

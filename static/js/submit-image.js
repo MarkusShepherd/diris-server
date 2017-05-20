@@ -4,6 +4,7 @@
 /*global $, _, Camera, FileReader, dirisApp, navigator, utils */
 
 dirisApp.controller('SubmitImageController', function SubmitImageController(
+    $http,
     $location,
     $log,
     $q,
@@ -11,12 +12,27 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
     $rootScope,
     $routeParams,
     $scope,
-    $timeout,
+    $interval,
     blockUI,
     toastr,
     dataService,
     MINIMUM_STORY_LENGTH
 ) {
+    var player = dataService.getLoggedInPlayer(),
+        mPk = $routeParams.mPk,
+        rNo = $routeParams.rNo,
+        sliderBlock = blockUI.instances.get('slider'),
+        slyInitiated = false;
+
+    if (!player) {
+        $location.path('/login');
+        return;
+    }
+
+    if (!blockUI.state().blocking) {
+        blockUI.start();
+    }
+
     function setImage(url) {
         $scope.selectedImage = true;
         $("#image")
@@ -40,23 +56,56 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
         });
     }
 
-    var player = dataService.getLoggedInPlayer(),
-        mPk = $routeParams.mPk,
-        rNo = $routeParams.rNo,
-        sliderBlock = blockUI.instances.get('useSlider');
+    function initSly() {
+        if (slyInitiated) {
+            $interval(function () {
+                $('#centered').sly('reload');
+            }, 1000, 10);
 
-    if (!player) {
-        $location.path('/login');
-        return;
-    }
+            return;
+        }
 
-    if (!blockUI.state().blocking) {
-        blockUI.start();
+        var $frame = $('#centered'),
+            $wrap  = $frame.parent();
+
+        $frame.sly({
+            horizontal: 1,
+            itemNav: 'centered',
+            smart: 1,
+            activateOn: 'click',
+            mouseDragging: 1,
+            touchDragging: 1,
+            releaseSwing: 1,
+            startAt: 0,
+            scrollBar: $wrap.find('.scrollbar'),
+            scrollBy: 1,
+            speed: 300,
+            elasticBounds: 1,
+            // easing: 'easeOutExpo',
+            dragHandle: 1,
+            dynamicHandle: 1,
+            clickBar: 1,
+            prev: $('#prevButton'),
+            next: $('#nextButton')
+        });
+
+        $frame.sly('reload');
+
+        $interval(function () {
+            $frame.sly('reload');
+        }, 1000, 10);
+
+        $($window).resize(function () {
+            $frame.sly('reload');
+        });
+
+        slyInitiated = true;
     }
 
     $scope.currentPlayer = player;
     $scope.mPk = mPk;
     $scope.rNo = rNo;
+    $scope.randomImagesSize = 0;
 
     $rootScope.menuItems = [{
         link: '#/overview',
@@ -110,54 +159,27 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
             $scope.image = image;
             return [];
         }).then(function (images) {
-            $scope.randomImages = images;
-            $scope.useSlider = !_.isEmpty(images);
-        }).then(function () {
-            sliderBlock.stop();
-
-            if (!$scope.useSlider) {
+            if (_.isEmpty(images)) {
                 return;
             }
 
-            var $frame = $('#centered'),
-                $wrap  = $frame.parent();
+            $scope.randomImages = _.concat($scope.randomImages || [], images);
+            $scope.randomImagesSize = _.size($scope.randomImages);
+            $scope.useSlider = !_.isEmpty($scope.randomImages);
 
-            $frame.sly({
-                horizontal: 1,
-                itemNav: 'centered',
-                smart: 1,
-                activateOn: 'click',
-                mouseDragging: 1,
-                touchDragging: 1,
-                releaseSwing: 1,
-                startAt: 0,
-                scrollBar: $wrap.find('.scrollbar'),
-                scrollBy: 1,
-                speed: 300,
-                elasticBounds: 1,
-                // easing: 'easeOutExpo',
-                dragHandle: 1,
-                dynamicHandle: 1,
-                clickBar: 1,
-                prev: $wrap.find('.prev'),
-                next: $wrap.find('.next')
-            });
 
-            $frame.sly('reload');
-
-            // TODO hacky - there must be a better way!
-            $timeout(function () {
-                $frame.sly('reload');
-            }, 1000);
-
-            $($window).resize(function () {
-                $frame.sly('reload');
-            });
+        }).then(function () {
+            if ($scope.useSlider) {
+                initSly();
+            }
         }).catch(function (response) {
             $log.debug('error');
             $log.debug(response);
             toastr.error("There was an error fetching the data - please try again later...");
-        }).then(blockUI.stop);
+
+            $scope.randomImagesSize = _.size($scope.randomImages);
+            $scope.useSlider = !_.isEmpty($scope.randomImages);
+        }).then(sliderBlock.stop);
 
     $scope.minStoryLength = MINIMUM_STORY_LENGTH;
 
@@ -257,4 +279,46 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
         }
     });
 
-});
+    $scope.showSearchPrompt = function showSearchPrompt() {
+        if (!sliderBlock.state().blocking) {
+            sliderBlock.start();
+        }
+
+        $q(function (resolve) {
+            navigator.notification.prompt(
+                'Please enter the term you would like to search images for:',
+                resolve,
+                'Search for images',
+                ['Search', 'Cancel']
+            );
+        }).then(function (response) {
+            if (response.buttonIndex !== 1 || _.isEmpty(response.input1)) {
+                return {data: {}};
+            }
+
+            // TODO query own backend instead
+            return $http.get('https://pixabay.com/api/?key=5345455-690261c6c5c99f6c5032f2ef8&per_page=10&q=' +
+                             encodeURIComponent(response.input1));
+        }).then(function (response) {
+            if (_.isEmpty(response.data.hits)) {
+                return;
+            }
+
+            _.forEach(response.data.hits, function (image) {
+                image.url = _.replace(image.webformatURL, '_640.', '_960.');
+            });
+
+            $scope.randomImages = _.concat(response.data.hits, $scope.randomImages || []);
+            $scope.randomImagesSize = _.size($scope.randomImages);
+            $scope.useSlider = !_.isEmpty($scope.randomImages);
+        }).then(function () {
+            if ($scope.useSlider) {
+                initSly();
+            }
+        }).catch(function (response) {
+            $log.error(response);
+            toastr.error(response);
+        }).then(sliderBlock.stop);
+    }; // showSearchPrompt
+
+}); // SubmitImageController

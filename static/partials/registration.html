@@ -8,27 +8,82 @@
 	<form id="register" name="myform" novalidate="novalidate" ng-submit="register()" role="form" class="form">
 		<div class="form-group">
 			<label class="sr-only" for="username">User name:</label>
-			<input type="text" id="username" name="username" placeholder="Name" ng-model="player.username" ng-required="true" class="form-control" />
+			<input type="text"
+				id="username"
+				name="username"
+				placeholder="Name"
+				ng-model="player.username"
+				ng-required="true"
+				ng-minlength="3"
+				ng-maxlength="21"
+				ng-pattern="'[a-zA-Z][a-zA-Z0-9_.-]{2,20}'"
+				class="form-control" />
+				<!-- TODO validate username is not taken (#100) -->
 		</div>
-		<p ng-show="myform.username.$invalid &amp;&amp; myform.username.$touched" class="alert alert-warning" role="alert">
-			Name is required
-		</p>
+		<div ng-show="myform.username.$touched &amp;&amp; myform.username.$invalid" class="alert alert-warning" role="alert">
+			<ul>
+				<li ng-show="myform.username.$error.required">Name is required</li>
+				<li ng-show="myform.username.$error.minlength">Name must be at least 3 characters long</li>
+				<li ng-show="myform.username.$error.maxlength">Name must be at most 21 characters long</li>
+				<li ng-show="myform.username.$error.pattern">Name must start with a letter and contain only letters, digits, dashs (-), periods (.), and underscores (_)</li>
+			</ul>
+		</div>
 
 		<div class="form-group">
 			<label class="sr-only" for="email">Email:</label>
-			<input type="email" id="email" name="email" placeholder="Email" ng-model="player.email" ng-required="true" class="form-control" />
+			<input type="email"
+				id="email"
+				name="email"
+				placeholder="Email"
+				ng-model="player.email"
+				ng-required="true"
+				class="form-control" />
+				<!-- TODO validate email is not taken (#100) -->
 		</div>
-		<p ng-show="myform.email.$invalid &amp;&amp; myform.email.$touched" class="alert alert-warning" role="alert">
+		<div ng-show="myform.email.$touched &amp;&amp; myform.email.$invalid" class="alert alert-warning" role="alert">
 			Must be a valid email
-		</p>
+		</div>
 
 		<div class="form-group">
 			<label class="sr-only" for="password">Password:</label>
-			<input type="password" id="password" name="password" placeholder="Password" ng-model="player.password" ng-required="true" class="form-control" />
+			<input type="password"
+				id="password"
+				name="password"
+				placeholder="Password"
+				ng-model="player.password"
+				ng-required="true"
+				ng-minlength="6"
+				ng-maxlength="128"
+				ng-pattern="'(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?!.*(.)\\1\\1)[a-zA-Z0-9&quot;!?,;.:@#$€£¥%&amp;§/()&lt;&gt;=+*_-]{6,128}'"
+				class="form-control" />
 		</div>
-		<p ng-show="myform.password.$invalid &amp;&amp; myform.password.$touched" class="alert alert-warning" role="alert">
-			Password must be at least 6 characters long with one of each lowercase, uppercase letters, and digits
-		</p>
+		<div ng-show="myform.password.$touched &amp;&amp; myform.password.$invalid" class="alert alert-warning" role="alert">
+			<ul>
+				<li ng-show="myform.password.$error.required">Password is required</li>
+				<li ng-show="myform.password.$error.minlength">Password must be at least 6 characters long</li>
+				<li ng-show="myform.password.$error.maxlength">Password must be at most 128 characters long</li>
+				<li ng-show="myform.password.$error.pattern">
+					Password must contain one of each lowercase, uppercase letters, and digits,
+					no more than two of the same in a row, with only these special characters allowed:
+					&quot;!?,;.:@#$€£¥%&amp;§/()&lt;&gt;=+*_-
+				</li>
+			</ul>
+		</div>
+
+		<div class="form-group">
+			<label class="sr-only" for="repeat_password">Repeat password:</label>
+			<input type="password"
+				id="repeat_password"
+				name="repeat_password"
+				placeholder="Repeat password"
+				ng-model="repeat_password"
+				ng-required="true"
+				passwords="passwords"
+				class="form-control" />
+		</div>
+		<div ng-show="myform.repeat_password.$touched &amp;&amp; myform.repeat_password.$invalid" class="alert alert-warning" role="alert">
+			Passwords don't match
+		</div>
 
 		<button type="submit" ng-disabled="myform.$invalid" class="btn btn-success btn-lg btn-block">
 			<span class="glyphicon glyphicon-ok"></span>

@@ -153,7 +153,7 @@ class MatchSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     username = serializers.RegexField(
-        regex=re.compile(r'^\d{21}$|^[a-zA-Z][a-zA-Z0-9_.\-]{2,20}$'),
+        regex=re.compile(r'^\d{21}$|^[a-zA-Z][a-zA-Z0-9_.-]{2,20}$'),
         min_length=3,
         max_length=21,
         # validators=[UniqueValidator(queryset=GaeDatastoreUser.objects.all(), lookup='iexact')],

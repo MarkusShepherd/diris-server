@@ -137,6 +137,20 @@ dirisApp.directive('playerIcon', function () {
     };
 });
 
+/*jslint unparam: true */
+dirisApp.directive('passwords', function () {
+    return {
+        require: 'ngModel',
+        link: function (scope, elm, attrs, ctrl) {
+            ctrl.$validators.passwords = function (modelValue) {
+                return ctrl.$isEmpty(modelValue) ||
+                    scope.myform.password.$modelValue === modelValue;
+            };
+        }
+    };
+});
+/*jslint unparam: false */
+
 dirisApp.run(function (
     $location,
     $log,

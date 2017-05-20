@@ -16,7 +16,7 @@
 	</div>
 
 	<section>
-		<div ng-show="round.readyForStoryImage || round.readyForOtherImage" class="btn-group btn-group-justified btn-group-lg">
+		<div ng-hide="round.hasSubmittedImage" class="btn-group btn-group-justified btn-group-lg">
 			<div ng-if="hasCamera" class="btn-group btn-group-lg">
 				<button ng-click="getImageFromCamera()" class="btn btn-primary">
 					<span class="glyphicon glyphicon-camera"></span>
@@ -38,7 +38,7 @@
 				</div>
 			</div>
 
-			<div class="frame" id="centered">
+			<div id="centered" class="frame">
 				<div class="slidee clearfix">
 					<img ng-repeat="image in randomImages"
 						ng-src="{{ image.url }}"
@@ -48,12 +48,25 @@
 						style="height: 150px; width: auto;" />
 				</div>
 			</div>
+		</div>
 
-			<div class="controls center">
-				<div class="btn-group btn-group-sm">
-					<button class="btn btn-primary prev"><span class="glyphicon glyphicon-chevron-left"></span> prev</button>
-					<button class="btn btn-primary next">next <span class="glyphicon glyphicon-chevron-right"></span></button>
-				</div>
+		<div ng-hide="round.hasSubmittedImage" class="controls center">
+			<div class="btn-group btn-group-sm">
+				<button id="prevButton"
+					ng-if="useSlider"
+					ng-disabled="!randomImagesSize"
+					class="btn btn-primary prev">
+					<span class="glyphicon glyphicon-chevron-left"></span> prev
+				</button>
+				<button ng-click="showSearchPrompt()" class="btn btn-primary">
+					<span class="glyphicon glyphicon-search"></span> more
+				</button>
+				<button id="nextButton"
+					ng-if="useSlider"
+					ng-disabled="!randomImagesSize"
+					class="btn btn-primary next">
+					next <span class="glyphicon glyphicon-chevron-right"></span>
+				</button>
 			</div>
 		</div>
 
