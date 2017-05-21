@@ -220,9 +220,7 @@ class Round(object):
         if match:
             match.images_ids.add(image_pk)
 
-        self.check_status()
-
-    def submit_vote(self, player_pk, image_pk, match=None):
+    def submit_vote(self, player_pk, image_pk):
         if not player_pk or not image_pk:
             raise ValueError('player and image are required')
 
@@ -251,15 +249,6 @@ class Round(object):
 
         details.vote = image_pk
         details.vote_player = vote_player
-
-        match = match or self.match
-
-        if match:
-            match.check_status()
-            match.score()
-        else:
-            self.check_status()
-            self.score()
 
     def check_status(self, match=None, prev_round=None):
         if (all(details.vote for player_pk, details in iteritems(self.details_dict)
@@ -596,8 +585,6 @@ class Match(models.Model):
         player_details.invitation_status = (MatchDetails.ACCEPTED if accept
                                             else MatchDetails.DECLINED)
         player_details.date_responded = timezone.now()
-
-        self.check_status()
 
     def check_status(self):
         self.status = (Match.WAITING

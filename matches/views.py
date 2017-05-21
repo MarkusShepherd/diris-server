@@ -151,6 +151,7 @@ class MatchViewSet(
         except ValueError as exc:
             raise_from(ValidationError(detail=str(exc)), exc)
         finally:
+            match.check_status()
             match.save()
 
         serializer = self.get_serializer(instance=match, player=player)
@@ -165,8 +166,9 @@ class MatchViewSet(
             match.respond(player.pk, accept=False)
         except ValueError as exc:
             raise_from(ValidationError(detail=str(exc)), exc)
-
-        match.save()
+        finally:
+            match.check_status()
+            match.save()
 
         serializer = self.get_serializer(instance=match, player=player)
         return Response(serializer.data)
@@ -220,6 +222,7 @@ class MatchImageView(views.APIView):
         except ValueError as exc:
             raise_from(ValidationError(detail=str(exc)), exc)
         finally:
+            match.check_status()
             match.save()
 
         serializer = MatchSerializer(instance=match, player=player)
@@ -239,6 +242,8 @@ class MatchVoteView(views.APIView):
         except ValueError as exc:
             raise_from(ValidationError(detail=str(exc)), exc)
         finally:
+            match.check_status()
+            match.score()
             match.save()
 
         serializer = MatchSerializer(instance=match, player=player)
