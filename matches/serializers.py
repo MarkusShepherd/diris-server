@@ -195,6 +195,7 @@ class PlayerSerializer(serializers.ModelSerializer):
             'pk',
             'user',
             'avatar',
+            'avatar_url',
             'gcm_registration_id',
             'total_matches',
             'created',
@@ -204,6 +205,9 @@ class PlayerSerializer(serializers.ModelSerializer):
             'created',
             'last_modified',
         )
+        extra_kwargs = {
+            'avatar': {'write_only': True},
+        }
 
     def create(self, validated_data):
         user_data = validated_data.pop('user')

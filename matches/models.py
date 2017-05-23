@@ -730,6 +730,8 @@ class Player(models.Model):
                                related_name='avatars',
                                blank=True, null=True,
                                on_delete=models.SET_NULL)
+    avatar_url = fields.ComputedCharField(func=lambda p: p.avatar.url if p.avatar else None,
+                                          max_length=1500, blank=True, null=True, default=None)
     gcm_registration_id = fields.CharField(blank=True, null=True)
     total_matches = models.PositiveSmallIntegerField(default=0)
     created = models.DateTimeField(auto_now_add=True)
