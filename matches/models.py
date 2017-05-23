@@ -756,7 +756,7 @@ class Player(models.Model):
             url = 'https://www.gravatar.com/avatar/{}'.format(gravatar)
             name = name or '{}.jpeg'.format(gravatar)
             params = params or {}
-            params['s'] = 1024
+            params['s'] = 1080
             params['d'] = 404
             params['r'] = 'pg'
 
@@ -791,6 +791,12 @@ class Player(models.Model):
         except Exception as exc:
             LOGGER.warning(exc)
             self.total_matches = 0
+
+        if not self.avatar_id:
+            try:
+                self.fetch_avatar()
+            except Exception as exc:
+                LOGGER.warning(exc)
 
         super(Player, self).save(*args, **kwargs)
 
