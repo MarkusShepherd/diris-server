@@ -22,8 +22,8 @@
 		<ul ng-show="currentPlayer" class="nav navbar-nav navbar-right">
 			<li>
 				<a href="#/profile" data-toggle="collapse" data-target="#myNavbar">
-					<img ng-show="currentPlayer.avatarURL" ng-src="{{ currentPlayer.avatarURL }}" class="img-circle" style="width: 20px; height: 20px;" />
-					<span ng-hide="currentPlayer.avatarURL" class="glyphicon glyphicon-user"></span>
+					<img ng-show="currentPlayer.avatar_url" ng-src="{{ currentPlayer.avatar_url }}" class="img-circle" style="width: 20px; height: 20px;" />
+					<span ng-hide="currentPlayer.avatar_url" class="glyphicon glyphicon-user"></span>
 					{{ currentPlayer.username }}
 				</a>
 			</li>
