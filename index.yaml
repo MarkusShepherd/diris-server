@@ -212,12 +212,6 @@ indexes:
   properties:
   - name: deadline_action
   - name: last_modified
-    direction: desc
-
-- kind: matches_match
-  properties:
-  - name: deadline_action
-  - name: last_modified
   - name: status
 
 - kind: matches_match

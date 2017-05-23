@@ -4,14 +4,19 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals, with_statement
 
+import hashlib
 import logging
 import time
 
+from builtins import int, map, range, str
 from collections import defaultdict
 from datetime import datetime, timedelta
+from io import BytesIO
 
-from builtins import int, map, range, str
+import requests
+
 from django.conf import settings
+from django.core.files.images import ImageFile
 from django.db import models
 from django.utils import timezone
 from django.utils.crypto import random
@@ -744,6 +749,35 @@ class Player(models.Model):
                 response = None
             LOGGER.info('sending GCM messages took %.3f seconds', time.time() - stt)
             return response
+
+    def fetch_avatar(self, url=None, params=None, name=None):
+        if not url:
+            gravatar = hashlib.md5(self.user.email.lower()).hexdigest()
+            url = 'https://www.gravatar.com/avatar/{}'.format(gravatar)
+            name = name or '{}.jpeg'.format(gravatar)
+            params = params or {}
+            params['s'] = 1024
+            params['d'] = 404
+            params['r'] = 'pg'
+
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+
+        # TODO use url basename instead
+        name = name or 'avatar.jpeg'
+        image = ImageFile(file=BytesIO(response.content), name=name)
+        avatar = Image.objects.create_image(
+            file=image,
+            size=len(response.content),
+            owner=self,
+            copyright=Image.OWNER,
+            info={'source': url},
+        )
+
+        if avatar:
+            self.avatar = avatar
+
+        return avatar
 
     def save(self, new_match=None, *args, **kwargs):
         # TODO inefficient - just have a counter and add sanity check method
