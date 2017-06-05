@@ -6,30 +6,31 @@
 dirisApp.controller('LoginController', function LoginController(
     $location,
     $log,
+    $q,
     $rootScope,
     $scope,
     blockUI,
     toastr,
     dataService
 ) {
-    var player = dataService.getLoggedInPlayer();
+    function login(username, password) {
+        var message;
 
-    if (player) {
-        $location.path('/overview').replace();
-        return;
-    }
+        username = username || $scope.player.name;
+        password = password || $scope.player.password;
 
-    blockUI.stop();
+        if (!username || !password) {
+            message = 'Username and password are required for login';
+            $log.debug(message);
+            toastr.error(message);
+            return $q.reject();
+        }
 
-    $rootScope.menuItems = [];
-    $rootScope.refreshButton = false;
-
-    $scope.login = function login() {
         if (!blockUI.state().blocking) {
             blockUI.start();
         }
 
-        dataService.getToken($scope.player.name, $scope.player.password)
+        return dataService.getToken(username, password)
             .then(function (token) {
                 $log.debug('token:', token);
 
@@ -39,7 +40,7 @@ dirisApp.controller('LoginController', function LoginController(
 
                 $location.path('/overview').replace();
             }).catch(function (response) {
-                var message = _.upperFirst(response.non_field_errors || response.message ||
+                message = _.upperFirst(response.non_field_errors || response.message ||
                                            response.toString() || 'There was an error logging in...');
 
                 $log.debug(response);
@@ -49,5 +50,40 @@ dirisApp.controller('LoginController', function LoginController(
 
                 blockUI.stop();
             });
-    }; // login
+    } // login
+
+    var player = dataService.getLoggedInPlayer();
+
+    if (player) {
+        $location.path('/overview').replace();
+        return;
+    }
+
+    $rootScope.menuItems = [];
+    $rootScope.refreshButton = false;
+
+    $scope.player = {
+        name: '',
+        password: ''
+    };
+
+    dataService.getUserName()
+        .then(function (username) {
+            if (username) {
+                $scope.player.name = username;
+            }
+
+            return dataService.getPassword();
+        }).then(function (password) {
+            if (password) {
+                $scope.player.password = password;
+            }
+
+            if ($scope.player.name && $scope.player.password) {
+                return login($scope.player.name, $scope.player.password);
+            }
+        }).catch($log.debug)
+        .then(blockUI.stop);
+
+    $scope.login = login;
 }); // LoginController

@@ -195,11 +195,25 @@ function removeEmpty(value) {
     return undefined;
 }
 
+function normalizeUrl(url, protocol) {
+    if (!url) {
+        return undefined;
+    }
+
+    if (_.startsWith(url, '//')) {
+        protocol = !protocol || protocol === 'file' ? 'https' : protocol;
+        return protocol + ':' + url;
+    }
+
+    return url;
+}
+
 utils = {
     processMatch: processMatch,
     getOrdinal: getOrdinal,
     isAndroid: isAndroid,
     isBrowser: isBrowser,
     roundAction: roundAction,
-    removeEmpty: removeEmpty
+    removeEmpty: removeEmpty,
+    normalizeUrl: normalizeUrl
 };

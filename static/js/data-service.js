@@ -1,7 +1,7 @@
 'use strict';
 
 /*jslint browser: true, nomen: true, stupid: true, todo: true */
-/*global _, dirisApp, utils */
+/*global _, cordova, dirisApp, utils */
 
 dirisApp.factory('dataService', function dataService(
     $localStorage,
@@ -21,7 +21,8 @@ dirisApp.factory('dataService', function dataService(
         token = null,
         loggedInPlayer = null,
         gcmRegistrationID = null,
-        nextUpdate = null;
+        nextUpdate = null,
+        secureStorage = new cordova.plugins.SecureStorage($log.debug, $log.error, 'diris');
 
     factory.logout = function logout() {
         factory.setToken(null);
@@ -30,6 +31,7 @@ dirisApp.factory('dataService', function dataService(
         players = {};
         images = {};
         $localStorage.$reset();
+        secureStorage.clear($log.debug, $log.debug);
     };
 
     factory.setNextUpdate = function setNextUpdate(nxt) {
@@ -42,6 +44,46 @@ dirisApp.factory('dataService', function dataService(
         nextUpdate = nextUpdate || $localStorage.nextUpdate || _.now() - 1;
         $localStorage.nextUpdate = nextUpdate;
         return nextUpdate;
+    };
+
+    function getSecureStorage(key) {
+        if (!secureStorage) {
+            return $q.reject('no storage');
+        }
+
+        return $q(function (resolve, reject) {
+            secureStorage.get(resolve, reject, key);
+        });
+    }
+
+    function setSecureStorage(key, value) {
+        if (!secureStorage) {
+            return $q.reject('no storage');
+        }
+
+        return $q(function (resolve, reject) {
+            secureStorage.set(resolve, reject, key, value);
+        });
+    }
+
+    factory.setUserName = function setUserName(username) {
+        return setSecureStorage('username', username);
+    };
+
+    factory.getUserName = function getUserName() {
+        return getSecureStorage('username');
+    };
+
+    factory.setPassword = function setPassword(password) {
+        if (utils.isBrowser()) {
+            return $q.resolve(false);
+        }
+
+        return setSecureStorage('password', password);
+    };
+
+    factory.getPassword = function getPassword() {
+        return getSecureStorage('password');
     };
 
     factory.setToken = function setToken(newToken) {
@@ -72,6 +114,16 @@ dirisApp.factory('dataService', function dataService(
                 {skipAuthorization: true})
             .then(function (response) {
                 factory.setToken(response.data.token);
+
+                if (token) {
+                    factory.setUserName(username)
+                        .then(function (response) {
+                            $log.debug(response);
+                            return factory.setPassword(password);
+                        }).then($log.debug)
+                        .catch($log.debug);
+                }
+
                 return token;
             }).catch(function (response) {
                 $log.debug(response);
@@ -241,6 +293,7 @@ dirisApp.factory('dataService', function dataService(
     };
 
     function setPlayer(player) {
+        player.avatar_url = utils.normalizeUrl(player.avatar_url, $location.protocol());
         $localStorage['player_' + player.pk] = player;
         players[player.pk] = player;
 
@@ -353,12 +406,7 @@ dirisApp.factory('dataService', function dataService(
     };
 
     function setImage(image) {
-        var protocol;
-        if (_.startsWith(image.url, '//')) {
-            protocol = $location.protocol() === 'file' ? 'https' : $location.protocol();
-            image.url = protocol + ':' + image.url;
-        }
-
+        image.url = utils.normalizeUrl(image.url, $location.protocol());
         $localStorage['image_' + image.pk] = image;
         images[image.pk] = image;
     }

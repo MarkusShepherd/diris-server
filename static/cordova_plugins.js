@@ -90,6 +90,20 @@ module.exports = [
         "id": "cordova-plugin-inappbrowser.InAppBrowserProxy",
         "pluginId": "cordova-plugin-inappbrowser",
         "runs": true
+    },
+    {
+        "file": "plugins/cordova-plugin-secure-storage/www/securestorage.js",
+        "id": "cordova-plugin-secure-storage.SecureStorage",
+        "pluginId": "cordova-plugin-secure-storage",
+        "clobbers": [
+            "SecureStorage"
+        ]
+    },
+    {
+        "file": "plugins/cordova-plugin-secure-storage/www/sjcl_ss.js",
+        "id": "cordova-plugin-secure-storage.sjcl_ss",
+        "pluginId": "cordova-plugin-secure-storage",
+        "runs": true
     }
 ];
 module.exports.metadata = 
@@ -102,7 +116,8 @@ module.exports.metadata =
     "cordova-plugin-whitelist": "1.3.2",
     "phonegap-plugin-push": "1.10.1",
     "cordova-plugin-inappbrowser": "1.7.1",
-    "cordova-plugin-console": "1.0.7"
+    "cordova-plugin-console": "1.0.7",
+    "cordova-plugin-secure-storage": "2.6.8"
 }
 // BOTTOM OF METADATA
 });
