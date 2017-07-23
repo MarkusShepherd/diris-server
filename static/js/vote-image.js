@@ -21,7 +21,7 @@ dirisApp.controller('VoteImageController', function VoteImageController(
         imagePromise;
 
     if (!player) {
-        $location.path('/login');
+        $location.search('dest', $location.path()).path('/login');
         return;
     }
 

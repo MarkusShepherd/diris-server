@@ -19,7 +19,7 @@ dirisApp.controller('MatchController', function MatchController(
         forceRefresh = _.now() >= dataService.getNextUpdate();
 
     if (!player) {
-        $location.path('/login');
+        $location.search('dest', $location.path()).path('/login');
         return;
     }
 
@@ -72,4 +72,24 @@ dirisApp.controller('MatchController', function MatchController(
         });
 
     $scope.action = utils.roundAction;
+
+    $scope.rematch = function rematch() {
+        if (!blockUI.state().blocking) {
+            blockUI.start();
+        }
+
+        var match = $scope.match,
+            playerPks = _(match.players).without(player.pk).unshift(player.pk).value();
+
+        dataService.createMatch(playerPks, match.total_rounds, match.timeout)
+            .then(function (newMatch) {
+                $log.debug(newMatch);
+                $location.path('/accept/' + newMatch.pk);
+            }).catch(function (response) {
+                $log.debug('error');
+                $log.debug(response);
+                blockUI.stop();
+                toastr.error("There was an error when creating the match...");
+            });
+    };
 }); // MatchController

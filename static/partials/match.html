@@ -19,6 +19,12 @@
 		class="btn btn-success btn-lg btn-block btn-match-action">
 		<span class="glyphicon glyphicon-fire"></span> Play
 	</a>
+	<button ng-if="match.status == 'f'"
+		ng-click="rematch()"
+		type="button"
+		class="btn btn-success btn-lg btn-block btn-match-action">
+		<span class="glyphicon glyphicon-repeat"></span> Rematch
+	</button>
 
 	<section class="list-group">
 		<a ng-repeat="round in match.rounds"

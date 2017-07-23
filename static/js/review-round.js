@@ -20,7 +20,7 @@ dirisApp.controller('ReviewRoundController', function ReviewRoundController(
         forceRefresh = _.now() >= dataService.getNextUpdate();
 
     if (!player) {
-        $location.path('/login');
+        $location.search('dest', $location.path()).path('/login');
         return;
     }
 
@@ -31,6 +31,7 @@ dirisApp.controller('ReviewRoundController', function ReviewRoundController(
     $scope.currentPlayer = player;
     $scope.mPk = mPk;
     $scope.rNo = rNo;
+    $scope.action = utils.roundAction;
 
     $rootScope.menuItems = [{
         link: '#/overview',

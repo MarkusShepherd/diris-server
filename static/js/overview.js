@@ -34,7 +34,7 @@ dirisApp.controller('OverviewController', function OverviewController(
     }
 
     if (!player) {
-        $location.path('/login');
+        $location.search('dest', $location.path()).path('/login');
         return;
     }
 

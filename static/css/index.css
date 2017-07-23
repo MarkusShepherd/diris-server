@@ -75,7 +75,8 @@ a.disabled {
 .form,
 .text-story,
 .btn-block,
-.btn-group-accept {
+.btn-group-accept,
+.btn-group-rounds {
     margin-bottom: 20px;
 }
 
@@ -218,6 +219,10 @@ img.player-icon-standings {
 
 .btn-group-image-edit {
     margin: 0 5px 5px;
+}
+
+.btn-left {
+    float: left;
 }
 
 .btn-right {

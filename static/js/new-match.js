@@ -44,7 +44,7 @@ dirisApp.controller('NewMatchController', function NewMatchController(
     }
 
     if (!player) {
-        $location.path('/login');
+        $location.search('dest', $location.path()).path('/login');
         return;
     }
 
@@ -146,7 +146,7 @@ dirisApp.controller('NewMatchController', function NewMatchController(
         dataService.createMatch(playerPks, totalRounds, timeout)
             .then(function (match) {
                 $log.debug(match);
-                $location.path('/overview');
+                $location.path('/accept/' + match.pk);
             }).catch(function (response) {
                 $log.debug('error');
                 $log.debug(response);

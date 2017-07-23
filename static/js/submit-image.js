@@ -25,7 +25,7 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
         slyInitiated = false;
 
     if (!player) {
-        $location.path('/login');
+        $location.search('dest', $location.path()).path('/login');
         return;
     }
 

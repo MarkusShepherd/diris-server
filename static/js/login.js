@@ -8,16 +8,18 @@ dirisApp.controller('LoginController', function LoginController(
     $log,
     $q,
     $rootScope,
+    $routeParams,
     $scope,
     blockUI,
     toastr,
     dataService
 ) {
-    function login(username, password) {
+    function login(username, password, dest) {
         var message;
 
         username = username || $scope.player.name;
         password = password || $scope.player.password;
+        dest = dest || $scope.dest || '/overview';
 
         if (!username || !password) {
             message = 'Username and password are required for login';
@@ -38,7 +40,7 @@ dirisApp.controller('LoginController', function LoginController(
                     throw 'There was an error logging in...';
                 }
 
-                $location.path('/overview').replace();
+                $location.path(dest).search('dest', null).replace();
             }).catch(function (response) {
                 message = _.upperFirst(response.non_field_errors || response.message ||
                                            response.toString() || 'There was an error logging in...');
@@ -52,10 +54,11 @@ dirisApp.controller('LoginController', function LoginController(
             });
     } // login
 
-    var player = dataService.getLoggedInPlayer();
+    var player = dataService.getLoggedInPlayer(),
+        dest = $routeParams.dest;
 
     if (player) {
-        $location.path('/overview').replace();
+        $location.path(dest || '/overview').search('dest', null).replace();
         return;
     }
 
@@ -66,6 +69,7 @@ dirisApp.controller('LoginController', function LoginController(
         name: '',
         password: ''
     };
+    $scope.dest = dest;
 
     dataService.getUserName()
         .then(function (username) {
@@ -80,7 +84,7 @@ dirisApp.controller('LoginController', function LoginController(
             }
 
             if ($scope.player.name && $scope.player.password) {
-                return login($scope.player.name, $scope.player.password);
+                return login($scope.player.name, $scope.player.password, dest);
             }
         }).catch($log.debug)
         .then(blockUI.stop);

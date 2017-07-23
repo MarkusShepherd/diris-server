@@ -18,7 +18,7 @@ dirisApp.controller('AcceptController', function AcceptController(
         mPk = $routeParams.mPk;
 
     if (!player) {
-        $location.path('/login');
+        $location.search('dest', $location.path()).path('/login');
         return;
     }
 

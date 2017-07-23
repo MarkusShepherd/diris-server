@@ -43,7 +43,9 @@ dirisApp.config(function (
 ) {
     jwtOptionsProvider.config({
         authPrefix: 'JWT ',
-        unauthenticatedRedirectPath: '/login',
+        unauthenticatedRedirector: ['$location', function ($location) {
+            $location.search('dest', $location.path()).path('/login');
+        }],
         whiteListedDomains: ['diris-app.appspot.com', 'localhost'],
         tokenGetter: ['dataService', function (dataService) {
             return dataService.getTokenSync();
@@ -95,12 +97,10 @@ dirisApp.config(function (
         requiresLogin: true
     }).when('/profile/:pPk', {
         templateUrl: 'partials/profile.html',
-        controller: 'ProfileController',
-        requiresLogin: true
+        controller: 'ProfileController'
     }).when('/profile/:pPk/:action', {
         templateUrl: 'partials/profile.html',
-        controller: 'ProfileController',
-        requiresLogin: true
+        controller: 'ProfileController'
     }).otherwise({
         redirectTo: '/login'
     });
