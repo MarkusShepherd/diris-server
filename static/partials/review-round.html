@@ -67,17 +67,19 @@
 			{{ players[item.playerPk].user.username }}
 		</a>
 	</section>
-	<div ng-if="round.number &gt; 1 || (round.status == 'f' &amp;&amp; round.number &lt; match.total_rounds)"
-		class="btn-group btn-group-justified btn-group-rounds" role="group">
+	<div class="btn-group btn-group-justified btn-group-rounds" role="group">
 		<a ng-if="round.number &gt; 1"
 			ng-href="#/{{ action(match.rounds[round.number - 2]) }}/{{ mPk }}/{{ round.number - 1 }}"
 			class="btn btn-primary">
-			<span class="glyphicon glyphicon-circle-arrow-left"></span> Previous round
+			<span class="glyphicon glyphicon-circle-arrow-left"></span>
+		</a>
+		<a ng-href="#/match/{{ mPk }}" class="btn btn-primary">
+			<span class="glyphicon glyphicon-circle-arrow-up"></span>
 		</a>
 		<a ng-if="round.status == 'f' &amp;&amp; round.number &lt; match.total_rounds"
 			ng-href="#/{{ action(match.rounds[round.number]) }}/{{ mPk }}/{{ round.number + 1 }}"
 			class="btn btn-primary">
-			Next round <span class="glyphicon glyphicon-circle-arrow-right"></span>
+			<span class="glyphicon glyphicon-circle-arrow-right"></span>
 		</a>
 	</div>
 </section>

@@ -89,7 +89,39 @@ dirisApp.controller('MatchController', function MatchController(
                 $log.debug('error');
                 $log.debug(response);
                 blockUI.stop();
-                toastr.error("There was an error when creating the match...");
+                toastr.error('There was an error creating the match...');
             });
+    };
+
+    $scope.check = function check() {
+        if (!blockUI.state().blocking) {
+            blockUI.start();
+        }
+
+        $q(function (resolve) {
+            navigator.notification.confirm(
+                'If the game is in an inconsistent state you can perform a check here...',
+                resolve,
+                'Check status',
+                ['Check', 'Cancel']
+            );
+        }).then(function (buttonIndex) {
+            if (buttonIndex === 1) {
+                return dataService.getMatch(mPk, true, true);
+            }
+            return false;
+        }).then(function (match) {
+            if (match) {
+                $scope.match = match;
+                $scope.round = match.currentRoundObj;
+            }
+
+            $log.debug('Match:', match);
+            $log.debug('Round:', $scope.round);
+        }).catch(function (response) {
+            $log.debug('error');
+            $log.debug(response);
+            toastr.error('There was an error fetching the data - please try again later...');
+        }).then(blockUI.stop);
     };
 }); // MatchController

@@ -258,7 +258,7 @@ dirisApp.factory('dataService', function dataService(
             });
     };
 
-    factory.getMatch = function getMatch(mPk, forceRefresh) {
+    factory.getMatch = function getMatch(mPk, forceRefresh, checkStatus) {
         if (!forceRefresh && matches[mPk]) {
             return $q.resolve(matches[mPk]);
         }
@@ -268,7 +268,7 @@ dirisApp.factory('dataService', function dataService(
             return $q.resolve(matches[mPk]);
         }
 
-        return $http.get(BACKEND_URL + '/matches/' + mPk + '/')
+        return $http.get(BACKEND_URL + '/matches/' + mPk + (checkStatus ? '/check/' : '/'))
             .then(function (response) {
                 $log.debug('Match from server:', response.data);
                 setMatch(response.data);
