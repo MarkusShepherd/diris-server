@@ -100,10 +100,12 @@ dirisApp.controller('MatchController', function MatchController(
 
         $q(function (resolve) {
             navigator.notification.confirm(
-                'If the game is in an inconsistent state you can perform a check here...',
+                'If the game is in an inconsistent state you can perform a check here.\n\n' +
+                    'If this does not fix the problem please send a bug report or ' +
+                    'an email through the links at the bottom of every page.',
                 resolve,
                 'Check status',
-                ['Check', 'Cancel']
+                ['OK', 'Cancel']
             );
         }).then(function (buttonIndex) {
             if (buttonIndex === 1) {
