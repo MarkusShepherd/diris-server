@@ -335,6 +335,14 @@ indexes:
 - kind: matches_messagegroup
   properties:
   - name: group_id
+  - name: last_modified
+    direction: desc
+  - name: sequence
+    direction: desc
+
+- kind: matches_messagegroup
+  properties:
+  - name: group_id
   - name: sequence
     direction: desc
   - name: last_modified
