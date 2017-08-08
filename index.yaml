@@ -244,14 +244,14 @@ indexes:
 - kind: matches_match
   properties:
   - name: group_id
-  - name: status
+  - name: deadline_action
+  - name: last_modified
+    direction: desc
 
 - kind: matches_match
   properties:
   - name: group_id
-  - name: deadline_action
-  - name: last_modified
-    direction: desc
+  - name: status
 
 - kind: matches_match
   properties:
@@ -331,6 +331,21 @@ indexes:
   properties:
   - name: status
   - name: last_modified
+
+- kind: matches_messagegroup
+  properties:
+  - name: group_id
+  - name: sequence
+    direction: desc
+  - name: last_modified
+    direction: desc
+
+- kind: matches_messagegroup
+  properties:
+  - name: last_modified
+    direction: desc
+  - name: sequence
+    direction: desc
 
 - kind: matches_player
   properties:

@@ -678,6 +678,41 @@ class Match(models.Model):
             for round_ in self.rounds_list:
                 round_.send_notifications(match=self)
 
+    def send_chat(self, player_pk, text, timestamp=None):
+        if player_pk not in self.players_ids:
+            raise ValueError('player <{}> does not participate in this match', player_pk)
+        if not text:
+            raise ValueError('messages need to have a text')
+
+        group_id = self.group_id
+        if group_id is None:
+            group_id = calculate_id(self.players_ids, bits=63)
+
+        LOGGER.debug(
+            'trying to send message to group <{}> by player <{}>: "{}"', group_id, player_pk, text)
+
+        # TODO keep group around
+        message_group = (MessageGroup.objects
+                         .filter(group_id=group_id)
+                         .order_by('-sequence', '-last_modified')
+                         .first())
+
+        if message_group is None:
+            message_group = MessageGroup.objects.create(group_id=group_id)
+
+        try:
+            message_group.add(player_pk, text, timestamp)
+        except ValueError:
+            message_group = MessageGroup.objects.create(
+                group_id=group_id, sequence=message_group.sequence + 1)
+            message_group.add(player_pk, text, timestamp)
+        finally:
+            message_group.save()
+
+        LOGGER.debug(message_group)
+
+        return message_group
+
     def update_deadlines(self):
         delta = timedelta(seconds=self.timeout or Match.STANDARD_TIMEOUT)
 
@@ -925,3 +960,73 @@ class Image(models.Model):
 
     def __str__(self):
         return self.url
+
+
+@python_2_unicode_compatible
+class Message(object):
+    def __init__(self, player, text, timestamp=None):
+        super(Message, self).__init__()
+        self.player = player
+        self.text = text
+        self.timestamp = timestamp or timezone.now()
+
+    def __str__(self):
+        return '<{}> {}'.format(self.timestamp, self.text)
+
+
+class MessageSerializer(serializers.Serializer):
+    player = serializers.IntegerField()
+    text = serializers.CharField(trim_whitespace=True)
+    timestamp = serializers.DateTimeField(required=False)
+
+    def create(self, validated_data):
+        return Message(**validated_data)
+
+
+@paginated_model(orderings=('last_modified', 'sequence', ('-last_modified', '-sequence')))
+@python_2_unicode_compatible
+class MessageGroup(models.Model):
+    MAX_SIZE = 100
+
+    group_id = models.PositiveIntegerField()
+    sequence = models.PositiveSmallIntegerField(default=0)
+    messages = fields.JSONField(default=list)
+    _messages_list = None
+
+    created = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(auto_now=True)
+
+    @property
+    def messages_list(self):
+        if self._messages_list is not None:
+            return self._messages_list
+
+        result = []
+        for data in self.messages or ():
+            serializer = MessageSerializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            result.append(serializer.save())
+
+        self._messages_list = result
+        return self._messages_list
+
+    def add(self, player, text, timestamp=None):
+        if len(self.messages_list) >= MessageGroup.MAX_SIZE:
+            raise ValueError('message group capacity exhausted')
+
+        message = Message(player, text, timestamp)
+        self.messages_list.append(message)
+        return message
+
+    def save(self, *args, **kwargs):
+        if self._messages_list is not None:
+            sorted_messages = sorted(self._messages_list, key=lambda message: message.timestamp)
+            self.messages = MessageSerializer(instance=sorted_messages, many=True).data
+
+        super(MessageGroup, self).save(*args, **kwargs)
+
+    class Meta(object):
+        ordering = ('-last_modified', '-sequence')
+
+    def __str__(self):
+        return 'message group <{}> #{}'.format(self.group_id, self.sequence)

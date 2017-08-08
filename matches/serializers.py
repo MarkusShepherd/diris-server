@@ -15,7 +15,9 @@ from rest_framework.exceptions import ValidationError
 from django.utils.crypto import random
 from djangae.contrib.gauth_datastore.models import GaeDatastoreUser
 
-from .models import Match, Player, Image, MatchDetailsSerializer, RoundSerializer
+from .models import (
+    Match, Player, Image, MessageGroup,
+    MatchDetailsSerializer, RoundSerializer, MessageSerializer)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -89,6 +91,7 @@ class MatchSerializer(serializers.ModelSerializer):
             'pk',
             'players',
             'inviting_player',
+            'group_id',
             'details',
             'rounds',
             'total_rounds',
@@ -103,6 +106,7 @@ class MatchSerializer(serializers.ModelSerializer):
             'finished',
         )
         read_only_fields = (
+            'group_id',
             'current_round',
             'images',
             'status',
@@ -272,3 +276,22 @@ class PlayerSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
+
+
+class MessageGroupSerializer(serializers.ModelSerializer):
+    messages = MessageSerializer(many=True)
+
+    class Meta(object):
+        model = MessageGroup
+        fields = (
+            'pk',
+            'group_id',
+            'sequence',
+            'messages',
+            'created',
+            'last_modified',
+        )
+        read_only_fields = (
+            'created',
+            'last_modified',
+        )
