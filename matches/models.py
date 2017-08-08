@@ -537,6 +537,7 @@ class Match(models.Model):
     group_id = fields.ComputedIntegerField(
         func=lambda match: calculate_id(match.players_ids, bits=63),
         blank=True, null=True, default=None)
+    message_group = None
 
     details = fields.JSONField()
     _details_dict = None
@@ -679,6 +680,7 @@ class Match(models.Model):
                 round_.send_notifications(match=self)
 
     def send_chat(self, player_pk, text, timestamp=None):
+        # pylint: disable=no-member
         if player_pk not in self.players_ids:
             raise ValueError('player <{}> does not participate in this match', player_pk)
         if not text:
@@ -686,32 +688,31 @@ class Match(models.Model):
 
         group_id = self.group_id
         if group_id is None:
+            # pylint: disable=no-member
             group_id = calculate_id(self.players_ids, bits=63)
 
-        LOGGER.debug(
-            'trying to send message to group <{}> by player <{}>: "{}"', group_id, player_pk, text)
+        if self.message_group is None:
+            # pylint: disable=no-member
+            self.message_group = (MessageGroup.objects
+                                  .filter(group_id=group_id)
+                                  .order_by('-sequence', '-last_modified')
+                                  .first())
 
-        # TODO keep group around
-        message_group = (MessageGroup.objects
-                         .filter(group_id=group_id)
-                         .order_by('-sequence', '-last_modified')
-                         .first())
-
-        if message_group is None:
-            message_group = MessageGroup.objects.create(group_id=group_id)
+        if self.message_group is None:
+            # pylint: disable=no-member
+            self.message_group = MessageGroup.objects.create(group_id=group_id)
 
         try:
-            message_group.add(player_pk, text, timestamp)
+            message = self.message_group.add(player_pk, text, timestamp)
         except ValueError:
-            message_group = MessageGroup.objects.create(
-                group_id=group_id, sequence=message_group.sequence + 1)
-            message_group.add(player_pk, text, timestamp)
+            # pylint: disable=no-member
+            self.message_group = MessageGroup.objects.create(
+                group_id=group_id, sequence=self.message_group.sequence + 1)
+            message = self.message_group.add(player_pk, text, timestamp)
         finally:
-            message_group.save()
+            self.message_group.save()
 
-        LOGGER.debug(message_group)
-
-        return message_group
+        return message
 
     def update_deadlines(self):
         delta = timedelta(seconds=self.timeout or Match.STANDARD_TIMEOUT)
