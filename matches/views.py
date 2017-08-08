@@ -10,6 +10,7 @@ import os.path
 
 from base64 import b64decode
 
+# pylint: disable=redefined-builtin
 from builtins import int, str
 from django.conf import settings
 from django.contrib.auth import login
@@ -17,6 +18,7 @@ from django.db.models import Q
 from django.utils.crypto import get_random_string, random
 from djangae.contrib.gauth_datastore.models import GaeDatastoreUser
 from djangae.contrib.pagination import Paginator
+# pylint: disable=import-error
 from google.appengine.api.mail import send_mail
 from rest_framework import mixins, permissions, status, views, viewsets
 from rest_framework.decorators import detail_route, list_route
@@ -75,6 +77,7 @@ class MatchViewSet(
         player = get_player(self.request)
         return player.matches.all() if player else Match.objects.none()
 
+    # pylint: disable=unused-argument
     def create(self, request, *args, **kwargs):
         player = get_player(request, raise_error=True)
 
@@ -84,6 +87,7 @@ class MatchViewSet(
         except ValueError as exc:
             raise_from(ValidationError(detail=str(exc)), exc)
 
+    # pylint: disable=unused-argument
     def retrieve(self, request, *args, **kwargs):
         player = get_player(request, raise_error=True)
 
@@ -91,6 +95,7 @@ class MatchViewSet(
         serializer = self.get_serializer(instance=match, player=player)
         return Response(serializer.data)
 
+    # pylint: disable=unused-argument
     def list(self, request, *args, **kwargs):
         player = get_player(request, raise_error=True)
 
@@ -105,6 +110,7 @@ class MatchViewSet(
         return Response(serializer.data)
 
     @list_route(methods=['get', 'post'], permission_classes=())
+    # pylint: disable=unused-argument
     def checks(self, request, *args, **kwargs):
         matches = (self.filter_queryset(Match.objects.all())
                    .order_by('deadline_action', 'last_modified'))
@@ -123,9 +129,11 @@ class MatchViewSet(
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @detail_route(methods=['get', 'post'], permission_classes=())
+    # pylint: disable=unused-argument
     def check(self, request, pk=None, *args, **kwargs):
         try:
             match = Match.objects.get(pk=pk)
+        # pylint: disable=no-member
         except Match.DoesNotExist as exc:
             raise_from(NotFound(detail='match "{}" does not exist'.format(pk)), exc)
 
@@ -142,6 +150,7 @@ class MatchViewSet(
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @detail_route(methods=['post'])
+    # pylint: disable=unused-argument
     def accept(self, request, pk, *args, **kwargs):
         player = get_player(request, raise_error=True)
         match = self.get_object()
@@ -158,6 +167,7 @@ class MatchViewSet(
         return Response(serializer.data)
 
     @detail_route(methods=['post'])
+    # pylint: disable=unused-argument
     def decline(self, request, pk, *args, **kwargs):
         player = get_player(request, raise_error=True)
         match = self.get_object()
@@ -174,12 +184,14 @@ class MatchViewSet(
         return Response(serializer.data)
 
     @detail_route()
+    # pylint: disable=unused-argument
     def players(self, request, pk=None, *args, **kwargs):
         match = self.get_object()
         serializer = PlayerSerializer(instance=match.players, many=True)
         return Response(serializer.data)
 
     @detail_route()
+    # pylint: disable=unused-argument
     def images(self, request, pk=None, *args, **kwargs):
         player = get_player(request, raise_error=True)
         match = self.get_object()
@@ -205,6 +217,7 @@ class MatchImageView(views.APIView):
     parser_classes = (MultiPartParser, FileUploadParser)
     permission_classes = (permissions.IsAuthenticated,)
 
+    # pylint: disable=no-self-use
     def post(self, request, match_pk, round_number, filename):
         player = get_player(request, raise_error=True)
         match = player.matches.get(pk=match_pk)
@@ -232,6 +245,7 @@ class MatchImageView(views.APIView):
 class MatchVoteView(views.APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
+    # pylint: disable=no-self-use
     def post(self, request, match_pk, round_number, image_pk):
         player = get_player(request, raise_error=True)
         match = player.matches.get(pk=match_pk)
@@ -251,11 +265,13 @@ class MatchVoteView(views.APIView):
 
 
 class PlayerViewSet(viewsets.ModelViewSet):
+    # pylint: disable=no-member
     queryset = Player.objects.all()
     permission_classes = (IsOwnerOrCreateAndRead,)
     serializer_class = PlayerSerializer
     ordering = ('-last_modified',)
 
+    # pylint: disable=unused-argument
     def create(self, request, *args, **kwargs):
         response = super(PlayerViewSet, self).create(request, *args, **kwargs)
 
@@ -274,6 +290,7 @@ class PlayerViewSet(viewsets.ModelViewSet):
         return response
 
     @list_route(methods=['post'], permission_classes=())
+    # pylint: disable=no-self-use,unused-argument
     def send(self, request, *args, **kwargs):
         if request.query_params.get('key') != settings.GCM_SERVER_KEY:
             raise NotAuthenticated(detail='the supplied key "{}" is not valid'
@@ -309,6 +326,7 @@ class PlayerViewSet(viewsets.ModelViewSet):
         LOGGER.info(player_pks)
         LOGGER.info(data)
 
+        # pylint: disable=no-member
         for player in Player.objects.filter(pk__in=player_pks):
             LOGGER.info(player.pk)
             LOGGER.info(player.send_message(**data))
@@ -316,6 +334,7 @@ class PlayerViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @list_route(methods=['post'], permission_classes=())
+    # pylint: disable=no-self-use,unused-argument
     def reset_password(self, request, *args, **kwargs):
         username = request.data.get('username') or request.query_params.get('username')
         email = request.data.get('email') or request.query_params.get('email')
@@ -325,6 +344,7 @@ class PlayerViewSet(viewsets.ModelViewSet):
 
         try:
             user = GaeDatastoreUser.objects.get(username=username, email=email)
+        # pylint: disable=no-member
         except GaeDatastoreUser.DoesNotExist as exc:
             raise_from(NotFound(detail='user with this combination of '
                                 'name and email does not exist'), exc)
@@ -364,18 +384,21 @@ class ImageViewSet(viewsets.ModelViewSet):
     default_random_size = 5
     default_shuffle_size = 100
 
+    # pylint: disable=unused-argument
     def create(self, request, *args, **kwargs):
         if not request.data.get('owner'):
             request.data['owner'] = get_player(request)
 
         return super(ImageViewSet, self).create(request, *args, **kwargs)
 
+    # pylint: disable=unused-argument
     def retrieve(self, request, *args, **kwargs):
         player = get_player(request)
         image = self.get_object()
         serializer = self.get_serializer(instance=image, player=player)
         return Response(serializer.data)
 
+    # pylint: disable=unused-argument
     def list(self, request, *args, **kwargs):
         player = get_player(request)
 
@@ -390,6 +413,7 @@ class ImageViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @list_route(methods=['get', 'post'])
+    # pylint: disable=unused-argument
     def shuffle(self, request, *args, **kwargs):
         try:
             size = int(request.query_params.get('size'))
@@ -404,6 +428,7 @@ class ImageViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @list_route()
+    # pylint: disable=unused-argument
     def random(self, request, *args, **kwargs):
         player = get_player(request)
 
@@ -442,6 +467,7 @@ class ImageViewSet(viewsets.ModelViewSet):
 class ImageUploadView(views.APIView):
     parser_classes = (MultiPartParser, FileUploadParser)
 
+    # pylint: disable=no-self-use
     def put(self, request, filename):
         owner = get_player(request)
 

@@ -1,0 +1,5 @@
+[diris]
+
+disable=broad-except,protected-access,too-many-arguments,too-many-ancestors,too-many-instance-attributes,too-many-locals,too-many-statements
+min-public-methods=1
+min-similarity-lines=20

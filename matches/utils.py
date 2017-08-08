@@ -7,6 +7,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 import string
 
+# pylint: disable=redefined-builtin
 from builtins import filter, str
 from collections import OrderedDict
 
@@ -19,6 +20,7 @@ from rest_framework_jwt.utils import jwt_payload_handler
 LOGGER = logging.getLogger(__name__)
 
 
+# pylint: disable=unused-argument
 def random_integer(*args, **kwargs):
     return random.randint(-2147483648, 2147483647)
 
