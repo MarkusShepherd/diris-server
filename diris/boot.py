@@ -30,6 +30,7 @@ def fix_path(include_dev_libs_path=False):
 def get_app_config():
     """Returns the application configuration, creating it if necessary."""
     from django.utils.crypto import get_random_string
+    # pylint: disable=import-error
     from google.appengine.ext import ndb
 
     class Config(ndb.Model):

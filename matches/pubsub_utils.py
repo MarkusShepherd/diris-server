@@ -16,10 +16,14 @@ from base64 import b64encode
 import httplib2
 import six
 
+# pylint: disable=import-error
 from apiclient import discovery
 from django.conf import settings
+# pylint: disable=import-error
 from google.appengine.api import app_identity
+# pylint: disable=import-error
 from google.appengine.api import memcache
+# pylint: disable=import-error
 from oauth2client.client import GoogleCredentials
 
 LOGGER = logging.getLogger(__name__)
