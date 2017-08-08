@@ -31,7 +31,7 @@ from rest_framework.exceptions import ValidationError
 from six import iteritems, itervalues
 
 from .pubsub_utils import PubSubSender
-from .utils import clear_list, find_current_round, random_integer
+from .utils import calculate_id, clear_list, find_current_round, random_integer
 
 GCM_SENDER = GCM(settings.GCM_API_KEY, debug=settings.DEBUG)
 LOGGER = logging.getLogger(__name__)
@@ -461,6 +461,11 @@ class MatchManager(models.Manager):
             raise ValueError('Too many players - need to give at most {} players '
                              'to create a match'.format(Match.MAXIMUM_PLAYER))
 
+        group_id = calculate_id((player.pk for player in players), bits=63)
+        if (Match.objects.order_by().filter(group_id=group_id)
+                .exclude(status__in=[Match.FINISHED, Match.DELETE]).exists()):
+            raise ValueError('Match with these players already in progress')
+
         inviting_player = inviting_player or players[0]
 
         match_details = {player.pk: MatchDetails(player=player.pk,
@@ -527,6 +532,9 @@ class Match(models.Model):
     players = fields.RelatedSetField('Player', related_name='matches', on_delete=models.PROTECT)
     inviting_player = models.ForeignKey('Player', related_name='inviting_matches',
                                         on_delete=models.PROTECT)
+    group_id = fields.ComputedIntegerField(
+        func=lambda match: calculate_id(match.players_ids, bits=63),
+        blank=True, null=True, default=None)
 
     details = fields.JSONField()
     _details_dict = None
