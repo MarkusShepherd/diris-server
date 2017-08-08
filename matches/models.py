@@ -537,7 +537,6 @@ class Match(models.Model):
     group_id = fields.ComputedIntegerField(
         func=lambda match: calculate_id(match.players_ids, bits=63),
         blank=True, null=True, default=None)
-    message_group = None
 
     details = fields.JSONField()
     _details_dict = None
@@ -691,28 +690,29 @@ class Match(models.Model):
             # pylint: disable=no-member
             group_id = calculate_id(self.players_ids, bits=63)
 
-        if self.message_group is None:
-            # pylint: disable=no-member
-            self.message_group = (MessageGroup.objects
-                                  .filter(group_id=group_id)
-                                  .order_by('-sequence', '-last_modified')
-                                  .first())
+        # pylint: disable=no-member
+        message_group = (MessageGroup.objects
+                         .filter(group_id=group_id)
+                         .order_by('-sequence', '-last_modified')
+                         .first())
 
-        if self.message_group is None:
+        if message_group is None:
             # pylint: disable=no-member
-            self.message_group = MessageGroup.objects.create(group_id=group_id)
+            message_group = MessageGroup.objects.create(group_id=group_id)
 
         try:
-            message = self.message_group.add(player_pk, text, timestamp)
+            message_group.add(player_pk, text, timestamp)
         except ValueError:
             # pylint: disable=no-member
-            self.message_group = MessageGroup.objects.create(
-                group_id=group_id, sequence=self.message_group.sequence + 1)
-            message = self.message_group.add(player_pk, text, timestamp)
+            message_group = MessageGroup.objects.create(
+                group_id=group_id, sequence=message_group.sequence + 1)
+            message_group.add(player_pk, text, timestamp)
         finally:
-            self.message_group.save()
+            message_group.save()
 
-        return message
+        LOGGER.debug(message_group)
+
+        return message_group
 
     def update_deadlines(self):
         delta = timedelta(seconds=self.timeout or Match.STANDARD_TIMEOUT)
