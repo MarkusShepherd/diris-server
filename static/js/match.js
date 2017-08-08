@@ -86,10 +86,11 @@ dirisApp.controller('MatchController', function MatchController(
                 $log.debug(newMatch);
                 $location.path('/accept/' + newMatch.pk);
             }).catch(function (response) {
-                $log.debug('error');
+                var message = _.get(response, 'data[0]', response) || 'There was an error creating the match...';
                 $log.debug(response);
+                $log.debug(message);
                 blockUI.stop();
-                toastr.error('There was an error creating the match...');
+                toastr.error(message);
             });
     };
 

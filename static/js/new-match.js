@@ -148,10 +148,11 @@ dirisApp.controller('NewMatchController', function NewMatchController(
                 $log.debug(match);
                 $location.path('/accept/' + match.pk);
             }).catch(function (response) {
-                $log.debug('error');
+                var message = _.get(response, 'data[0]', response) || 'There was an error creating the match...';
                 $log.debug(response);
+                $log.debug(message);
                 blockUI.stop();
-                toastr.error("There was an error when creating the match...");
+                toastr.error(message);
             });
     }; // createMatch
 }); // NewMatchController
