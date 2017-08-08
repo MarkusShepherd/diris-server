@@ -7,6 +7,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 import re
 
+# pylint: disable=redefined-builtin
 from builtins import str, zip
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -69,7 +70,9 @@ class ImageSerializer(serializers.ModelSerializer):
 
 
 class MatchSerializer(serializers.ModelSerializer):
+    # pylint: disable=no-member
     players = serializers.PrimaryKeyRelatedField(queryset=Player.objects.all(), many=True)
+    # pylint: disable=no-member
     inviting_player = serializers.PrimaryKeyRelatedField(queryset=Player.objects.all(),
                                                          required=False)
     details = serializers.DictField(child=MatchDetailsSerializer(), required=False)
@@ -226,6 +229,7 @@ class PlayerSerializer(serializers.ModelSerializer):
         user = GaeDatastoreUser.objects.create_user(**user_data)
 
         user.set_password(password)
+        # pylint: disable=no-member
         user.save()
 
         player = Player.objects.create(user=user, **validated_data)

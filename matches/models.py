@@ -8,6 +8,7 @@ import hashlib
 import logging
 import time
 
+# pylint: disable=redefined-builtin
 from builtins import int, map, range, str
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -31,7 +32,7 @@ from rest_framework.exceptions import ValidationError
 from six import iteritems, itervalues
 
 from .pubsub_utils import PubSubSender
-from .utils import clear_list, find_current_round, random_integer
+from .utils import calculate_id, clear_list, find_current_round, random_integer
 
 GCM_SENDER = GCM(settings.GCM_API_KEY, debug=settings.DEBUG)
 LOGGER = logging.getLogger(__name__)
@@ -351,6 +352,7 @@ class Round(object):
                           if not (details.is_storyteller or details.notification_image_sent)]
 
             if player_pks:
+                # pylint: disable=no-member
                 storyteller = Player.objects.get(pk=self.storyteller).user.username
                 data = {
                     'player_pks': player_pks,
@@ -461,6 +463,11 @@ class MatchManager(models.Manager):
             raise ValueError('Too many players - need to give at most {} players '
                              'to create a match'.format(Match.MAXIMUM_PLAYER))
 
+        group_id = calculate_id((player.pk for player in players), bits=63)
+        if (Match.objects.order_by().filter(group_id=group_id)
+                .exclude(status__in=[Match.FINISHED, Match.DELETE]).exists()):
+            raise ValueError('Match with these players already in progress')
+
         inviting_player = inviting_player or players[0]
 
         match_details = {player.pk: MatchDetails(player=player.pk,
@@ -527,6 +534,9 @@ class Match(models.Model):
     players = fields.RelatedSetField('Player', related_name='matches', on_delete=models.PROTECT)
     inviting_player = models.ForeignKey('Player', related_name='inviting_matches',
                                         on_delete=models.PROTECT)
+    group_id = fields.ComputedIntegerField(
+        func=lambda match: calculate_id(match.players_ids, bits=63),
+        blank=True, null=True, default=None)
 
     details = fields.JSONField()
     _details_dict = None
@@ -615,6 +625,7 @@ class Match(models.Model):
                 return
 
         prev_round = None
+        # pylint: disable=no-member
         self.images_ids.clear()
 
         for curr_round in self.rounds_list:
@@ -623,6 +634,7 @@ class Match(models.Model):
                 self.current_round = curr_round.number
             for details in itervalues(curr_round.details_dict):
                 if details.image:
+                    # pylint: disable=no-member
                     self.images_ids.add(details.image)
             prev_round = curr_round
 
@@ -648,6 +660,7 @@ class Match(models.Model):
             player_pks = [player_pk for player_pk, details in iteritems(self.details_dict)
                           if not details.notification_sent]
             if player_pks:
+                # pylint: disable=no-member
                 data = {
                     'player_pks': player_pks,
                     'match_pk': self.pk or '_new',
@@ -690,6 +703,7 @@ class Match(models.Model):
             LOGGER.info('match %d marked for deletion', self.pk)
             LOGGER.info(self.delete())
 
+            # pylint: disable=no-member
             for player in self.players.all():
                 player.total_matches -= 1
                 player.save(new_match=self)
@@ -716,6 +730,7 @@ class Match(models.Model):
         super(Match, self).save(*args, **kwargs)
 
     def __str__(self):
+        # pylint: disable=no-member
         return ('match {match_pk} started on {created} (players: {player_pks})'
                 .format(match_pk=self.pk, created=self.created,
                         player_pks=', '.join(map(str, self.players_ids))))
@@ -754,6 +769,7 @@ class Player(models.Model):
 
     def fetch_avatar(self, url=None, params=None, name=None):
         if not url:
+            # pylint: disable=no-member
             gravatar = hashlib.md5(self.user.email.lower()).hexdigest()
             url = 'https://www.gravatar.com/avatar/{}'.format(gravatar)
             name = name or '{}.jpeg'.format(gravatar)
@@ -784,16 +800,20 @@ class Player(models.Model):
     def save(self, new_match=None, *args, **kwargs):
         # TODO inefficient - just have a counter and add sanity check method
         try:
+            # pylint: disable=no-member
             if not hasattr(self, 'matches') or self.matches is None:
                 self.total_matches = 0
             elif new_match:
+                # pylint: disable=no-member
                 self.total_matches = ensure_instance_consistent(self.matches, new_match).count()
             else:
+                # pylint: disable=no-member
                 self.total_matches = self.matches.count()
         except Exception as exc:
             LOGGER.warning(exc)
             self.total_matches = 0
 
+        # pylint: disable=no-member
         if not self.avatar_id:
             try:
                 self.fetch_avatar()
@@ -831,6 +851,7 @@ class ImageManager(models.Manager):
             return image
 
         try:
+            # pylint: disable=import-error
             import google.appengine.api.images
             image.file.open(mode='r')
             image_obj = google.appengine.api.images.Image(image_data=image.file.read())

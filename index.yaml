@@ -243,6 +243,18 @@ indexes:
 
 - kind: matches_match
   properties:
+  - name: group_id
+  - name: status
+
+- kind: matches_match
+  properties:
+  - name: group_id
+  - name: deadline_action
+  - name: last_modified
+    direction: desc
+
+- kind: matches_match
+  properties:
   - name: inviting_player_id
   - name: players_ids
   - name: pagination_last_modified

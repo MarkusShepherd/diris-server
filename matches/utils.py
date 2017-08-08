@@ -4,9 +4,11 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals, with_statement
 
+import hashlib
 import logging
 import string
 
+# pylint: disable=redefined-builtin
 from builtins import filter, str
 from collections import OrderedDict
 
@@ -19,6 +21,7 @@ from rest_framework_jwt.utils import jwt_payload_handler
 LOGGER = logging.getLogger(__name__)
 
 
+# pylint: disable=unused-argument
 def random_integer(*args, **kwargs):
     return random.randint(-2147483648, 2147483647)
 
@@ -93,3 +96,10 @@ def get_player(request, raise_error=False):
     except AttributeError as exc:
         if raise_error:
             six.raise_from(NotAuthenticated(detail='no user'), exc)
+
+
+def calculate_id(ids, bits=None):
+    id_str = ','.join(map(str, sorted(ids)))
+    sha = hashlib.sha256(id_str).hexdigest()
+    sha = sha[-(bits//4):] if bits else sha
+    return int(sha, base=16)
