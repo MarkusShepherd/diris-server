@@ -237,6 +237,7 @@ img.player-icon-chat {
 .chat-timestamp {
     text-align: right;
     font-size: x-small;
+    margin: .5em 0;
 }
 
 .chat-player {
@@ -253,9 +254,10 @@ img.player-icon-chat {
 
 .chat-speech-bubble {
     background-color: white;
-    padding: 0.5em;
+    padding: .1em .5em;
     border-radius: .5em;
     display: inline-block;
+    margin-bottom: .2em;
 }
 
 /* sly */

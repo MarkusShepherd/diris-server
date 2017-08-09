@@ -6,9 +6,10 @@
 		</span>
 	</p>
 	<div ng-repeat="message in messages" class="container" id="#msg{{$index}}">
-		<!-- <div class="col-xs-12 chat-timestamp" id="#ts{{$index}}">
-			{{ message.timestamp }}
-		</div> -->
+		<div ng-if="$first || messages[$index - 1].timestamp.diff(message.timestamp, 'hours')"
+				class="col-xs-12 chat-timestamp" id="#ts{{$index}}">
+			{{ message.timestamp.calendar() }}
+		</div>
 		<div class="col-xs-2 {{ currentPlayer.pk == message.player ? 'col-xs-push-10' : '' }} chat-player">
 			<player-icon player="players[message.player]"
 				ng-if="$first || message.player != messages[$index - 1].player"
@@ -26,6 +27,7 @@
 				id="text"
 				name="text"
 				autocomplete="off"
+				autofocus="autofocus"
 				placeholder="Type your message"
 				ng-model="text"
 				ng-required="true"
