@@ -148,7 +148,8 @@ img.player-icon {
     height: 50px;
 }
 img.player-icon-accept,
-img.player-icon-standings {
+img.player-icon-standings,
+img.player-icon-chat {
     width: 30px;
     height: 30px;
 }
@@ -231,6 +232,30 @@ img.player-icon-standings {
 
 .navbar-footer {
     margin-bottom: 0;
+}
+
+.chat-timestamp {
+    text-align: right;
+    font-size: x-small;
+}
+
+.chat-player {
+
+}
+
+.chat-text {
+
+}
+
+.chat-text-own {
+    text-align: right;
+}
+
+.chat-speech-bubble {
+    background-color: white;
+    padding: 0.5em;
+    border-radius: .5em;
+    display: inline-block;
 }
 
 /* sly */

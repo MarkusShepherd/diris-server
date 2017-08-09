@@ -1,0 +1,40 @@
+<section xmlns="http://www.w3.org/1999/xhtml">
+	<p class="lead">
+		<span ng-repeat="player in playersArray">
+			<span ng-if="!$last">{{ player.user.username }},</span>
+			<span ng-if="$last">&amp; {{ player.user.username }}</span>
+		</span>
+	</p>
+	<div ng-repeat="message in messages" class="container" id="#msg{{$index}}">
+		<!-- <div class="col-xs-12 chat-timestamp" id="#ts{{$index}}">
+			{{ message.timestamp }}
+		</div> -->
+		<div class="col-xs-2 {{ currentPlayer.pk == message.player ? 'col-xs-push-10' : '' }} chat-player">
+			<player-icon player="players[message.player]"
+				ng-if="$first || message.player != messages[$index - 1].player"
+				class-icon="player-icon-chat"
+				class-btn="btn-primary"></player-icon>
+		</div>
+		<div class="col-xs-10 chat-text {{ currentPlayer.pk == message.player ? 'col-xs-pull-2 chat-text-own' : '' }}">
+			<p class="chat-speech-bubble">{{ message.text }}</p>
+		</div>
+	</div>
+	<form id="send" name="send" novalidate="novalidate" ng-submit="sendMessage()" role="form" class="form">
+		<div class="form-group">
+			<label class="sr-only" for="text">Text:</label>
+			<input type="text"
+				id="text"
+				name="text"
+				autocomplete="off"
+				placeholder="Type your message"
+				ng-model="text"
+				ng-required="true"
+				class="form-control" />
+		</div>
+
+		<button type="submit" ng-disabled="send.$invalid" class="btn btn-success btn-lg btn-block" id="submit">
+			<span class="glyphicon glyphicon-send"></span>
+			Send
+		</button>
+	</form>
+</section>

@@ -1,7 +1,7 @@
 'use strict';
 
 /*jslint browser: true, nomen: true, stupid: true, todo: true */
-/*global _, cordova, dirisApp, utils */
+/*global _, cordova, dirisApp, moment, utils */
 
 dirisApp.factory('dataService', function dataService(
     $localStorage,
@@ -18,6 +18,7 @@ dirisApp.factory('dataService', function dataService(
         matches = {},
         players = {},
         images = {},
+        chats = {},
         token = null,
         loggedInPlayer = null,
         gcmRegistrationID = null,
@@ -501,6 +502,67 @@ dirisApp.factory('dataService', function dataService(
                 setMatch(match);
 
                 return match;
+            });
+    };
+
+    function setChatMessages(mPk, newMessages) {
+        chats[mPk] = _(_.get(chats, mPk, []))
+            .concat(newMessages)
+            .map(function (message) {
+                message.timestamp = moment(message.timestamp).startOf('second');
+                return message;
+            })
+            .sortBy(['timestamp'])
+            .filter(function (value, index, coll) {
+                var prev = coll[index - 1];
+                return (index === 0 ||
+                    value.player !== prev.player ||
+                    value.text !== prev.text ||
+                    value.timestamp.toString() !== prev.timestamp.toString());
+            }).value();
+    }
+
+    factory.getChat = function getChat(mPk, seq) {
+        var url = BACKEND_URL + '/matches/' + mPk + '/chat/',
+            seqNum = _.parseInt(seq);
+
+        if (!_.isNaN(seqNum)) {
+            url += '?seq=' + seqNum;
+        }
+
+        return $http.get(url).then(function (response) {
+            var messageGroup = response.data;
+
+            if (!messageGroup) {
+                messageGroup = {
+                    sequence: seqNum,
+                    messages: []
+                };
+            }
+
+            setChatMessages(mPk, messageGroup.messages);
+
+            // TODO make 10 a parameter
+            if (_.size(messageGroup.messages) < 10 && messageGroup.sequence > 0) {
+                return factory.getChat(mPk, messageGroup.sequence - 1);
+            }
+
+            return chats[mPk];
+        });
+    };
+
+    factory.sendChat = function sendChat(mPk, text) {
+        return $http.post(BACKEND_URL + '/matches/' + mPk + '/chat/', {text: text})
+            .then(function (response) {
+                var messageGroup = response.data;
+
+                if (!messageGroup) {
+                    throw new Error(response);
+                }
+
+                setChatMessages(mPk, messageGroup.messages);
+
+                return chats[mPk];
             });
     };
 
