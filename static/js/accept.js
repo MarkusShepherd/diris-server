@@ -33,6 +33,10 @@ dirisApp.controller('AcceptController', function AcceptController(
         link: '#/overview',
         label: 'Overview',
         glyphicon: 'home'
+    }, {
+        link: '#/chat/' + mPk,
+        label: 'Chat',
+        glyphicon: 'send'
     }];
     $rootScope.refreshButton = false;
 

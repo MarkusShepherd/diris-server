@@ -4,7 +4,7 @@
 /*global _, angular, PushNotification */
 
 var testUrl = 'http://localhost:8000',
-    stagingUrl = 'https://0-2-1-dot-diris-app.appspot.com',
+    stagingUrl = 'https://0-3-0-dot-diris-app.appspot.com',
     liveUrl = 'https://diris-app.appspot.com';
 
 var dirisApp = angular.module('dirisApp', [
@@ -90,6 +90,10 @@ dirisApp.config(function (
     }).when('/review/:mPk/:rNo', {
         templateUrl: 'partials/review-round.html',
         controller: 'ReviewRoundController',
+        requiresLogin: true
+    }).when('/chat/:mPk', {
+        templateUrl: 'partials/chat.html',
+        controller: 'ChatController',
         requiresLogin: true
     }).when('/profile', {
         templateUrl: 'partials/profile.html',

@@ -34,6 +34,10 @@ dirisApp.controller('MatchController', function MatchController(
         link: '#/overview',
         label: 'Overview',
         glyphicon: 'home'
+    }, {
+        link: '#/chat/' + mPk,
+        label: 'Chat',
+        glyphicon: 'send'
     }];
     $rootScope.refreshButton = true;
 

@@ -115,6 +115,10 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
         link: '#/match/' + mPk,
         label: 'Match',
         glyphicon: 'knight'
+    }, {
+        link: '#/chat/' + mPk,
+        label: 'Chat',
+        glyphicon: 'send'
     }];
     $rootScope.refreshButton = false;
 

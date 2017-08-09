@@ -13,7 +13,7 @@ dirisApp.controller('FooterController', function FooterController(
     FEEDBACK_LINK
 ) {
     $scope.now = _.now();
-    $scope.appLink = utils.isAndroid() && utils.isBrowser() ? ANDROID_APP_LINK : null;
+    $scope.appLink = utils.isAndroid() ? ANDROID_APP_LINK : null; // && utils.isBrowser()
     $scope.creatorName = CREATOR_NAME;
     $scope.creatorLink = CREATOR_LINK;
     $scope.feedbackEmail = FEEDBACK_EMAIL;

@@ -11,7 +11,7 @@ import os.path
 from base64 import b64decode
 
 # pylint: disable=redefined-builtin
-from builtins import int, str
+from builtins import str
 from django.conf import settings
 from django.contrib.auth import login
 from django.db.models import Q
@@ -28,10 +28,10 @@ from rest_framework.parsers import FileUploadParser, MultiPartParser
 from rest_framework_jwt.settings import api_settings
 from six import itervalues, raise_from, string_types
 
-from .models import Image, Match, Player
+from .models import Image, Match, Player, MessageGroup
 from .permissions import IsOwnerOrCreateAndRead
-from .serializers import MatchSerializer, PlayerSerializer, ImageSerializer
-from .utils import get_player, merge, normalize_space, random_string
+from .serializers import MatchSerializer, PlayerSerializer, ImageSerializer, MessageGroupSerializer
+from .utils import calculate_id, get_player, merge, normalize_space, random_string
 
 LOGGER = logging.getLogger(__name__)
 
@@ -210,6 +210,41 @@ class MatchViewSet(
 
         serializer = ImageSerializer(instance=Image.objects.filter(pk__in=image_pks),
                                      player=player, many=True)
+        return Response(serializer.data)
+
+    @detail_route(methods=['get', 'post'])
+    # pylint: disable=unused-argument
+    def chat(self, request, pk=None, *args, **kwargs):
+        player = get_player(request, raise_error=True)
+        match = self.get_object()
+
+        if request.method == 'POST':
+            text = (normalize_space(request.data.get('text'))
+                    or normalize_space(request.query_params.get('text')))
+
+            message_group = match.send_chat(player.pk, text)
+
+            serializer = MessageGroupSerializer(instance=message_group)
+            return Response(serializer.data)
+
+        group_id = match.group_id
+        if group_id is None:
+            # pylint: disable=no-member
+            group_id = calculate_id(match.players_ids, bits=63)
+
+        sequence = (normalize_space(request.data.get('seq'))
+                    or normalize_space(request.query_params.get('seq')))
+
+        # pylint: disable=no-member
+        queryset = MessageGroup.objects.filter(group_id=group_id)
+        queryset = (queryset.filter(sequence=int(sequence)) if sequence
+                    else queryset.order_by('-sequence', '-last_modified'))
+        message_group = queryset.first()
+
+        if message_group is None:
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        serializer = MessageGroupSerializer(instance=message_group)
         return Response(serializer.data)
 
 

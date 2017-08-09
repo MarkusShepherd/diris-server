@@ -41,6 +41,10 @@ dirisApp.controller('VoteImageController', function VoteImageController(
         link: '#/match/' + mPk,
         label: 'Match',
         glyphicon: 'knight'
+    }, {
+        link: '#/chat/' + mPk,
+        label: 'Chat',
+        glyphicon: 'send'
     }];
     $rootScope.refreshButton = false;
 
