@@ -505,7 +505,7 @@ dirisApp.factory('dataService', function dataService(
             });
     };
 
-    function setChatMessages(mPk, newMessages) {
+    factory.setChatMessages = function setChatMessages(mPk, newMessages) {
         chats[mPk] = _(_.get(chats, mPk, []))
             .concat(newMessages)
             .map(function (message) {
@@ -520,9 +520,13 @@ dirisApp.factory('dataService', function dataService(
                     value.text !== prev.text ||
                     value.timestamp.toString() !== prev.timestamp.toString());
             }).value();
-    }
+    };
 
-    factory.getChat = function getChat(mPk, seq) {
+    factory.getChat = function getChat(mPk, forceRefresh, seq) {
+        if (!forceRefresh && chats[mPk]) {
+            return $q.resolve(chats[mPk]);
+        }
+
         var url = BACKEND_URL + '/matches/' + mPk + '/chat/',
             seqNum = _.parseInt(seq);
 
@@ -540,11 +544,11 @@ dirisApp.factory('dataService', function dataService(
                 };
             }
 
-            setChatMessages(mPk, messageGroup.messages);
+            factory.setChatMessages(mPk, messageGroup.messages);
 
             // TODO make 10 a parameter
             if (_.size(messageGroup.messages) < 10 && messageGroup.sequence > 0) {
-                return factory.getChat(mPk, messageGroup.sequence - 1);
+                return factory.getChat(mPk, true, messageGroup.sequence - 1);
             }
 
             return chats[mPk];
@@ -560,7 +564,7 @@ dirisApp.factory('dataService', function dataService(
                     throw new Error(response);
                 }
 
-                setChatMessages(mPk, messageGroup.messages);
+                factory.setChatMessages(mPk, messageGroup.messages);
 
                 return chats[mPk];
             });

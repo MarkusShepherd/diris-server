@@ -5,6 +5,7 @@
 
 dirisApp.controller('ChatController', function ChatController(
     $anchorScroll,
+    $interval,
     $location,
     $log,
     $q,
@@ -19,7 +20,8 @@ dirisApp.controller('ChatController', function ChatController(
     var player = dataService.getLoggedInPlayer(),
         mPk = $routeParams.mPk,
         matchPromise,
-        chatPromise;
+        chatPromise,
+        intervalPromise;
 
     if (!player) {
         $location.search('dest', $location.path()).path('/login');
@@ -62,9 +64,8 @@ dirisApp.controller('ChatController', function ChatController(
             toastr.error('There was an error fetching the data - please try again later...');
         });
 
-    chatPromise = dataService.getChat(mPk)
+    chatPromise = dataService.getChat(mPk, true)
         .then(function (messages) {
-            $log.debug(messages);
             $scope.messages = messages;
         }).catch(function (response) {
             $log.debug('error');
@@ -78,6 +79,13 @@ dirisApp.controller('ChatController', function ChatController(
             return $timeout(function () {
                 $anchorScroll('submit');
             }, 100);
+        }).then(function () {
+            intervalPromise = $interval(function () {
+                dataService.getChat(mPk, false).then(function (messages) {
+                    $scope.messages = messages;
+                });
+            }, 1000);
+            return intervalPromise;
         });
 
     $scope.sendMessage = function sendMessage() {
@@ -101,4 +109,10 @@ dirisApp.controller('ChatController', function ChatController(
                 }, 100);
             });
     };
+
+    $scope.$on('$destroy', function () {
+        if (!_.isNil(intervalPromise)) {
+            $interval.cancel(intervalPromise);
+        }
+    });
 }); // MatchController
