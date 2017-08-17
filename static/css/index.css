@@ -260,6 +260,14 @@ img.player-icon-chat {
     margin-bottom: .2em;
 }
 
+.chat-speech-bubble.chat-emoji {
+    background-color: transparent;
+    border: none;
+    font-size: 200%;
+    padding: 0;
+    margin-bottom: 0;
+}
+
 /* sly */
 .wrap {
     position: relative;

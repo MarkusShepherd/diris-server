@@ -151,7 +151,7 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
         }).then(function (image) {
             blockUI.stop();
 
-            $scope.useSlider = !image;
+            $scope.useSlider = $scope.round.hasAction && !image;
 
             if ($scope.useSlider) {
                 if (!sliderBlock.state().blocking) {
@@ -170,8 +170,6 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
             $scope.randomImages = _.concat($scope.randomImages || [], images);
             $scope.randomImagesSize = _.size($scope.randomImages);
             $scope.useSlider = !_.isEmpty($scope.randomImages);
-
-
         }).then(function () {
             if ($scope.useSlider) {
                 initSly();

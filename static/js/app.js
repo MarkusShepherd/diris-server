@@ -4,7 +4,7 @@
 /*global _, angular, PushNotification */
 
 var testUrl = 'http://localhost:8000',
-    stagingUrl = 'https://0-3-0-dot-diris-app.appspot.com',
+    stagingUrl = 'https://0-3-1-dot-diris-app.appspot.com',
     liveUrl = 'https://diris-app.appspot.com';
 
 var dirisApp = angular.module('dirisApp', [
@@ -16,7 +16,7 @@ var dirisApp = angular.module('dirisApp', [
     'toastr'
 ]);
 
-dirisApp.constant('BACKEND_URL', liveUrl)
+dirisApp.constant('BACKEND_URL', stagingUrl)
     .constant('DEVELOPER_MODE', false)
     .constant('MINIMUM_STORY_LENGTH', 3)
     .constant('MINIMUM_PLAYER', 4)
@@ -167,72 +167,76 @@ dirisApp.run(function (
 ) {
     authManager.checkAuthOnRefresh();
 
-    var push = PushNotification.init({
-        android: {
-            senderID: GCM_SENDER_ID
-        },
-        browser: {},
-        ios: {
-            alert: true,
-            badge: true,
-            sound: true,
-            vibration: true
-        },
-        windows: {}
-    });
+    try {
+        var push = PushNotification.init({
+            android: {
+                senderID: GCM_SENDER_ID
+            },
+            browser: {},
+            ios: {
+                alert: true,
+                badge: true,
+                sound: true,
+                vibration: true
+            },
+            windows: {}
+        });
 
-    push.on('registration', function (data) {
-        $log.debug('registration event:', data.registrationId);
-        dataService.setGcmRegistrationID(data.registrationId);
-    });
+        push.on('registration', function (data) {
+            $log.debug('registration event:', data.registrationId);
+            dataService.setGcmRegistrationID(data.registrationId);
+        });
 
-    push.on('notification', function (data) {
-        var promise = $q.resolve(),
-            options = {},
-            path = null;
+        push.on('notification', function (data) {
+            var promise = $q.resolve(),
+                options = {},
+                path = null;
 
-        $log.debug('received notification:', data);
-        $log.debug(data.additionalData.match_pk);
+            $log.debug('received notification:', data);
+            $log.debug(data.additionalData.match_pk);
 
-        if (data.additionalData.match_pk === '_new') {
-            path = '/overview';
-            promise = dataService.getMatches(true, true);
+            if (data.additionalData.match_pk === '_new') {
+                path = '/overview';
+                promise = dataService.getMatches(true, true);
 
-            options.onTap = function () {
-                $location.path(path);
-            };
+                options.onTap = function () {
+                    $location.path(path);
+                };
 
-            if (!data.additionalData.foreground || data.additionalData.coldstart) {
-                $location.path(path);
+                if (!data.additionalData.foreground || data.additionalData.coldstart) {
+                    $location.path(path);
+                }
+            } else if (data.additionalData.match_pk) {
+                path = '/match/' + data.additionalData.match_pk;
+                promise = dataService.getMatch(data.additionalData.match_pk, true);
+
+                options.onTap = function () {
+                    $location.path(path);
+                };
+
+                if (!data.additionalData.foreground || data.additionalData.coldstart) {
+                    $location.path(path);
+                }
             }
-        } else if (data.additionalData.match_pk) {
-            path = '/match/' + data.additionalData.match_pk;
-            promise = dataService.getMatch(data.additionalData.match_pk, true);
 
-            options.onTap = function () {
-                $location.path(path);
-            };
+            promise.then(function () {
+                if (_.startsWith($location.path(), '/overview') ||
+                        _.startsWith($location.path(), '/match') ||
+                        _.startsWith($location.path(), '/review')) {
+                    $route.reload();
+                }
+            }).catch($log.debug)
+                .then(function () {
+                    toastr.info(data.message, data.title, options);
+                });
+        });
 
-            if (!data.additionalData.foreground || data.additionalData.coldstart) {
-                $location.path(path);
-            }
-        }
-
-        promise.then(function () {
-            if (_.startsWith($location.path(), '/overview') ||
-                    _.startsWith($location.path(), '/match') ||
-                    _.startsWith($location.path(), '/review')) {
-                $route.reload();
-            }
-        }).catch($log.debug)
-            .then(function () {
-                toastr.info(data.message, data.title, options);
-            });
-    });
-
-    push.on('error', function (e) {
-        $log.debug('error in notifications:', e);
-        $log.debug(e.message);
-        toastr.error(e.message);
-    });
+        push.on('error', function (e) {
+            $log.debug('error in notifications:', e);
+            $log.debug(e.message);
+            toastr.error(e.message);
+        });
+    } catch (err) {
+        console.log(err);
+    }
 });

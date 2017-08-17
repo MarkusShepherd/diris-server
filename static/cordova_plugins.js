@@ -61,22 +61,6 @@ module.exports = [
         ]
     },
     {
-        "file": "plugins/phonegap-plugin-push/www/push.js",
-        "id": "phonegap-plugin-push.PushNotification",
-        "pluginId": "phonegap-plugin-push",
-        "clobbers": [
-            "PushNotification"
-        ]
-    },
-    {
-        "file": "plugins/phonegap-plugin-push/www/browser/push.js",
-        "id": "phonegap-plugin-push.BrowserPush",
-        "pluginId": "phonegap-plugin-push",
-        "clobbers": [
-            "PushNotification"
-        ]
-    },
-    {
         "file": "plugins/cordova-plugin-inappbrowser/www/inappbrowser.js",
         "id": "cordova-plugin-inappbrowser.inappbrowser",
         "pluginId": "cordova-plugin-inappbrowser",
@@ -104,6 +88,22 @@ module.exports = [
         "id": "cordova-plugin-secure-storage.sjcl_ss",
         "pluginId": "cordova-plugin-secure-storage",
         "runs": true
+    },
+    {
+        "file": "plugins/phonegap-plugin-push/www/push.js",
+        "id": "phonegap-plugin-push.PushNotification",
+        "pluginId": "phonegap-plugin-push",
+        "clobbers": [
+            "PushNotification"
+        ]
+    },
+    {
+        "file": "plugins/phonegap-plugin-push/www/browser/push.js",
+        "id": "phonegap-plugin-push.BrowserPush",
+        "pluginId": "phonegap-plugin-push",
+        "clobbers": [
+            "PushNotification"
+        ]
     }
 ];
 module.exports.metadata = 
@@ -114,10 +114,10 @@ module.exports.metadata =
     "cordova-plugin-device": "1.1.5",
     "cordova-plugin-dialogs": "1.3.2",
     "cordova-plugin-whitelist": "1.3.2",
-    "phonegap-plugin-push": "1.10.1",
     "cordova-plugin-inappbrowser": "1.7.1",
     "cordova-plugin-console": "1.0.7",
-    "cordova-plugin-secure-storage": "2.6.8"
+    "cordova-plugin-secure-storage": "2.6.8",
+    "phonegap-plugin-push": "1.10.5"
 }
 // BOTTOM OF METADATA
 });
