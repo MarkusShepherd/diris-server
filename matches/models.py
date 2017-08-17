@@ -701,16 +701,29 @@ class Match(models.Model):
             message_group = MessageGroup.objects.create(group_id=group_id)
 
         try:
-            message_group.add(player_pk, text, timestamp)
+            message = message_group.add(player_pk, text, timestamp)
         except ValueError:
             # pylint: disable=no-member
             message_group = MessageGroup.objects.create(
                 group_id=group_id, sequence=message_group.sequence + 1)
-            message_group.add(player_pk, text, timestamp)
+            message = message_group.add(player_pk, text, timestamp)
         finally:
             message_group.save()
 
         LOGGER.debug(message_group)
+
+        data = {
+            'player_pks': [pk for pk in self.players_ids if pk != player_pk],
+            'match_pk': self.pk or '_new',
+            'title': 'New message from {}'.format(self.players.get(pk=player_pk).user.username),
+            'message': message.text,
+            'sender_pk': player_pk,
+            'route': 'chat',
+            'timestamp': message.timestamp.isoformat() + 'Z',
+            'group_id': group_id,
+        }
+        response = PUBSUB_SENDER.send_message(data=data)
+        LOGGER.debug(response)
 
         return message_group
 

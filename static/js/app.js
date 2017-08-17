@@ -16,7 +16,7 @@ var dirisApp = angular.module('dirisApp', [
     'toastr'
 ]);
 
-dirisApp.constant('BACKEND_URL', stagingUrl)
+dirisApp.constant('BACKEND_URL', liveUrl)
     .constant('DEVELOPER_MODE', false)
     .constant('MINIMUM_STORY_LENGTH', 3)
     .constant('MINIMUM_PLAYER', 4)
@@ -195,21 +195,22 @@ dirisApp.run(function (
             $log.debug('received notification:', data);
             $log.debug(data.additionalData.match_pk);
 
-            if (data.additionalData.match_pk === '_new') {
+            if (data.additionalData.route === 'chat' && data.additionalData.match_pk) {
+                path = '/chat/' + data.additionalData.match_pk;
+                dataService.setChatMessages(data.additionalData.match_pk, [{
+                    player: data.additionalData.sender_pk,
+                    text: data.message,
+                    timestamp: data.additionalData.timestamp
+                }]);
+            } else if (data.additionalData.match_pk === '_new') {
                 path = '/overview';
                 promise = dataService.getMatches(true, true);
-
-                options.onTap = function () {
-                    $location.path(path);
-                };
-
-                if (!data.additionalData.foreground || data.additionalData.coldstart) {
-                    $location.path(path);
-                }
             } else if (data.additionalData.match_pk) {
                 path = '/match/' + data.additionalData.match_pk;
                 promise = dataService.getMatch(data.additionalData.match_pk, true);
+            }
 
+            if (path) {
                 options.onTap = function () {
                     $location.path(path);
                 };
@@ -237,6 +238,6 @@ dirisApp.run(function (
             toastr.error(e.message);
         });
     } catch (err) {
-        console.log(err);
+        $log.error(err);
     }
 });
