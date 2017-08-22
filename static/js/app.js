@@ -28,7 +28,9 @@ dirisApp.constant('BACKEND_URL', liveUrl)
     .constant('CREATOR_NAME', 'Markus Shepherd')
     .constant('CREATOR_LINK', 'http://www.riemannhypothesis.info/')
     .constant('FEEDBACK_EMAIL', 'markus.r.shepherd@gmail.com')
-    .constant('FEEDBACK_LINK', 'https://bitbucket.org/MarkusShepherd/diris-app/issues/new');
+    .constant('FEEDBACK_LINK', 'https://bitbucket.org/MarkusShepherd/diris-app/issues/new')
+    .constant('PIXABAY_KEY', '5345455-690261c6c5c99f6c5032f2ef8')
+    .constant('UNSPLASH_KEY', '9466c6b85770ec23d61aab776ee4aebb26f4edad241e0981c93c5f2efe05c110');
 
 dirisApp.config(function (
     $httpProvider,

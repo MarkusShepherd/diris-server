@@ -4,7 +4,6 @@
 /*global $, _, Camera, FileReader, dirisApp, navigator, utils */
 
 dirisApp.controller('SubmitImageController', function SubmitImageController(
-    $http,
     $location,
     $log,
     $q,
@@ -295,22 +294,12 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
             );
         }).then(function (response) {
             if (response.buttonIndex !== 1 || _.isEmpty(response.input1)) {
-                return {data: {}};
+                return [];
             }
 
-            // TODO query own backend instead
-            return $http.get('https://pixabay.com/api/?key=5345455-690261c6c5c99f6c5032f2ef8&per_page=10&q=' +
-                             encodeURIComponent(response.input1));
-        }).then(function (response) {
-            if (_.isEmpty(response.data.hits)) {
-                return;
-            }
-
-            _.forEach(response.data.hits, function (image) {
-                image.url = _.replace(image.webformatURL, '_640.', '_960.');
-            });
-
-            $scope.randomImages = _.concat(response.data.hits, $scope.randomImages || []);
+            return dataService.queryImages(response.input1);
+        }).then(function (images) {
+            $scope.randomImages = _.concat(images, $scope.randomImages || []);
             $scope.randomImagesSize = _.size($scope.randomImages);
             $scope.useSlider = !_.isEmpty($scope.randomImages);
         }).then(function () {

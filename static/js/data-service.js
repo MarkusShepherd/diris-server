@@ -12,7 +12,9 @@ dirisApp.factory('dataService', function dataService(
     authManager,
     jwtHelper,
     BACKEND_URL,
-    CACHE_TIMEOUT
+    CACHE_TIMEOUT,
+    PIXABAY_KEY,
+    UNSPLASH_KEY
 ) {
     var factory = {},
         matches = {},
@@ -471,6 +473,27 @@ dirisApp.factory('dataService', function dataService(
                 setImage(response.data);
                 return images[iPk];
             });
+    };
+
+    factory.queryImages = function queryImages(query) {
+        return $q.all([
+            $http.get('https://pixabay.com/api/?key=' + PIXABAY_KEY + '&per_page=20&q=' +
+                    encodeURIComponent(query))
+                .then(function (response) {
+                    return _.map(response.data.hits, function (image) {
+                        return {url: _.replace(image.webformatURL, '_640.', '_960.')};
+                    });
+                }),
+            $http.get('https://api.unsplash.com/search/photos?client_id=' + UNSPLASH_KEY + '&per_page=20&query=' +
+                    encodeURIComponent(query))
+                .then(function (response) {
+                    return _.map(response.data.results, function (image) {
+                        return {url: image.urls.regular};
+                    });
+                })
+        ]).then(function (images) {
+            return _(images).flatten().shuffle().value();
+        });
     };
 
     factory.submitImage = function submitImage(mPk, rNo, image, story) {

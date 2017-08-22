@@ -260,6 +260,10 @@ img.player-icon-chat {
     margin-bottom: .2em;
 }
 
+.chat-text-own .chat-speech-bubble {
+    background-color: lightyellow;
+}
+
 .chat-speech-bubble.chat-emoji {
     background-color: transparent;
     border: none;
