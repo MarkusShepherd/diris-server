@@ -14,17 +14,27 @@
 		</a>
 	</section>
 
-	<a ng-if="match.actionStatus == 'a'"
-		ng-href="#/{{ action(match.currentRoundObj) }}/{{ mPk }}/{{ match.currentRoundObj.number }}"
-		class="btn btn-success btn-lg btn-block btn-match-action">
-		<span class="glyphicon glyphicon-fire"></span> Play
-	</a>
-	<button ng-if="match.status == 'f'"
-		ng-click="rematch()"
-		type="button"
-		class="btn btn-success btn-lg btn-block btn-match-action">
-		<span class="glyphicon glyphicon-repeat"></span> Rematch
-	</button>
+	<div class="btn-group btn-group-justified btn-group-lg btn-group-match">
+		<div class="btn-group btn-group-lg">
+			<a ng-href="#/chat/{{ mPk }}"
+				class="btn btn-success">
+				<span class="glyphicon glyphicon-send"></span> Chat
+				<span ng-if="numMessages" class="badge">{{ numMessages }}</span>
+			</a>
+		</div>
+		<div ng-if="match.actionStatus == 'a'" class="btn-group btn-group-lg">
+			<a ng-href="#/{{ action(match.currentRoundObj) }}/{{ mPk }}/{{ match.currentRoundObj.number }}"
+				class="btn btn-success">
+				<span class="glyphicon glyphicon-fire"></span> Play
+			</a>
+		</div>
+		<div ng-if="match.status == 'f'" class="btn-group btn-group-lg">
+			<button ng-click="rematch()" type="button"
+				class="btn btn-success">
+				<span class="glyphicon glyphicon-repeat"></span> Rematch
+			</button>
+		</div>
+	</div>
 
 	<section class="list-group">
 		<a ng-repeat="round in match.rounds"

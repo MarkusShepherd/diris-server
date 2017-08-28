@@ -67,6 +67,7 @@ dirisApp.controller('ChatController', function ChatController(
     chatPromise = dataService.getChat(mPk, true)
         .then(function (messages) {
             $scope.messages = messages;
+            dataService.setChatViewed(mPk);
         }).catch(function (response) {
             $log.debug('error');
             $log.debug(response);
@@ -83,6 +84,7 @@ dirisApp.controller('ChatController', function ChatController(
             intervalPromise = $interval(function () {
                 dataService.getChat(mPk, false).then(function (messages) {
                     $scope.messages = messages;
+                    dataService.setChatViewed(mPk);
                 });
             }, 1000);
             return intervalPromise;

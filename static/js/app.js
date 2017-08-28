@@ -4,7 +4,7 @@
 /*global _, angular, PushNotification */
 
 var testUrl = 'http://localhost:8000',
-    stagingUrl = 'https://0-3-1-dot-diris-app.appspot.com',
+    stagingUrl = 'https://0-3-2-dot-diris-app.appspot.com',
     liveUrl = 'https://diris-app.appspot.com';
 
 var dirisApp = angular.module('dirisApp', [
@@ -16,7 +16,7 @@ var dirisApp = angular.module('dirisApp', [
     'toastr'
 ]);
 
-dirisApp.constant('BACKEND_URL', liveUrl)
+dirisApp.constant('BACKEND_URL', stagingUrl)
     .constant('DEVELOPER_MODE', false)
     .constant('MINIMUM_STORY_LENGTH', 3)
     .constant('MINIMUM_PLAYER', 4)

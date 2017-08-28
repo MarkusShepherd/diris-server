@@ -76,7 +76,8 @@ a.disabled {
 .text-story,
 .btn-block,
 .btn-group-accept,
-.btn-group-rounds {
+.btn-group-rounds,
+.btn-group-match {
     margin-bottom: 20px;
 }
 
@@ -174,6 +175,16 @@ img.player-icon-chat {
 .badge-time-left,
 .badge-time-passed {
     background-color: #337ab7;
+}
+
+.badge-new-messages {
+    position: absolute;
+    top: -5px;
+    left: -5px;
+    z-index: 10;
+    color: #fff;
+    background-color: #f0ad4e;
+    /*border-color: #eea236;*/
 }
 
 .select-image {

@@ -46,4 +46,10 @@
 			</button>
 		</div>
 	</div>
+
+	<a ng-href="#/chat/{{ mPk }}"
+		class="btn btn-primary btn-block">
+		<span class="glyphicon glyphicon-send"></span> Chat
+		<span ng-if="numMessages" class="badge">{{ numMessages }}</span>
+	</a>
 </section>
