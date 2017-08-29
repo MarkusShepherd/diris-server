@@ -17,7 +17,9 @@
 				class-btn="btn-primary"></player-icon>
 		</div>
 		<div class="col-xs-10 chat-text {{ currentPlayer.pk == message.player ? 'col-xs-pull-2 chat-text-own' : '' }}">
-			<p class="chat-speech-bubble">{{ message.text }}</p>
+			<p class="chat-speech-bubble {{ hasOnlyEmojis(message.text) ? 'chat-emoji' : '' }}">
+				{{ message.text }}
+			</p>
 		</div>
 	</div>
 	<form id="send" name="send" novalidate="novalidate" ng-submit="sendMessage()" role="form" class="form">

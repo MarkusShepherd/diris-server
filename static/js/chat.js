@@ -90,6 +90,8 @@ dirisApp.controller('ChatController', function ChatController(
             return intervalPromise;
         });
 
+    $scope.hasOnlyEmojis = utils.hasOnlyEmojis;
+
     $scope.sendMessage = function sendMessage() {
         if (!blockUI.state().blocking) {
             blockUI.start();
@@ -108,6 +110,7 @@ dirisApp.controller('ChatController', function ChatController(
             .then(function () {
                 return $timeout(function () {
                     $anchorScroll('submit');
+                    dataService.setChatViewed(mPk);
                 }, 100);
             });
     };
