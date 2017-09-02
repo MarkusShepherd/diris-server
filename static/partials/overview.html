@@ -16,6 +16,9 @@
 						class="badge badge-time-left">
 						{{ match.deadlineResponseLeft }}
 					</span>
+					<span ng-if="match.numMessages" class="badge badge-new-messages">
+						{{ match.numMessages }}
+					</span>
 					By {{ players[match.inviting_player].user.username }}
 				</a>
 			</div>
@@ -36,6 +39,9 @@
 							class="badge badge-time-left">
 							{{ match.currentRoundObj.deadlineStoryLeft }}
 						</span>
+						<span ng-if="match.numMessages" class="badge badge-new-messages">
+							{{ match.numMessages }}
+						</span>
 						{{ match.currentRoundObj.isStoryTeller
 							? 'Tell your story!'
 							: 'Wait for the story...' }}
@@ -45,6 +51,9 @@
 							class="badge badge-time-left">
 							{{ match.currentRoundObj.deadlineOthersLeft }}
 						</span>
+						<span ng-if="match.numMessages" class="badge badge-new-messages">
+							{{ match.numMessages }}
+						</span>
 						{{ !match.currentRoundObj.hasSubmittedImage
 							? 'Submit your image!'
 							: "Wait for the other players' images..." }}
@@ -53,6 +62,9 @@
 						<span ng-if="!match.currentRoundObj.isStoryTeller &amp;&amp; !match.currentRoundObj.hasVoted &amp;&amp; match.currentRoundObj.deadlineVotesLeft"
 							class="badge badge-time-left">
 							{{ match.currentRoundObj.deadlineVotesLeft }}
+						</span>
+						<span ng-if="match.numMessages" class="badge badge-new-messages">
+							{{ match.numMessages }}
 						</span>
 						{{ !match.currentRoundObj.isStoryTeller &amp;&amp; !match.currentRoundObj.hasVoted
 							? 'Submit your vote!'
@@ -70,7 +82,12 @@
 				<a ng-repeat="match in matches | filter:{actionStatus:'p'}:true | orderBy:'deadline_action':false"
 					ng-href="#/match/{{ match.pk }}"
 					class="list-group-item">
-					<span ng-if="match.current_round &gt; 1" class="badge badge-position">{{ match.playerPositionOrd }}</span>
+					<span ng-if="match.current_round &gt; 1" class="badge badge-position">
+						{{ match.playerPositionOrd }}
+					</span>
+					<span ng-if="match.numMessages" class="badge badge-new-messages">
+						{{ match.numMessages }}
+					</span>
 					<h4 class="list-group-item-heading">Round {{ match.current_round }} of {{ match.total_rounds }}</h4>
 					<p ng-if="match.currentRoundObj.status === 's'" class="list-group-item-text">
 						{{ match.currentRoundObj.isStoryTeller

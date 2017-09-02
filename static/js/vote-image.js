@@ -89,6 +89,11 @@ dirisApp.controller('VoteImageController', function VoteImageController(
 
     $q.all([matchPromise, imagePromise]).then(blockUI.stop);
 
+    dataService.getChatNumNew(mPk, true)
+        .then(function (numMessages) {
+            $scope.numMessages = numMessages;
+        });
+
     $scope.selectImage = function selectImage(image) {
         if (image.pk !== $scope.round.playerDetails.image) {
             $scope.selectedImage = image;

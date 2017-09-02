@@ -546,8 +546,8 @@ dirisApp.factory('dataService', function dataService(
     };
 
     factory.getChat = function getChat(mPk, forceRefresh, seq) {
-        if (!forceRefresh && chats[mPk]) {
-            return $q.resolve(chats[mPk]);
+        if (!forceRefresh) {
+            return $q.resolve(_.get(chats, mPk, []));
         }
 
         var url = BACKEND_URL + '/matches/' + mPk + '/chat/',
@@ -590,6 +590,29 @@ dirisApp.factory('dataService', function dataService(
                 factory.setChatMessages(mPk, messageGroup.messages);
 
                 return chats[mPk];
+            });
+    };
+
+    factory.setChatViewed = function setChatViewed(mPk, date) {
+        $localStorage['chat_' + mPk] = date || moment();
+    };
+
+    factory.getChatViewed = function getChatViewed(mPk) {
+        return moment(_.get($localStorage, 'chat_' + mPk));
+    };
+
+    factory.getChatNumNew = function getChatNumNew(mPk, forceRefresh) {
+        return factory.getChat(mPk, forceRefresh)
+            .then(function (messages) {
+                if (_.isEmpty(messages)) {
+                    return 0;
+                }
+
+                var lastViewed = factory.getChatViewed(mPk);
+
+                return _(messages).filter(function (message) {
+                    return message.timestamp.isAfter(lastViewed);
+                }).size();
             });
     };
 

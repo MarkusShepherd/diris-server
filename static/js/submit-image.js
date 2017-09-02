@@ -182,6 +182,11 @@ dirisApp.controller('SubmitImageController', function SubmitImageController(
             $scope.useSlider = !_.isEmpty($scope.randomImages);
         }).then(sliderBlock.stop);
 
+    dataService.getChatNumNew(mPk, true)
+        .then(function (numMessages) {
+            $scope.numMessages = numMessages;
+        });
+
     $scope.minStoryLength = MINIMUM_STORY_LENGTH;
 
     $scope.hasCamera = !!(!utils.isBrowser() && navigator.camera && navigator.camera.getPicture);

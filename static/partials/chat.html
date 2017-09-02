@@ -10,14 +10,16 @@
 				class="col-xs-12 chat-timestamp" id="#ts{{$index}}">
 			{{ message.timestamp.calendar() }}
 		</div>
-		<div class="col-xs-2 {{ currentPlayer.pk == message.player ? 'col-xs-push-10' : '' }} chat-player">
+		<div class="col-xs-2 chat-player">
 			<player-icon player="players[message.player]"
-				ng-if="$first || message.player != messages[$index - 1].player"
+				ng-if="currentPlayer.pk != message.player &amp;&amp; ($first || message.player != messages[$index - 1].player)"
 				class-icon="player-icon-chat"
 				class-btn="btn-primary"></player-icon>
 		</div>
-		<div class="col-xs-10 chat-text {{ currentPlayer.pk == message.player ? 'col-xs-pull-2 chat-text-own' : '' }}">
-			<p class="chat-speech-bubble">{{ message.text }}</p>
+		<div class="col-xs-10 chat-text {{ currentPlayer.pk == message.player ? 'chat-text-own' : '' }}">
+			<p class="chat-speech-bubble {{ hasOnlyEmojis(message.text) ? 'chat-emoji' : '' }}">
+				{{ message.text }}
+			</p>
 		</div>
 	</div>
 	<form id="send" name="send" novalidate="novalidate" ng-submit="sendMessage()" role="form" class="form">

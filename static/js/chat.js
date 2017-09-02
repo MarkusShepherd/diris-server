@@ -67,6 +67,7 @@ dirisApp.controller('ChatController', function ChatController(
     chatPromise = dataService.getChat(mPk, true)
         .then(function (messages) {
             $scope.messages = messages;
+            dataService.setChatViewed(mPk);
         }).catch(function (response) {
             $log.debug('error');
             $log.debug(response);
@@ -83,10 +84,13 @@ dirisApp.controller('ChatController', function ChatController(
             intervalPromise = $interval(function () {
                 dataService.getChat(mPk, false).then(function (messages) {
                     $scope.messages = messages;
+                    dataService.setChatViewed(mPk);
                 });
-            }, 1000);
+            }, 10000);
             return intervalPromise;
         });
+
+    $scope.hasOnlyEmojis = utils.hasOnlyEmojis;
 
     $scope.sendMessage = function sendMessage() {
         if (!blockUI.state().blocking) {
@@ -106,6 +110,7 @@ dirisApp.controller('ChatController', function ChatController(
             .then(function () {
                 return $timeout(function () {
                     $anchorScroll('submit');
+                    dataService.setChatViewed(mPk);
                 }, 100);
             });
     };

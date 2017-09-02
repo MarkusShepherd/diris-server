@@ -30,6 +30,11 @@ dirisApp.controller('OverviewController', function OverviewController(
 
         _.forEach($scope.matches, function (match) {
             $scope.status[match.actionStatus] = true;
+
+            dataService.getChatNumNew(match.pk)
+                .then(function (numMessages) {
+                    match.numMessages = numMessages;
+                });
         });
     }
 

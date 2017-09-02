@@ -1,9 +1,10 @@
 'use strict';
 
-/*jslint browser: true, nomen: true */
+/*jslint browser: true, nomen: true, todo: true */
 /*global _, device, moment */
 
-var utils;
+var utils,
+    emojiRegex = /^([\ue000-\uf8ff]|\ud83c[\udf00-\udfff]|\ud83d[\udc00-\ude4f]|\ud83d[\ude80-\udeff]|\s)+$/;
 
 function getOrdinal(n) {
     var s = ['th', 'st', 'nd', 'rd'],
@@ -208,6 +209,11 @@ function normalizeUrl(url, protocol) {
     return url;
 }
 
+function hasOnlyEmojis(str) {
+    // TODO does not capture all emojis, e.g., flags
+    return emojiRegex.test(str);
+}
+
 utils = {
     processMatch: processMatch,
     getOrdinal: getOrdinal,
@@ -215,5 +221,6 @@ utils = {
     isBrowser: isBrowser,
     roundAction: roundAction,
     removeEmpty: removeEmpty,
-    normalizeUrl: normalizeUrl
+    normalizeUrl: normalizeUrl,
+    hasOnlyEmojis: hasOnlyEmojis
 };

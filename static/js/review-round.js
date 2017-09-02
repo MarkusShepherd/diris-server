@@ -91,4 +91,10 @@ dirisApp.controller('ReviewRoundController', function ReviewRoundController(
             $log.debug(response);
             toastr.error("There was an error fetching the data - please try again later...");
         });
+
+    dataService.getChatNumNew(mPk, true)
+        .then(function (numMessages) {
+            $scope.numMessages = numMessages;
+        });
+
 });
