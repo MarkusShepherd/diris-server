@@ -546,8 +546,8 @@ dirisApp.factory('dataService', function dataService(
     };
 
     factory.getChat = function getChat(mPk, forceRefresh, seq) {
-        if (!forceRefresh && chats[mPk]) {
-            return $q.resolve(chats[mPk]);
+        if (!forceRefresh) {
+            return $q.resolve(_.get(chats, mPk, []));
         }
 
         var url = BACKEND_URL + '/matches/' + mPk + '/chat/',

@@ -86,7 +86,7 @@ dirisApp.controller('ChatController', function ChatController(
                     $scope.messages = messages;
                     dataService.setChatViewed(mPk);
                 });
-            }, 1000);
+            }, 10000);
             return intervalPromise;
         });
 
